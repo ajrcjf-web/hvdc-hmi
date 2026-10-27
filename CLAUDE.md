@@ -27,6 +27,8 @@ TypeScript, Node.js. Más adelante: React + Vite, Vitest, OPC UA.
 - Un rechazo es un resultado normal, no una excepción: no debe romper el simulador.
 - Los enclavamientos viven en la lógica de control, no en la interfaz.
 - Las secuencias automáticas (ej. parada ordenada) serán órdenes separadas y explícitas.
+- Convención de idioma: nombres en el código (variables, funciones, tipos, archivos) en inglés; comentarios y documentación en español.
+- Las transiciones entre estados vecinos son en ambos sentidos (stopped ↔ decoupled ↔ coupled).
 
 ## Preguntas abiertas
 - Secuencia automática de desacople (bajar P y abrir Q2).
