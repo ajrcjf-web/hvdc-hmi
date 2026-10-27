@@ -8,7 +8,7 @@ Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) 
 
 Es un **proyecto de aprendizaje**: lo desarrollo para aprender a programar desde cero, usando como caso práctico el control de una estación de corriente continua en alta tensión (HVDC). Por eso el código y las decisiones de diseño se documentan en español y con lenguaje simple.
 
-**Convención de idioma:** los nombres en el código (variables, funciones, tipos, archivos) están en inglés; los comentarios y la documentación, en español.
+**Convención de idioma:** nombres en el código (variables, funciones, tipos, archivos) en inglés; comentarios y documentación en español.
 
 ## Qué quiere lograr
 
@@ -29,8 +29,8 @@ stopped  ↔  decoupled  ↔  coupled
 | Estado | Q1 (interruptor AC) | Convertidor | Q2 (seccionador DC) | ¿Transmite potencia? |
 |---|---|---|---|---|
 | `stopped` | abierto | bloqueado | abierto | No |
-| `decoupled` | cerrado | energizado (junto con el transformador) | abierto | No |
-| `coupled` | cerrado | energizado | cerrado | **Sí** |
+| `decoupled` | cerrado | energizado (junto con el transformador) y bloqueado | abierto | No |
+| `coupled` | cerrado | energizado; desbloqueado si P > 0 | cerrado | **Sí** |
 
 ### Enclavamientos
 
