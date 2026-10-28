@@ -28,12 +28,12 @@ earthed  ↔  stopped  ↔  decoupled  ↔  coupled
 
 Quedarse en el mismo estado (por ejemplo, de `coupled` a `coupled`) **no es una transición válida** y se rechaza.
 
-| Estado | Q1 (interruptor AC) | Convertidor | Q2 (seccionador DC) | ¿Transmite potencia? |
-|---|---|---|---|---|
-| `earthed` (puesta a tierra) | abierto | bloqueado | abierto | No |
-| `stopped` | abierto | bloqueado | abierto | No |
-| `decoupled` | cerrado | energizado (junto con el transformador) y bloqueado | abierto | No |
-| `coupled` | cerrado | energizado; desbloqueado si P > 0 | cerrado | **Sí** |
+| Estado | Q1 (interruptor AC) | Convertidor | Q2 (seccionador DC) | Puesta a tierra | ¿Transmite potencia? |
+|---|---|---|---|---|---|
+| `earthed` | abierto | bloqueado | abierto | **cerrada** | No |
+| `stopped` | abierto | bloqueado | abierto | abierta | No |
+| `decoupled` | cerrado | energizado (junto con el transformador) y bloqueado | abierto | abierta | No |
+| `coupled` | cerrado | energizado; desbloqueado si P > 0 | cerrado | abierta | **Sí** |
 
 ### Enclavamientos
 
