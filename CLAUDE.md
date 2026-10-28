@@ -34,8 +34,8 @@ supervisa una estación HVDC monopolar.
 - Las transiciones entre estados vecinos son en ambos sentidos (earthed ↔ stopped ↔ decoupled ↔ coupled).
 - Las transiciones se definen con una lista blanca (`allowedTransitions`): lo que no está listado, no está permitido.
 - Quedarse en el mismo estado (ej. coupled → coupled) no es una transición válida: se rechaza.
+- ¿qué tipo de dato en TypeScript representa el resultado de una orden ("hecho" o "rechazado con motivo")? -> El resultado de una orden es una unión discriminada TransitionResult: { ok: true; state } o { ok: false; reason }.
 
 ## Preguntas abiertas
 - Secuencia automática de desacople (bajar P y abrir Q2).
 - Fase de interruptores: enclavamientos de la puesta a tierra. No cerrarla con Q1 o Q2 cerrados (cortocircuito), y no cerrar Q1 ni Q2 con ella cerrada. Hoy solo los garantiza el orden de los estados; al modelar cada interruptor habrá que comprobarlos de forma explícita.
-- Próxima fase: ¿qué tipo de dato en TypeScript representa el resultado de una orden ("hecho" o "rechazado con motivo")?
