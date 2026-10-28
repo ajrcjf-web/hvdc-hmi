@@ -4,7 +4,8 @@ Simulador básico de la ventana overview de un HMI que controla y
 supervisa una estación HVDC monopolar.
 
 ## Dominio
-- Estados: stopped → decoupled → coupled (solo transiciones entre vecinos).
+- Estados: earthed ↔ stopped ↔ decoupled ↔ coupled (solo transiciones entre vecinos).
+- Earthed: estación puesta a tierra (para trabajar con seguridad). Q1 abierto, convertidor bloqueado, Q2 abierto. Solo se llega desde stopped y solo se sale hacia stopped.
 - Stopped: Q1 (interruptor AC) abierto, convertidor bloqueado, Q2 (seccionador DC) abierto.
 - Decoupled: Q1 cerrado, transformador y convertidor energizados, Q2 abierto.
 - Coupled: Q2 cerrado. Solo aquí se puede transmitir potencia.
@@ -28,7 +29,9 @@ TypeScript, Node.js. Más adelante: React + Vite, Vitest, OPC UA.
 - Los enclavamientos viven en la lógica de control, no en la interfaz.
 - Las secuencias automáticas (ej. parada ordenada) serán órdenes separadas y explícitas.
 - Convención de idioma: nombres en el código (variables, funciones, tipos, archivos) en inglés; comentarios y documentación en español.
-- Las transiciones entre estados vecinos son en ambos sentidos (stopped ↔ decoupled ↔ coupled).
+- Las transiciones entre estados vecinos son en ambos sentidos (earthed ↔ stopped ↔ decoupled ↔ coupled).
+- Las transiciones se definen con una lista blanca (`allowedTransitions`): lo que no está listado, no está permitido.
+- Quedarse en el mismo estado (ej. coupled → coupled) no es una transición válida: se rechaza.
 
 ## Preguntas abiertas
 - Secuencia automática de desacople (bajar P y abrir Q2).
