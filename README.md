@@ -2,7 +2,7 @@
 
 Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.
 
-> **Estado: en desarrollo (Fase 1).** Ya existe el modelo de estados y la tabla de transiciones permitidas. Todavía no hay interfaz gráfica.
+> **Estado: en desarrollo (Fase 1).** Ya existe el modelo de estados, la tabla de transiciones permitidas y sus tests automáticos. Todavía no hay interfaz gráfica.
 
 ## Sobre este proyecto
 
@@ -54,8 +54,8 @@ Un **enclavamiento** es una condición que debe cumplirse para permitir una acci
 
 ## Tecnologías
 
-- **Ahora:** TypeScript y Node.js.
-- **Más adelante:** React + Vite, Vitest (pruebas) y OPC UA.
+- **Ahora:** TypeScript, Node.js y Vitest (pruebas).
+- **Más adelante:** React + Vite y OPC UA.
 
 ## Instalación y uso
 
@@ -70,6 +70,7 @@ npm start
 
 Otros comandos:
 
+- `npm test`: ejecuta los tests automáticos.
 - `npm run typecheck`: verifica los tipos de TypeScript.
 
 ## Hoja de ruta
@@ -77,7 +78,7 @@ Otros comandos:
 - [x] Modelar los estados y las transiciones válidas.
 - [ ] Implementar los enclavamientos y el resultado de las órdenes (hecho o rechazado con motivo).
 - [ ] Simular la potencia con rampa y límites.
-- [ ] Añadir pruebas con Vitest.
+- [x] Añadir pruebas con Vitest.
 - [ ] Construir la interfaz con React + Vite.
 - [ ] Integrar OPC UA.
 
