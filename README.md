@@ -73,10 +73,9 @@ Otros comandos:
 - `npm test`: ejecuta los tests automáticos.
 - `npm run typecheck`: verifica los tipos de TypeScript.
 
-## Hoja de ruta
-
 - [x] Modelar los estados y las transiciones válidas.
-- [ ] Implementar los enclavamientos y el resultado de las órdenes (hecho o rechazado con motivo).
+- [x] Resultado de las órdenes: ejecutada o rechazada con motivo.
+- [ ] Enclavamientos de potencia: desacoplar solo con P = 0, rampa y límites.
 - [ ] Simular la potencia con rampa y límites.
 - [x] Añadir pruebas con Vitest.
 - [ ] Construir la interfaz con React + Vite.
