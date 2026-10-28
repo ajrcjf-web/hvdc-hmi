@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.",
   "scripts": {
-  "start": "tsx src/main.ts",
-  "typecheck": "tsc --noEmit",
-  "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
