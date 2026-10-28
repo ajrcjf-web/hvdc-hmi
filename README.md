@@ -69,3 +69,4 @@ En construcción. Esta sección se completará cuando exista una primera versió
 ## Autoría
 
 Proyecto de [ajrcjf-web](https://github.com/ajrcjf-web).
+Licencia: [MIT](LICENSE).
