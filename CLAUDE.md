@@ -34,7 +34,7 @@ supervisa una estación HVDC monopolar.
 - Las transiciones entre estados vecinos son en ambos sentidos (earthed ↔ stopped ↔ decoupled ↔ coupled).
 - Las transiciones se definen con una lista blanca (`allowedTransitions`): lo que no está listado, no está permitido.
 - Quedarse en el mismo estado (ej. coupled → coupled) no es una transición válida: se rechaza.
-- ¿qué tipo de dato en TypeScript representa el resultado de una orden ("hecho" o "rechazado con motivo")? -> El resultado de una orden es una unión discriminada TransitionResult: { ok: true; state } o { ok: false; reason }.
+- El resultado de una orden es una unión discriminada `TransitionResult`: `{ ok: true; state }` si se ejecutó, o `{ ok: false; reason }` si se rechazó.
 
 ## Preguntas abiertas
 - Secuencia automática de desacople (bajar P y abrir Q2).
