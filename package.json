@@ -11,9 +11,9 @@
     "url": "git+https://github.com/ajrcjf-web/hvdc-hmi.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+  "author": "Angel Rojas",
+  "license": "MIT",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/ajrcjf-web/hvdc-hmi/issues"
   },
