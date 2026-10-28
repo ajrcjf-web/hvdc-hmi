@@ -36,3 +36,7 @@ console.log("earthed → stopped:", canTransition("earthed", "stopped")); // esp
 console.log("stopped → earthed:", canTransition("stopped", "earthed")); // esperado: true
 console.log("earthed → decoupled:", canTransition("earthed", "decoupled")); // esperado: false
 console.log("decoupled → earthed:", canTransition("decoupled", "earthed")); // esperado: false
+console.log("earthed → decoupled:", canTransition("earthed", "decoupled")); // esperado: false
+console.log("earthed → earthed:", canTransition("earthed", "earthed")); // esperado: false
+console.log("earthed → coupled:", canTransition("earthed", "coupled")); // esperado: false
+console.log("coupled → earthed:", canTransition("coupled", "earthed")); // esperado: false
