@@ -1,0 +1,31 @@
+{
+  "name": "hvdc-hmi",
+  "version": "1.0.0",
+  "description": "Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ajrcjf-web/hvdc-hmi.git"
+  },
+  "keywords": [],
+  "author": "Angel Rojas",
+  "license": "MIT",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/ajrcjf-web/hvdc-hmi/issues"
+  },
+  "homepage": "https://github.com/ajrcjf-web/hvdc-hmi#readme",
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}

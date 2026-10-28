@@ -2,7 +2,7 @@
 
 Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.
 
-> **Estado: en construcción.** Todavía no hay código ejecutable. Este documento describe lo que el proyecto pretende ser y se irá completando a medida que avance.
+> **Estado: en desarrollo (Fase 1).** Ya existe el modelo de estados, la tabla de transiciones permitidas y sus tests automáticos. Todavía no hay interfaz gráfica.
 
 ## Sobre este proyecto
 
@@ -20,17 +20,20 @@ Es un **proyecto de aprendizaje**: lo desarrollo para aprender a programar desde
 
 ### Estados de la estación
 
-La estación pasa por tres estados y **solo puede moverse entre estados vecinos**:
+La estación pasa por cuatro estados y **solo puede moverse entre estados vecinos**, en ambos sentidos:
 
 ```
-stopped  ↔  decoupled  ↔  coupled
+earthed  ↔  stopped  ↔  decoupled  ↔  coupled
 ```
 
-| Estado | Q1 (interruptor AC) | Convertidor | Q2 (seccionador DC) | ¿Transmite potencia? |
-|---|---|---|---|---|
-| `stopped` | abierto | bloqueado | abierto | No |
-| `decoupled` | cerrado | energizado (junto con el transformador) y bloqueado | abierto | No |
-| `coupled` | cerrado | energizado; desbloqueado si P > 0 | cerrado | **Sí** |
+Quedarse en el mismo estado (por ejemplo, de `coupled` a `coupled`) **no es una transición válida** y se rechaza.
+
+| Estado | Q1 (interruptor AC) | Convertidor | Q2 (seccionador DC) | Puesta a tierra | ¿Transmite potencia? |
+|---|---|---|---|---|---|
+| `earthed` | abierto | bloqueado | abierto | **cerrada** | No |
+| `stopped` | abierto | bloqueado | abierto | abierta | No |
+| `decoupled` | cerrado | energizado (junto con el transformador) y bloqueado | abierto | abierta | No |
+| `coupled` | cerrado | energizado; desbloqueado si P > 0 | cerrado | abierta | **Sí** |
 
 ### Enclavamientos
 
@@ -40,6 +43,7 @@ Un **enclavamiento** es una condición que debe cumplirse para permitir una acci
 - Solo se puede desacoplar con potencia P = 0.
 - La potencia cambia con una rampa y debe respetar los límites Pmin y Pmax. La consigna válida es 0, o un valor entre Pmin y Pmax.
 - No se puede cambiar de estado mientras la potencia está en rampa.
+- Solo se permiten las transiciones listadas: lo que no está en la lista, se rechaza (incluido quedarse en el mismo estado).
 
 ### Cómo se tratan las órdenes rechazadas
 
@@ -50,22 +54,34 @@ Un **enclavamiento** es una condición que debe cumplirse para permitir una acci
 
 ## Tecnologías
 
-- **Ahora:** TypeScript y Node.js.
-- **Más adelante:** React + Vite, Vitest (pruebas) y OPC UA.
+- **Ahora:** TypeScript, Node.js y Vitest (pruebas).
+- **Más adelante:** React + Vite y OPC UA.
 
 ## Instalación y uso
 
-En construcción. Esta sección se completará cuando exista una primera versión ejecutable.
+Requisitos: Node.js 24 o superior y Git.
 
-## Hoja de ruta
+```bash
+git clone https://github.com/ajrcjf-web/hvdc-hmi.git
+cd hvdc-hmi
+npm install
+npm start
+```
 
-- [ ] Modelar los estados y las transiciones válidas.
-- [ ] Implementar los enclavamientos y el resultado de las órdenes (hecho o rechazado con motivo).
+Otros comandos:
+
+- `npm test`: ejecuta los tests automáticos.
+- `npm run typecheck`: verifica los tipos de TypeScript.
+
+- [x] Modelar los estados y las transiciones válidas.
+- [x] Resultado de las órdenes: ejecutada o rechazada con motivo.
+- [ ] Enclavamientos de potencia: desacoplar solo con P = 0, rampa y límites.
 - [ ] Simular la potencia con rampa y límites.
-- [ ] Añadir pruebas con Vitest.
+- [x] Añadir pruebas con Vitest.
 - [ ] Construir la interfaz con React + Vite.
 - [ ] Integrar OPC UA.
 
 ## Autoría
 
 Proyecto de [ajrcjf-web](https://github.com/ajrcjf-web).
+Licencia: [MIT](LICENSE).
