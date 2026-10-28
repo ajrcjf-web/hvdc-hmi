@@ -13,7 +13,8 @@ supervisa una estación HVDC monopolar.
 - Desacoplar solo con P = 0. Potencia con rampa y límites Pmin/Pmax.
 
 ## Stack
-TypeScript, Node.js. Más adelante: React + Vite, Vitest, OPC UA.
+- **Ahora:** TypeScript, Node.js y Vitest (pruebas).
+- **Más adelante:** React + Vite y OPC UA.
 
 ## Cómo ayudarme
 - Estoy aprendiendo a programar desde cero con este proyecto.
