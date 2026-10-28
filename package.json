@@ -2,9 +2,9 @@
   "name": "hvdc-hmi",
   "version": "1.0.0",
   "description": "Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "start": "tsx src/main.ts",
+  "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
