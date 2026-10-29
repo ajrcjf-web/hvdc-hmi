@@ -1,8 +1,10 @@
 # Simulador HMI de estación HVDC monopolar
 
+[![CI](https://github.com/ajrcjf-web/hvdc-hmi/actions/workflows/ci.yml/badge.svg)](https://github.com/ajrcjf-web/hvdc-hmi/actions/workflows/ci.yml)
+
 Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.
 
-> **Estado: en desarrollo (Fase 1).** Ya existe el modelo de estados, la tabla de transiciones permitidas y sus tests automáticos. Todavía no hay interfaz gráfica.
+> **Estado: en desarrollo (Fase 1).** Ya existe el modelo de estados, la tabla de transiciones permitidas, el resultado de las órdenes y sus tests automáticos con CI. Todavía no hay interfaz gráfica.
 
 ## Sobre este proyecto
 
@@ -54,8 +56,8 @@ Un **enclavamiento** es una condición que debe cumplirse para permitir una acci
 
 ## Tecnologías
 
-- **Ahora:** TypeScript, Node.js y Vitest (pruebas).
-- **Más adelante:** React + Vite y OPC UA.
+- **Ahora:** TypeScript, Node.js, Vitest (pruebas) y GitHub Actions (integración continua).
+- **Más adelante:** React + Vite, WebSocket y OPC UA.
 
 ## Instalación y uso
 
@@ -73,13 +75,61 @@ Otros comandos:
 - `npm test`: ejecuta los tests automáticos.
 - `npm run typecheck`: verifica los tipos de TypeScript.
 
+## Hoja de ruta
+
+El proyecto avanza por fases. Al cerrar cada una se publica una versión (`v0.1.0` al cerrar la Fase 1, `v0.2.0` la Fase 2, y así). La `v1.0.0` llegará cuando el simulador completo funcione.
+
+### Fase 0 — El taller ✅
+
+- [x] Entorno de desarrollo: Node.js, Git, VS Code y Claude Code.
+- [x] Repositorio en GitHub y flujo de trabajo con ramas y Pull Requests.
+
+### Fase 1 — El cerebro 🟡
+
+Lógica de control sin interfaz.
+
 - [x] Modelar los estados y las transiciones válidas.
 - [x] Resultado de las órdenes: ejecutada o rechazada con motivo.
-- [ ] Enclavamientos de potencia: desacoplar solo con P = 0, rampa y límites.
-- [ ] Simular la potencia con rampa y límites.
-- [x] Añadir pruebas con Vitest.
-- [ ] Construir la interfaz con React + Vite.
-- [ ] Integrar OPC UA.
+- [x] Tests automáticos con Vitest.
+- [x] Integración continua con GitHub Actions.
+- [ ] Enclavamientos de potencia: consigna entre Pmin y Pmax, desacoplar solo con P = 0.
+- [ ] La estación como objeto con varios datos (estado, potencia, consigna).
+
+### Fase 2 — La planta simulada
+
+- [ ] Bucle de tiempo y rampa de potencia.
+- [ ] Valores medidos: Udc e Idc.
+- [ ] Q1, Q2 y la puesta a tierra como equipos, con sus propios enclavamientos y tiempos de maniobra.
+
+### Fase 3 — La ventana overview
+
+- [ ] Interfaz con React + Vite.
+- [ ] Unifilar en SVG con estados de los equipos.
+- [ ] Valores medidos en pantalla.
+- [ ] Órdenes con confirmación (*select-before-operate*).
+
+### Fase 4 — Eventos, alarmas y tendencias
+
+- [ ] Lista de eventos con marca de tiempo.
+- [ ] Alarmas con reconocimiento.
+- [ ] Gráficos de tendencia de potencia y tensión.
+- [ ] Fallas simuladas (por ejemplo, falla en la línea DC).
+
+### Fase 5 — Arquitectura industrial
+
+- [ ] Simulador y HMI como programas separados, comunicados por WebSocket.
+- [ ] Comunicación por OPC UA.
+
+### Fase 6 — Nivel profesional
+
+- [ ] Contenedores con Docker.
+- [ ] Roles de usuario (operador e ingeniero).
+- [ ] Diseño de pantallas según ISA-101.
+- [ ] Merge en `main` solo con CI en verde.
+
+## Flujo de trabajo
+
+Cómo trabajo con Git, ramas y Pull Requests: [docs/WORKFLOW.md](docs/WORKFLOW.md).
 
 ## Autoría
 
