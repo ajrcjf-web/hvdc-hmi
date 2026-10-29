@@ -65,17 +65,23 @@ git push origin v0.1.0
 
 ## Convenciones
 
-**Ramas:** minúsculas, palabras separadas con guiones, sin acentos.
+Se usa [Conventional Commits](https://www.conventionalcommits.org/). El mismo tipo sirve para el commit y para el prefijo de la rama.
 
-- `feature/`: funcionalidad nueva.
-- `fix/`: corrección de un error.
-- `docs/`: solo documentación.
-- `refactor/`: reorganizar código sin cambiar su comportamiento.
-- `test/`: solo tests.
-- `chore/`: mantenimiento (dependencias, configuración).
-- `ci/`: integración continua.
+| Tipo | Para qué |
+|---|---|
+| `feat` | Funcionalidad nueva |
+| `fix` | Corrección de un error |
+| `docs` | Solo documentación |
+| `test` | Solo tests |
+| `refactor` | Reorganizar código sin cambiar su comportamiento |
+| `chore` | Mantenimiento: dependencias, configuración |
+| `ci` | Integración continua |
 
-**Commits:** verbo en imperativo, en español, describiendo todo lo que incluye el commit. Ejemplo: "Agrega enclavamiento de desacople con P = 0".
+**Commits:** `tipo: descripción en imperativo`. Tipo en inglés y minúscula; descripción en español, en minúscula y sin punto final. Un commit, un motivo.
+Ejemplo: `feat: agrega enclavamiento de desacople con P = 0`
+
+**Ramas:** `tipo/nombre-descriptivo`, en minúsculas, con guiones y sin acentos.
+Ejemplo: `feat/power-interlocks`
 
 **Versiones:** `0.x.y` mientras el proyecto está en desarrollo; una versión menor por fase.
 

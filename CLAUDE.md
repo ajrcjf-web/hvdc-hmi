@@ -35,6 +35,7 @@ supervisa una estación HVDC monopolar.
 - Las transiciones se definen con una lista blanca (`allowedTransitions`): lo que no está listado, no está permitido.
 - Quedarse en el mismo estado (ej. coupled → coupled) no es una transición válida: se rechaza.
 - El resultado de una orden es una unión discriminada `TransitionResult`: `{ ok: true; state }` si se ejecutó, o `{ ok: false; reason }` si se rechazó.
+- Commits y ramas según Conventional Commits; ver docs/WORKFLOW.md.
 
 ## Preguntas abiertas
 - Secuencia automática de desacople (bajar P y abrir Q2).
