@@ -21,6 +21,7 @@ supervisa una estación HVDC monopolar.
 - `src/station.ts`: la estación (`Station`, `StationConfig`) y las órdenes del operador (`requestTransition`, `requestPowerOrder`).
 - `src/main.ts`: punto de entrada; único lugar donde cambia la estación actual.
 - `*.test.ts`: tests de Vitest, al lado del archivo que prueban.
+- `src/simulation.ts`: evolución de la planta en el tiempo: step
 
 ## Cómo ayudarme
 - Estoy aprendiendo a programar desde cero con este proyecto.
@@ -44,6 +45,7 @@ supervisa una estación HVDC monopolar.
 - "En rampa" significa potencia medida ≠ consigna.
 - Configuración por defecto (`defaultConfig`): Pmin = 50 MW, Pmax = 500 MW. Los tests usan su propia configuración.
 - Commits y ramas según Conventional Commits; ver docs/WORKFLOW.md.
+- la rampa se configura en MW/min (rampRateMWPerMin, 600 por defecto), step es una función pura y la potencia llega exactamente a la consigna para evitar errores de redondeo; el reloj y el escenario viven en main.ts.
 
 ## Preguntas abiertas
 - Fase 2: enclavamientos de la puesta a tierra. No cerrarla con Q1 o Q2 cerrados (cortocircuito), y no cerrar Q1 ni Q2 con ella cerrada. Hoy solo los garantiza el orden de los estados; al modelar cada equipo habrá que comprobarlos de forma explícita.
