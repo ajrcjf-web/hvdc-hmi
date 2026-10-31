@@ -7,7 +7,12 @@ import {
   type StationConfig,
 } from "./station.ts";
 
-const config: StationConfig = { pMinMW: 50, pMaxMW: 500, rampRateMWPerMin: 600 };
+const config: StationConfig = {
+  pMinMW: 50,
+  pMaxMW: 500,
+  rampRateMWPerMin: 600,
+  ratedVoltageKV: 500,
+};
 
 function coupled(powerMW: number, powerOrderMW = powerMW): Station {
   return { state: "coupled", powerMW, powerOrderMW };

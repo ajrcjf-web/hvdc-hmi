@@ -14,12 +14,14 @@ export type StationConfig = {
   pMinMW: number;
   pMaxMW: number;
   rampRateMWPerMin: number;
+  ratedVoltageKV: number;
 };
 
 export const defaultConfig: StationConfig = {
   pMinMW: 50,
   pMaxMW: 500,
   rampRateMWPerMin: 600,
+  ratedVoltageKV: 500,
 };
 
 export type CommandResult =
@@ -77,3 +79,4 @@ export function requestPowerOrder(
 
   return { ok: true, station: { ...station, powerOrderMW: orderMW } };
 }
+
