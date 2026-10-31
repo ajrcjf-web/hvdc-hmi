@@ -13,8 +13,14 @@ supervisa una estación HVDC monopolar.
 - Desacoplar solo con P = 0. Potencia con rampa y límites Pmin/Pmax.
 
 ## Stack
-- **Ahora:** TypeScript, Node.js y Vitest (pruebas).
-- **Más adelante:** React + Vite y OPC UA.
+- **Ahora:** TypeScript, Node.js, GitHub Actions y Vitest (pruebas).
+- **Más adelante:** React + Vite, WebSocket y OPC UA.
+
+## Estructura del código
+- `src/stationState.ts`: estados (`StationState`) y tabla de transiciones permitidas (`canTransition`).
+- `src/station.ts`: la estación (`Station`, `StationConfig`) y las órdenes del operador (`requestTransition`, `requestPowerOrder`).
+- `src/main.ts`: punto de entrada; único lugar donde cambia la estación actual.
+- `*.test.ts`: tests de Vitest, al lado del archivo que prueban.
 
 ## Cómo ayudarme
 - Estoy aprendiendo a programar desde cero con este proyecto.
@@ -34,7 +40,10 @@ supervisa una estación HVDC monopolar.
 - Las transiciones entre estados vecinos son en ambos sentidos (earthed ↔ stopped ↔ decoupled ↔ coupled).
 - Las transiciones se definen con una lista blanca (`allowedTransitions`): lo que no está listado, no está permitido.
 - Quedarse en el mismo estado (ej. coupled → coupled) no es una transición válida: se rechaza.
-- El resultado de una orden es una unión discriminada `TransitionResult`: `{ ok: true; state }` si se ejecutó, o `{ ok: false; reason }` si se rechazó.
+- El resultado de una orden es `CommandResult`: `{ ok: true; station }` si se ejecutó, o `{ ok: false; reason }` si se rechazó.
+- Las órdenes no modifican la estación que reciben: devuelven una estación nueva (inmutabilidad). Solo `main.ts` guarda la estación actual.
+- "En rampa" significa potencia medida ≠ consigna.
+- Configuración por defecto (`defaultConfig`): Pmin = 50 MW, Pmax = 500 MW. Los tests usan su propia configuración.
 - Commits y ramas según Conventional Commits; ver docs/WORKFLOW.md.
 
 ## Preguntas abiertas

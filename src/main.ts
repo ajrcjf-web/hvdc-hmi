@@ -1,21 +1,33 @@
 // Punto de entrada del simulador: arranca el programa.
-import { canTransition, requestTransition, type StationState } from "./stationState.ts";
+import {
+  createStation,
+  defaultConfig,
+  requestPowerOrder,
+  requestTransition,
+  type CommandResult,
+  type Station,
+} from "./station.ts";
 
+let station: Station = createStation();
 
-const stationName: string = "Estación A";
-const ratedPowerMW: number = 500;
+function apply(command: string, result: CommandResult): void {
+  if (result.ok) {
+    station = result.station;
+    console.log(
+      `✓ ${command} → estado: ${station.state}, consigna: ${station.powerOrderMW} MW`,
+    );
+  } else {
+    console.log(`✗ ${command} → rechazada: ${result.reason}`);
+  }
+}
 
 console.log("Simulador HMI HVDC");
-console.log(`Estación: ${stationName}`);
-console.log(`Potencia nominal: ${ratedPowerMW} MW`);
+console.log(`Estado inicial: ${station.state}`);
 
-let state: StationState = "stopped";
-console.log(`Estado: ${state}`);
-
-const result = requestTransition(state, "coupled");
-if (result.ok) {
-  state = result.state;
-  console.log(`Orden ejecutada. Nuevo estado: ${state}`);
-} else {
-  console.log(`Orden rechazada: ${result.reason}`);
-}
+apply("Ir a decoupled", requestTransition(station, "decoupled"));
+apply("Ir a coupled", requestTransition(station, "coupled"));
+apply("Consigna 300 MW", requestPowerOrder(station, 300, defaultConfig));
+apply("Consigna 20 MW", requestPowerOrder(station, 20, defaultConfig));
+apply("Desacoplar", requestTransition(station, "decoupled"));
+apply("Consigna 0 MW", requestPowerOrder(station, 0, defaultConfig));
+apply("Desacoplar", requestTransition(station, "decoupled"));
