@@ -21,7 +21,7 @@
 4. `npm start`: el programa funciona.
 5. `git status` y `git diff`: revisar qué cambió.
 6. `git add <archivos>` y, si hay archivos nuevos, `git diff --staged`.
-7. `git commit -m "Verbo en imperativo + qué cambia"`: un commit, un motivo.
+7. `git commit -m "tipo: descripción en imperativo"`: un commit, un motivo (ver Convenciones).
 8. Si cambió el comportamiento o las reglas: actualizar README y `CLAUDE.md` en la misma rama.
 
 ## Al terminar la sesión
@@ -41,18 +41,22 @@
 
 ## Al cerrar una fase
 
+En Claude Code, `/cerrar-fase` guía este procedimiento.
+
 1. **Revisar la hoja de ruta** del README:
    - ¿Qué cambió respecto del plan?
    - ¿Qué adelantamos o postergamos?
    - ¿Qué aprendimos que modifica lo que sigue?
    - Actualizarla para que vuelva a ser verdadera.
 2. **Revisar `CLAUDE.md`**: decisiones de diseño nuevas, preguntas abiertas resueltas o nuevas.
-3. **Actualizar la versión** en `package.json` (por ejemplo, `0.1.0`), en una rama con su PR.
+3. **Actualizar la versión** con `npm version X.Y.Z --no-git-tag-version` (actualiza `package.json` y `package-lock.json`), en una rama con su PR.
 4. **Marcar la versión** en `main`, después del merge:
-git switch main
-git pull
-git tag -a v0.1.0 -m “Fase 1: modelo de estados y enclavamientos”
-git push origin v0.1.0
+   ```
+   git switch main
+   git pull
+   git tag -a v0.1.0 -m "Fase 1: modelo de estados y enclavamientos"
+   git push origin v0.1.0
+   ```
 
 5. **Publicar un Release** en GitHub a partir del tag, con un resumen de lo que incluye la fase.
 
