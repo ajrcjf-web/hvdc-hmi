@@ -50,6 +50,7 @@ supervisa una estación HVDC monopolar.
 ## Preguntas abiertas
 - Fase 2: enclavamientos de la puesta a tierra. No cerrarla con Q1 o Q2 cerrados (cortocircuito), y no cerrar Q1 ni Q2 con ella cerrada. Hoy solo los garantiza el orden de los estados; al modelar cada equipo habrá que comprobarlos de forma explícita.
 - Sin fecha: secuencia automática de desacople (bajar P y abrir Q2), como orden separada y explícita.
+- Fase 2: modelo de Udc más fiel. Hoy Udc es la tensión nominal en coupled y 0 en los demás estados (simplificación). En la realidad depende del estado del convertidor (bloqueado o desbloqueado), la carga de la línea y el control.
 
 ## Skills del proyecto
 - `/cerrar-fase`: ritual de cierre de fase y publicación de versión (`.claude/skills/cerrar-fase/`).
