@@ -46,5 +46,5 @@ supervisa una estación HVDC monopolar.
 - Commits y ramas según Conventional Commits; ver docs/WORKFLOW.md.
 
 ## Preguntas abiertas
-- Secuencia automática de desacople (bajar P y abrir Q2).
-- Fase de interruptores: enclavamientos de la puesta a tierra. No cerrarla con Q1 o Q2 cerrados (cortocircuito), y no cerrar Q1 ni Q2 con ella cerrada. Hoy solo los garantiza el orden de los estados; al modelar cada interruptor habrá que comprobarlos de forma explícita.
+- Fase 2: enclavamientos de la puesta a tierra. No cerrarla con Q1 o Q2 cerrados (cortocircuito), y no cerrar Q1 ni Q2 con ella cerrada. Hoy solo los garantiza el orden de los estados; al modelar cada equipo habrá que comprobarlos de forma explícita.
+- Sin fecha: secuencia automática de desacople (bajar P y abrir Q2), como orden separada y explícita.
