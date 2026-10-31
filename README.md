@@ -4,7 +4,7 @@
 
 Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.
 
-> **Estado: en desarrollo (Fase 1).** Ya existe el modelo de estados, las órdenes del operador con sus enclavamientos (transiciones y potencia), y sus tests automáticos con CI. Todavía no hay simulación del tiempo ni interfaz gráfica.
+> **Estado: en desarrollo (Fase 2).** La Fase 1 está completa ([v0.1.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.1.0)): modelo de estados, órdenes del operador con sus enclavamientos de transiciones y de potencia, tests automáticos y CI. Todavía no hay simulación del tiempo ni interfaz gráfica.
 
 ## Sobre este proyecto
 
@@ -84,7 +84,7 @@ El proyecto avanza por fases. Al cerrar cada una se publica una versión (`v0.1.
 - [x] Entorno de desarrollo: Node.js, Git, VS Code y Claude Code.
 - [x] Repositorio en GitHub y flujo de trabajo con ramas y Pull Requests.
 
-### Fase 1 — El cerebro 🟡
+### Fase 1 — El cerebro ✅ (v0.1.0)
 
 Lógica de control sin interfaz.
 
