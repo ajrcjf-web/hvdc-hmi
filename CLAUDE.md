@@ -26,7 +26,6 @@ supervisa una estación HVDC monopolar.
 - Estoy aprendiendo a programar desde cero con este proyecto.
 - Explica el porqué antes del cómo, en español neutro y con lenguaje simple.
 - Muéstrame el código completo y explícalo parte por parte.
-- Después hazme preguntas para pensar, con las respuestas más abajo, separadas.
 
 ## Decisiones de diseño
 - Consigna de potencia válida: 0, o entre Pmin y Pmax.
