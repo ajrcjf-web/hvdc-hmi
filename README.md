@@ -4,7 +4,7 @@
 
 Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.
 
-> **Estado: en desarrollo (Fase 1).** Ya existe el modelo de estados, la tabla de transiciones permitidas, el resultado de las órdenes y sus tests automáticos con CI. Todavía no hay interfaz gráfica.
+> **Estado: en desarrollo (Fase 1).** Ya existe el modelo de estados, las órdenes del operador con sus enclavamientos (transiciones y potencia), y sus tests automáticos con CI. Todavía no hay simulación del tiempo ni interfaz gráfica.
 
 ## Sobre este proyecto
 
@@ -92,8 +92,8 @@ Lógica de control sin interfaz.
 - [x] Resultado de las órdenes: ejecutada o rechazada con motivo.
 - [x] Tests automáticos con Vitest.
 - [x] Integración continua con GitHub Actions.
-- [ ] Enclavamientos de potencia: consigna entre Pmin y Pmax, desacoplar solo con P = 0.
-- [ ] La estación como objeto con varios datos (estado, potencia, consigna).
+- [x] Enclavamientos de potencia: consigna entre Pmin y Pmax, desacoplar solo con P = 0.
+- [x] La estación como objeto con varios datos (estado, potencia, consigna).
 
 ### Fase 2 — La planta simulada
 
