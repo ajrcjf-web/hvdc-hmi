@@ -13,11 +13,13 @@ export type Station = {
 export type StationConfig = {
   pMinMW: number;
   pMaxMW: number;
+  rampRateMWPerMin: number;
 };
 
 export const defaultConfig: StationConfig = {
   pMinMW: 50,
   pMaxMW: 500,
+  rampRateMWPerMin: 600,
 };
 
 export type CommandResult =
