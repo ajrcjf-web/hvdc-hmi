@@ -97,7 +97,7 @@ Lógica de control sin interfaz.
 
 ### Fase 2 — La planta simulada
 
-- [ ] Bucle de tiempo y rampa de potencia.
+- [x] Bucle de tiempo y rampa de potencia.
 - [ ] Valores medidos: Udc e Idc.
 - [ ] Q1, Q2 y la puesta a tierra como equipos, con sus propios enclavamientos y tiempos de maniobra.
 
