@@ -100,6 +100,7 @@ Lógica de control sin interfaz.
 - [x] Bucle de tiempo y rampa de potencia.
 - [ ] Valores medidos: Udc e Idc.
 - [ ] Q1, Q2 y la puesta a tierra como equipos, con sus propios enclavamientos y tiempos de maniobra.
+- [ ] Modelo de Udc más fiel: tensión según el estado del convertidor (bloqueado o desbloqueado) y el control.
 
 ### Fase 3 — La ventana overview
 
