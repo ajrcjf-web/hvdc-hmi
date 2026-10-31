@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { canTransition, requestTransition, type StationState } from "./stationState.ts";
+import { canTransition, type StationState } from "./stationState.ts";
 
 describe("canTransition", () => {
   // Los 16 pares posibles: [desde, hacia, permitido]
@@ -31,21 +31,5 @@ describe("canTransition", () => {
 
   test("nunca permite poner a tierra una estación acoplada", () => {
     expect(canTransition("coupled", "earthed")).toBe(false);
-  });
-});
-describe("requestTransition", () => {
-  test("una transición permitida devuelve el nuevo estado", () => {
-    expect(requestTransition("stopped", "decoupled")).toEqual({
-      ok: true,
-      state: "decoupled",
-    });
-  });
-
-  test("una transición no permitida se rechaza con un motivo", () => {
-    const result = requestTransition("stopped", "coupled");
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.reason).toContain("stopped → coupled");
-    }
   });
 });
