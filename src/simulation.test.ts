@@ -3,7 +3,12 @@ import { step } from "./simulation.ts";
 import type { Station, StationConfig } from "./station.ts";
 
 // 600 MW/min = 10 MW/s
-const config: StationConfig = { pMinMW: 50, pMaxMW: 500, rampRateMWPerMin: 600 };
+const config: StationConfig = {
+  pMinMW: 50,
+  pMaxMW: 500,
+  rampRateMWPerMin: 600,
+  ratedVoltageKV: 500,
+};
 
 function coupled(powerMW: number, powerOrderMW = powerMW): Station {
   return { state: "coupled", powerMW, powerOrderMW };
