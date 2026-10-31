@@ -9,6 +9,7 @@ import {
   type CommandResult,
   type Station,
 } from "./station.ts";
+import { measure } from "./measurements.ts";
 
 const TICK_MS = 100; // cada cuánto se calcula un paso (tiempo real)
 const SIMULATION_SPEED = 10; // 10 = la simulación corre 10 veces más rápido
@@ -57,7 +58,12 @@ function tick(): void {
 
   // 2. Registro del estado en este instante.
   if (timeSeconds % 5 === 0) {
-    log(`  ${station.state} | P = ${station.powerMW} MW | consigna = ${station.powerOrderMW} MW`);
+    const { udcKV, idcKA } = measure(station, defaultConfig);
+    log(
+      `  ${station.state.padEnd(9)} | P = ${String(station.powerMW).padStart(3)} MW` +
+        ` | consigna = ${String(station.powerOrderMW).padStart(3)} MW` +
+        ` | Udc = ${String(udcKV).padStart(3)} kV | Idc = ${idcKA.toFixed(2)} kA`,
+    );
   }
 
   // 3. Evolución de la planta hasta el instante siguiente.
