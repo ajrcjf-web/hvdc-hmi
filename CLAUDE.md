@@ -11,6 +11,7 @@ supervisa una estación HVDC monopolar.
 - Coupled: Q2 cerrado, puesta a tierra abierta. Solo aquí se puede transmitir potencia.
 - La puesta a tierra (equipo QE) solo está cerrada en earthed.
 - Q2 no puede maniobrar con corriente: solo se abre o se cierra con P = 0. Potencia con rampa y límites Pmin/Pmax.
+- El convertidor se bloquea y desbloquea por orden del operador. Udc sube y baja con su rampa: hacia la tensión nominal con el convertidor desbloqueado, y hacia 0 con el convertidor bloqueado.
 
 ## Stack
 - **Ahora:** TypeScript, Node.js, GitHub Actions y Vitest (pruebas).
@@ -18,13 +19,13 @@ supervisa una estación HVDC monopolar.
 
 ## Estructura del código
 - `src/stationState.ts`: estados (`StationState`), tabla de transiciones permitidas (`canTransition`), posiciones de los equipos por estado (`statePositions`) y deducción del estado a partir de los equipos (`deriveState`).
-- `src/station.ts`: la estación (`Station`, `StationConfig`) y las órdenes del operador (`requestTransition`, `requestPowerOrder`).
-- `src/simulation.ts`: evolución de la planta en el tiempo (`step`): avanza las maniobras de los equipos y la rampa de potencia.
-- `src/measurements.ts`: valores medidos calculados a partir de la estación (`measure`).
+- `src/station.ts`: la estación (`Station`, `StationConfig`) y las órdenes del operador (`requestTransition`, `requestPowerOrder`, `requestDeblock`, `requestBlock`).
+- `src/simulation.ts`: evolución de la planta en el tiempo (`step`): avanza las maniobras de los equipos y las rampas de tensión y de potencia.
+- `src/measurements.ts`: valores medidos de la estación (`measure`): Udc se lee de la estación e Idc se calcula.
 - `src/switchgear.ts`: equipos Q1, Q2 y QE: posiciones, tiempos de maniobra y enclavamientos (`requestSwitch`, `stepSwitchgear`).
 - `src/main.ts`: punto de entrada; reloj, escenario y único lugar donde cambia la estación actual.
 - `*.test.ts`: tests de Vitest, al lado del archivo que prueban.
-- `src/testSupport.ts`: configuración (`testConfig`) y estaciones de prueba (`stationAt`) compartidas por los tests.
+- `src/testSupport.ts`: configuración (`testConfig`) y estaciones de prueba (`stationAt, deblockedAt`) compartidas por los tests.
 
 ## Cómo ayudarme
 - Estoy aprendiendo a programar desde cero con este proyecto.
@@ -45,10 +46,11 @@ supervisa una estación HVDC monopolar.
 - Quedarse en el mismo estado (ej. coupled → coupled) no es una transición válida: se rechaza.
 - El resultado de una orden es `CommandResult`: `{ ok: true; station }` si se ejecutó, o `{ ok: false; reason }` si se rechazó.
 - Las órdenes no modifican la estación que reciben: devuelven una estación nueva (inmutabilidad). Solo `main.ts` guarda la estación actual.
-- "En rampa" significa potencia medida ≠ consigna.
-- Configuración por defecto (`defaultConfig`): Pmin = 50 MW, Pmax = 500 MW, rampa = 600 MW/min, tensión nominal = 500 kV y tiempos de maniobra (Q1 = 1 s, Q2 = 8 s, QE = 6 s). Los tests usan `testConfig` de `testSupport.ts`.
-- La rampa se configura en MW/min (`rampRateMWPerMin`). `step` es una función pura, y la potencia llega exactamente a la consigna para evitar errores de redondeo. El reloj y el escenario viven en `main.ts`.
-- Los valores medidos (Udc, Idc) se calculan a partir de la estación; no se guardan (fuente única de verdad). Idc = P / Udc, y 0 sin tensión.
+- "En rampa" significa potencia medida ≠ consigna, o Udc ≠ su valor objetivo (nominal desbloqueado, 0 bloqueado).
+- Configuración por defecto (`defaultConfig`): Pmin = 50 MW, Pmax = 500 MW, rampa = 600 MW/min, tensión nominal = 500 kV, rampa de tensión = 100 kV/s y tiempos de maniobra (Q1 = 1 s, Q2 = 8 s, QE = 6 s). Los tests usan `testConfig` de `testSupport.ts`.
+- La rampa de potencia se configura en MW/min (`rampRateMWPerMin`) y la de tensión en kV/s (`voltageRampKVPerS`, 100 por defecto). Las dos usan la función común `rampTowards`. `step` es una función pura, y cada valor llega exactamente a su objetivo para evitar errores de redondeo. El reloj y el escenario viven en `main.ts`.
+- Udc tiene dinámica y se guarda en `Station`. Idc se calcula: Idc = P / Udc, y 0 sin tensión.
+- Reglas del convertidor: solo se desbloquea en coupled; solo se bloquea con P y consigna en 0; Q2 no maniobra con el convertidor desbloqueado (hay que bloquear primero); la consigna de potencia exige el convertidor desbloqueado y Udc en su valor nominal; no se cambia de estado mientras Udc o P estén en rampa.
 - Un equipo en maniobra no cuenta como abierto: ante la duda, bloquear.
 - El estado de la estación no se guarda: se deduce de las posiciones de los equipos (`deriveState`). Además de los cuatro estados, hay dos situaciones extra, `transition` (algún equipo en maniobra) e `inconsistent` (posiciones que no corresponden a ningún estado), en las que no se aceptan órdenes.
 - Cada transición entre estados vecinos es la maniobra de un equipo.
@@ -56,8 +58,8 @@ supervisa una estación HVDC monopolar.
 
 ## Simplificaciones conocidas
 Son intencionales: no corregirlas sin que el usuario lo pida. Las mejoras están en los issues de GitHub.
-- Udc es la tensión nominal en coupled y 0 en los demás estados. En la realidad depende del estado del convertidor (bloqueado o desbloqueado), la carga de la línea y el control.
-- Cada transición entre estados vecinos es una sola maniobra. En la realidad es una secuencia de varios pasos (por ejemplo, desbloqueo del convertidor).
+- Cada transición entre estados vecinos es una sola maniobra de un equipo. En la realidad puede incluir pasos intermedios (por ejemplo, verificaciones de posición o maniobras de seccionadores adicionales).
+- Udc sigue una rampa fija hacia su valor objetivo (nominal o 0). No se modelan la carga de la línea ni el control de tensión.
 
 ## Skills del proyecto
 - `/cerrar-fase`: ritual de cierre de fase y publicación de versión (`.claude/skills/cerrar-fase/`).

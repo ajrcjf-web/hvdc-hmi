@@ -1,16 +1,15 @@
-// Valores medidos: se calculan a partir de la estación, no se guardan.
-// Así nunca pueden quedar desactualizados respecto de la potencia o el estado.
+// Valores medidos de la estación.
+// Udc tiene dinámica y se guarda en la estación; Idc se calcula en cada instante.
 
-import type { Station, StationConfig } from "./station.ts";
-import { deriveState } from "./stationState.ts";
+import type { Station } from "./station.ts";
 
 export type Measurements = {
   udcKV: number;
   idcKA: number;
 };
 
-export function measure(station: Station, config: StationConfig): Measurements {
-  const udcKV = deriveState(station.switchgear) === "coupled" ? config.ratedVoltageKV : 0;
+export function measure(station: Station): Measurements {
+  const udcKV = station.udcKV;
   const idcKA = udcKV > 0 ? station.powerMW / udcKV : 0;
   return { udcKV, idcKA };
 }
