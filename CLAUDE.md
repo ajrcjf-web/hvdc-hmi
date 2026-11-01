@@ -54,10 +54,10 @@ supervisa una estación HVDC monopolar.
 - Cada transición entre estados vecinos es la maniobra de un equipo.
 - Commits y ramas según Conventional Commits; ver docs/WORKFLOW.md.
 
-## Preguntas abiertas
-- Fase 2: modelo de Udc más fiel. Hoy Udc es la tensión nominal en coupled y 0 en los demás estados (simplificación). En la realidad depende del estado del convertidor (bloqueado o desbloqueado), la carga de la línea y el control.
-- Sin fecha: secuencia automática de desacople (bajar P y abrir Q2), como orden separada y explícita.
-- Sin fecha: transiciones como secuencias de varios pasos (por ejemplo, desbloqueo del convertidor).
+## Simplificaciones conocidas
+Son intencionales: no corregirlas sin que el usuario lo pida. Las mejoras están en los issues de GitHub.
+- Udc es la tensión nominal en coupled y 0 en los demás estados. En la realidad depende del estado del convertidor (bloqueado o desbloqueado), la carga de la línea y el control.
+- Cada transición entre estados vecinos es una sola maniobra. En la realidad es una secuencia de varios pasos (por ejemplo, desbloqueo del convertidor).
 
 ## Skills del proyecto
 - `/cerrar-fase`: ritual de cierre de fase y publicación de versión (`.claude/skills/cerrar-fase/`).

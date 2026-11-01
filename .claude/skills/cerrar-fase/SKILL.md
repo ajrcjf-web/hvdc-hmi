@@ -11,6 +11,7 @@ El usuario está aprendiendo: explica cada paso y deja que él ejecute los coman
 ## 1. Verificar el punto de partida
 - Confirmar que la rama actual es `main`, actualizada (`git pull`) y sin cambios pendientes (`git status`).
 - Confirmar que todas las casillas de la fase en la hoja de ruta del README están marcadas. Si falta alguna, avisar y no seguir.
+- Pedir al usuario que revise en GitHub el milestone de la fase: no debe tener issues abiertos. Si quedan, decidir con él si se resuelven antes o se mueven a otro milestone o al backlog (sin milestone).
 - Ejecutar `npm run typecheck` y `npm test`. Si algo falla, no seguir.
 
 ## 2. Revisar la fase con el usuario
@@ -23,7 +24,7 @@ Proponer un balance con tres puntos y pedir confirmación:
 Pedir al usuario que cree la rama `chore/release-X.Y.Z`. Después proponer, mostrando cada cambio como diff:
 - README: nota de estado con la fase siguiente y el enlace al Release; título de la fase cerrada con ✅ y la versión; ajustes a las fases siguientes según el balance.
 - README: no modificar las tareas de las fases ya cerradas; son el registro histórico.
-- CLAUDE.md: decisiones de diseño nuevas; preguntas abiertas resueltas o reasignadas a una fase. Revisar que ningún título de sección quede duplicado.
+- CLAUDE.md: decisiones de diseño nuevas; simplificaciones conocidas que se resolvieron o aparecieron. Revisar que ningún título de sección quede duplicado.
 - Versión: indicar al usuario que ejecute `npm version X.Y.Z --no-git-tag-version` (actualiza package.json y package-lock.json sin crear commit ni tag).
 
 ## 4. Commits y Pull Request
@@ -31,7 +32,7 @@ Pedir al usuario que cree la rama `chore/release-X.Y.Z`. Después proponer, most
   `docs: cierra la Fase N en la hoja de ruta`, `docs: ...` para CLAUDE.md, `chore: sube versión a X.Y.Z`.
 - Proponer el PR con título `chore: release vX.Y.Z` y descripción con las secciones de la plantilla.
 
-## 5. Tag y Release (después del merge)
+## 5. Tag, Release y milestone (después del merge)
 No ejecutar estos comandos: dárselos al usuario.
 
 ```
@@ -48,3 +49,5 @@ Redactar las notas del Release con estas secciones:
 - Próximo paso: la fase siguiente.
 
 Recordar al usuario usar "Generate release notes" en GitHub y agregar las notas arriba.
+
+Por último, pedir al usuario que cierre el milestone de la fase en GitHub (Issues → Milestones → Close).
