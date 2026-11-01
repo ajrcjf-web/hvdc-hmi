@@ -21,11 +21,12 @@ supervisa una estación HVDC monopolar.
 - `src/stationState.ts`: estados (`StationState`), tabla de transiciones permitidas (`canTransition`), posiciones de los equipos por estado (`statePositions`) y deducción del estado a partir de los equipos (`deriveState`).
 - `src/station.ts`: la estación (`Station`, `StationConfig`) y las órdenes del operador (`requestTransition`, `requestPowerOrder`, `requestDeblock`, `requestBlock`).
 - `src/simulation.ts`: evolución de la planta en el tiempo (`step`): avanza las maniobras de los equipos y las rampas de tensión y de potencia.
+- `src/simulationCycle.ts`: el ciclo de cada instante (`runCycle`), en orden fijo: aplica las órdenes programadas, registra el estado cada 5 s y avanza la planta con `step`. Devuelve la estación siguiente y los eventos ocurridos.
 - `src/measurements.ts`: valores medidos de la estación (`measure`): Udc se lee de la estación e Idc se calcula.
 - `src/switchgear.ts`: equipos Q1, Q2 y QE: posiciones, tiempos de maniobra y enclavamientos (`requestSwitch`, `stepSwitchgear`).
-- `src/main.ts`: punto de entrada; reloj, escenario y único lugar donde cambia la estación actual.
+- `src/main.ts`: punto de entrada; reloj, escenario, salida por consola y único lugar donde cambia la estación actual.
 - `*.test.ts`: tests de Vitest, al lado del archivo que prueban.
-- `src/testSupport.ts`: configuración (`testConfig`) y estaciones de prueba (`stationAt, deblockedAt`) compartidas por los tests.
+- `src/testSupport.ts`: configuración (`testConfig`) y estaciones de prueba (`stationAt`, `deblockedAt`) compartidas por los tests.
 
 ## Cómo trabajar conmigo
 - Estoy aprendiendo a programar con este proyecto. Explica las decisiones y los conceptos nuevos en español neutro y con lenguaje simple.
