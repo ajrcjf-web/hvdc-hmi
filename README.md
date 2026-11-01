@@ -4,7 +4,7 @@
 
 Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.
 
-> **Estado: en desarrollo (Fase 2).** La Fase 1 está completa ([v0.1.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.1.0)): modelo de estados, órdenes del operador con sus enclavamientos de transiciones y de potencia, tests automáticos y CI. Todavía no hay simulación del tiempo ni interfaz gráfica.
+> **Estado: en desarrollo (Fase 2).** La Fase 1 está completa ([v0.1.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.1.0)). La Fase 2 ya simula la rampa de potencia en el tiempo, los valores medidos Udc e Idc, y los equipos Q1, Q2 y QE con sus tiempos de maniobra. Todavía no hay interfaz gráfica.
 
 ## Sobre este proyecto
 
@@ -46,6 +46,8 @@ Un **enclavamiento** es una condición que debe cumplirse para permitir una acci
 - La potencia cambia con una rampa y debe respetar los límites Pmin y Pmax. La consigna válida es 0, o un valor entre Pmin y Pmax.
 - No se puede cambiar de estado mientras la potencia está en rampa.
 - Solo se permiten las transiciones listadas: lo que no está en la lista, se rechaza (incluido quedarse en el mismo estado).
+- No se puede cerrar la puesta a tierra con Q1 o Q2 sin abrir (cortocircuito a tierra).
+- No se puede cerrar Q1 ni Q2 con la puesta a tierra sin abrir.
 
 ### Cómo se tratan las órdenes rechazadas
 
@@ -98,8 +100,9 @@ Lógica de control sin interfaz.
 ### Fase 2 — La planta simulada
 
 - [x] Bucle de tiempo y rampa de potencia.
-- [ ] Valores medidos: Udc e Idc.
-- [ ] Q1, Q2 y la puesta a tierra como equipos, con sus propios enclavamientos y tiempos de maniobra.
+- [x] Valores medidos: Udc e Idc.
+- [x] Q1, Q2 y la puesta a tierra como equipos, con tiempos de maniobra y enclavamientos de puesta a tierra.
+- [ ] Estado de la estación deducido de las posiciones de los equipos, con las transiciones como secuencias de maniobras.
 - [ ] Modelo de Udc más fiel: tensión según el estado del convertidor (bloqueado o desbloqueado) y el control.
 
 ### Fase 3 — La ventana overview
