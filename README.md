@@ -4,7 +4,7 @@
 
 Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.
 
-> **Estado: en desarrollo (Fase 2).** La Fase 1 está completa ([v0.1.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.1.0)). La Fase 2 ya simula la rampa de potencia en el tiempo, los valores medidos Udc e Idc, y los equipos Q1, Q2 y QE con sus tiempos de maniobra; el estado de la estación se deduce de las posiciones de esos equipos. Todavía no hay interfaz gráfica.
+> **Estado: en desarrollo (Fase 2).** La Fase 1 está completa ([v0.1.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.1.0)). La Fase 2 ya simula la rampa de potencia en el tiempo, los equipos Q1, Q2 y QE con sus tiempos de maniobra, el bloqueo y desbloqueo del convertidor, y la tensión Udc con su propia rampa; el estado de la estación se deduce de las posiciones de los equipos. Todavía no hay interfaz gráfica.
 
 ## Sobre este proyecto
 
@@ -15,7 +15,7 @@ Es un **proyecto de aprendizaje**: lo desarrollo para aprender a programar desde
 ## Qué quiere lograr
 
 - Representar el estado de una estación HVDC monopolar (interruptores, seccionador, convertidor y potencia).
-- Permitir las órdenes del operador (acoplar, desacoplar, cambiar potencia) respetando las reglas de seguridad del proceso.
+- Permitir las órdenes del operador (acoplar, desacoplar, bloquear y desbloquear el convertidor, cambiar potencia) respetando las reglas de seguridad del proceso.
 - Rechazar las órdenes no permitidas e informar del motivo.
 
 ## Conceptos del dominio
@@ -35,7 +35,7 @@ Quedarse en el mismo estado (por ejemplo, de `coupled` a `coupled`) **no es una 
 | `earthed` | abierto | bloqueado | abierto | **cerrada** | No |
 | `stopped` | abierto | bloqueado | abierto | abierta | No |
 | `decoupled` | cerrado | energizado (junto con el transformador) y bloqueado | abierto | abierta | No |
-| `coupled` | cerrado | energizado; desbloqueado si P > 0 | cerrado | abierta | **Sí** |
+| `coupled` | cerrado | bloqueado o desbloqueado (orden del operador) | cerrado | abierta | **Sí** |
 
 Esta tabla está definida en el código (`statePositions`), y el estado de la estación se deduce de las posiciones de los equipos.
 
@@ -44,10 +44,12 @@ Esta tabla está definida en el código (`statePositions`), y el estado de la es
 Un **enclavamiento** es una condición que debe cumplirse para permitir una acción. Si no se cumple, la orden se rechaza. Los principales son:
 
 - Solo se transmite potencia en el estado `coupled`.
-- Q2 no puede maniobrar con corriente: solo con P = 0.
+- Q2 no puede maniobrar con corriente: solo con P = 0 y con el convertidor bloqueado.
+- El convertidor solo se desbloquea en `coupled`, y solo se bloquea con P y consigna en 0.
+- Solo se da consigna de potencia con el convertidor desbloqueado y Udc en su valor nominal.
 - No se aceptan órdenes mientras un equipo está en maniobra.
 - La potencia cambia con una rampa y debe respetar los límites Pmin y Pmax. La consigna válida es 0, o un valor entre Pmin y Pmax.
-- No se puede cambiar de estado mientras la potencia está en rampa.
+- No se puede cambiar de estado mientras la potencia o la tensión están en rampa.
 - Solo se permiten las transiciones listadas: lo que no está en la lista, se rechaza (incluido quedarse en el mismo estado).
 - No se puede cerrar la puesta a tierra con Q1 o Q2 sin abrir (cortocircuito a tierra).
 - No se puede cerrar Q1 ni Q2 con la puesta a tierra sin abrir.
@@ -106,7 +108,7 @@ Lógica de control sin interfaz.
 - [x] Valores medidos: Udc e Idc.
 - [x] Q1, Q2 y la puesta a tierra como equipos, con tiempos de maniobra y enclavamientos de puesta a tierra.
 - [x] Estado de la estación deducido de las posiciones de los equipos, con cada transición como la maniobra de un equipo.
-- [ ] Modelo de Udc más fiel: tensión según el estado del convertidor (bloqueado o desbloqueado) y el control.
+- [x] Modelo de Udc más fiel: tensión según el estado del convertidor (bloqueado o desbloqueado) y el control.
 
 ### Fase 3 — La ventana overview
 
