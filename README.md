@@ -4,7 +4,7 @@
 
 Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.
 
-> **Estado: en desarrollo (Fase 2).** La Fase 1 está completa ([v0.1.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.1.0)). La Fase 2 ya simula la rampa de potencia en el tiempo, los valores medidos Udc e Idc, y los equipos Q1, Q2 y QE con sus tiempos de maniobra. Todavía no hay interfaz gráfica.
+> **Estado: en desarrollo (Fase 2).** La Fase 1 está completa ([v0.1.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.1.0)). La Fase 2 ya simula la rampa de potencia en el tiempo, los valores medidos Udc e Idc, y los equipos Q1, Q2 y QE con sus tiempos de maniobra; el estado de la estación se deduce de las posiciones de esos equipos. Todavía no hay interfaz gráfica.
 
 ## Sobre este proyecto
 
@@ -37,12 +37,15 @@ Quedarse en el mismo estado (por ejemplo, de `coupled` a `coupled`) **no es una 
 | `decoupled` | cerrado | energizado (junto con el transformador) y bloqueado | abierto | abierta | No |
 | `coupled` | cerrado | energizado; desbloqueado si P > 0 | cerrado | abierta | **Sí** |
 
+Esta tabla está definida en el código (`statePositions`), y el estado de la estación se deduce de las posiciones de los equipos.
+
 ### Enclavamientos
 
 Un **enclavamiento** es una condición que debe cumplirse para permitir una acción. Si no se cumple, la orden se rechaza. Los principales son:
 
 - Solo se transmite potencia en el estado `coupled`.
-- Solo se puede desacoplar con potencia P = 0.
+- Q2 no puede maniobrar con corriente: solo con P = 0.
+- No se aceptan órdenes mientras un equipo está en maniobra.
 - La potencia cambia con una rampa y debe respetar los límites Pmin y Pmax. La consigna válida es 0, o un valor entre Pmin y Pmax.
 - No se puede cambiar de estado mientras la potencia está en rampa.
 - Solo se permiten las transiciones listadas: lo que no está en la lista, se rechaza (incluido quedarse en el mismo estado).
@@ -102,7 +105,7 @@ Lógica de control sin interfaz.
 - [x] Bucle de tiempo y rampa de potencia.
 - [x] Valores medidos: Udc e Idc.
 - [x] Q1, Q2 y la puesta a tierra como equipos, con tiempos de maniobra y enclavamientos de puesta a tierra.
-- [ ] Estado de la estación deducido de las posiciones de los equipos, con las transiciones como secuencias de maniobras.
+- [x] Estado de la estación deducido de las posiciones de los equipos, con cada transición como la maniobra de un equipo.
 - [ ] Modelo de Udc más fiel: tensión según el estado del convertidor (bloqueado o desbloqueado) y el control.
 
 ### Fase 3 — La ventana overview
