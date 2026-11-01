@@ -22,6 +22,7 @@ Proponer un balance con tres puntos y pedir confirmación:
 ## 3. Preparar la rama de cierre
 Pedir al usuario que cree la rama `chore/release-X.Y.Z`. Después proponer, mostrando cada cambio como diff:
 - README: nota de estado con la fase siguiente y el enlace al Release; título de la fase cerrada con ✅ y la versión; ajustes a las fases siguientes según el balance.
+- README: no modificar las tareas de las fases ya cerradas; son el registro histórico.
 - CLAUDE.md: decisiones de diseño nuevas; preguntas abiertas resueltas o reasignadas a una fase. Revisar que ningún título de sección quede duplicado.
 - Versión: indicar al usuario que ejecute `npm version X.Y.Z --no-git-tag-version` (actualiza package.json y package-lock.json sin crear commit ni tag).
 

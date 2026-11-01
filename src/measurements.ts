@@ -2,6 +2,7 @@
 // Así nunca pueden quedar desactualizados respecto de la potencia o el estado.
 
 import type { Station, StationConfig } from "./station.ts";
+import { deriveState } from "./stationState.ts";
 
 export type Measurements = {
   udcKV: number;
@@ -9,7 +10,7 @@ export type Measurements = {
 };
 
 export function measure(station: Station, config: StationConfig): Measurements {
-  const udcKV = station.state === "coupled" ? config.ratedVoltageKV : 0;
+  const udcKV = deriveState(station.switchgear) === "coupled" ? config.ratedVoltageKV : 0;
   const idcKA = udcKV > 0 ? station.powerMW / udcKV : 0;
   return { udcKV, idcKA };
 }
