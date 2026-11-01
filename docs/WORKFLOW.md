@@ -77,6 +77,8 @@ Las tareas de las fases cerradas no se reescriben aunque el código cambie despu
 - `git log --oneline --graph --all`: ver el historial y las ramas como árbol.
 - `git restore <archivo>`: descartar cambios no commiteados de un archivo.
 - `git log main..origin/main --oneline`: commits en GitHub que todavía no tengo.
+- `git show v0.1.0:README.md`: ver un archivo tal como estaba en una versión anterior.
+- `git log v0.1.0..main --oneline`: commits hechos desde una versión.
 
 ## Convenciones
 
