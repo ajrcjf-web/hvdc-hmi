@@ -54,6 +54,7 @@ supervisa una estación HVDC monopolar.
 - Un equipo en maniobra no cuenta como abierto: ante la duda, bloquear.
 - El estado de la estación no se guarda: se deduce de las posiciones de los equipos (`deriveState`). Además de los cuatro estados, hay dos situaciones extra, `transition` (algún equipo en maniobra) e `inconsistent` (posiciones que no corresponden a ningún estado), en las que no se aceptan órdenes.
 - Cada transición entre estados vecinos es la maniobra de un equipo.
+- `main.ts` debe ser mínimo y solo conectar piezas. Toda lógica con decisiones, incluido el orden de cada paso de la simulación, vive en funciones con tests.
 - Commits y ramas según Conventional Commits; ver docs/WORKFLOW.md.
 
 ## Simplificaciones conocidas

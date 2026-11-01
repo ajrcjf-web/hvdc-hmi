@@ -4,7 +4,7 @@
 
 Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.
 
-> **Estado: en desarrollo (Fase 2).** La Fase 1 está completa ([v0.1.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.1.0)). La Fase 2 ya simula la rampa de potencia en el tiempo, los equipos Q1, Q2 y QE con sus tiempos de maniobra, el bloqueo y desbloqueo del convertidor, y la tensión Udc con su propia rampa; el estado de la estación se deduce de las posiciones de los equipos. Todavía no hay interfaz gráfica.
+> **Estado: en desarrollo (Fase 3).** La Fase 2 está completa ([v0.2.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.2.0)): la planta simulada ya evoluciona en el tiempo, con la rampa de potencia, los equipos Q1, Q2 y QE con sus tiempos de maniobra, el bloqueo y desbloqueo del convertidor, y la tensión Udc con su propia rampa. El estado de la estación se deduce de las posiciones de los equipos. Ahora toca la ventana *overview* con React + Vite; todavía no hay interfaz gráfica.
 
 ## Sobre este proyecto
 
@@ -102,7 +102,7 @@ Lógica de control sin interfaz.
 - [x] Enclavamientos de potencia: consigna entre Pmin y Pmax, desacoplar solo con P = 0.
 - [x] La estación como objeto con varios datos (estado, potencia, consigna).
 
-### Fase 2 — La planta simulada
+### Fase 2 — La planta simulada ✅ (v0.2.0)
 
 - [x] Bucle de tiempo y rampa de potencia.
 - [x] Valores medidos: Udc e Idc.
