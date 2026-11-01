@@ -27,10 +27,12 @@ supervisa una estación HVDC monopolar.
 - `*.test.ts`: tests de Vitest, al lado del archivo que prueban.
 - `src/testSupport.ts`: configuración (`testConfig`) y estaciones de prueba (`stationAt, deblockedAt`) compartidas por los tests.
 
-## Cómo ayudarme
-- Estoy aprendiendo a programar desde cero con este proyecto.
-- Explica el porqué antes del cómo, en español neutro y con lenguaje simple.
-- Muéstrame el código completo y explícalo parte por parte.
+## Cómo trabajar conmigo
+- Estoy aprendiendo a programar con este proyecto. Explica las decisiones y los conceptos nuevos en español neutro y con lenguaje simple.
+- Para tareas de código: primero propón un plan breve y espera mi aprobación. Después implementa el cambio completo, con sus tests, y explica qué hiciste y por qué.
+- Antes de darme el trabajo por terminado, ejecuta `npm run typecheck` y `npm test`, y muéstrame los resultados.
+- Actualiza README y CLAUDE.md si el cambio lo requiere (ver docs/WORKFLOW.md).
+- No hagas commits ni push: los hago yo después de revisar el diff.
 
 ## Decisiones de diseño
 - Consigna de potencia válida: 0, o entre Pmin y Pmax.
