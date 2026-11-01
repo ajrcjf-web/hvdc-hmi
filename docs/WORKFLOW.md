@@ -33,7 +33,7 @@
 ## Al terminar una funcionalidad (Pull Request)
 
 1. `git push` de la rama.
-2. En GitHub: **Compare & pull request**, con título y descripción claros.
+2. En GitHub: **Compare & pull request**, con título y descripción claros. Si el PR resuelve un issue, incluir `Closes #N` en la descripción.
 3. Esperar el CI en verde. Si falla: corregir en la misma rama, nunca desactivar el test.
 4. Revisar **Files changed**; corregir en la misma rama si hace falta.
 5. **Merge pull request** y **Delete branch**.
@@ -43,23 +43,33 @@
 
 En Claude Code, `/cerrar-fase` guía este procedimiento.
 
-1. **Revisar la hoja de ruta** del README:
+1. **Revisar el milestone** de la fase en GitHub: no debe tener issues abiertos. Los que queden se resuelven antes, o se mueven a otro milestone o al backlog.
+2. **Revisar la hoja de ruta** del README:
    - ¿Qué cambió respecto del plan?
    - ¿Qué adelantamos o postergamos?
    - ¿Qué aprendimos que modifica lo que sigue?
    - Actualizar las fases abiertas para que vuelvan a ser verdaderas (las cerradas no se tocan: ver abajo).
-2. **Revisar `CLAUDE.md`**: decisiones de diseño nuevas, preguntas abiertas resueltas o nuevas.
-3. **Actualizar la versión** con `npm version X.Y.Z --no-git-tag-version` (actualiza `package.json` y `package-lock.json`), en una rama con su PR.
-4. **Marcar la versión** en `main`, después del merge:
+3. **Revisar `CLAUDE.md`**: decisiones de diseño nuevas; simplificaciones conocidas resueltas o nuevas.
+4. **Actualizar la versión** con `npm version X.Y.Z --no-git-tag-version` (actualiza `package.json` y `package-lock.json`), en una rama con su PR.
+5. **Marcar la versión** en `main`, después del merge:
    ```
    git switch main
    git pull
    git tag -a v0.1.0 -m "Fase 1: modelo de estados y enclavamientos"
    git push origin v0.1.0
    ```
-5. **Publicar un Release** en GitHub a partir del tag, con un resumen de lo que incluye la fase.
+6. **Publicar un Release** en GitHub a partir del tag, con un resumen de lo que incluye la fase.
+7. **Cerrar el milestone** de la fase (Issues → Milestones → Close).
 
 Las tareas de las fases cerradas no se reescriben aunque el código cambie después: documentan lo que era cierto en ese momento, igual que las notas de un Release.
+
+## Issues y milestones
+
+- **La hoja de ruta del README** muestra las grandes tareas de cada fase.
+- **Los issues** registran las mejoras puntuales y los errores que aparecen en el camino. Cada uno explica qué hay hoy, qué se propone y de dónde surgió.
+- **Cada fase tiene un milestone** con el mismo nombre que en el README. Los issues sin milestone forman el backlog: pendientes, sin fase decidida.
+- **Un PR que resuelve un issue** lo menciona con `Closes #N`: al hacer merge, GitHub cierra el issue y los deja vinculados.
+- **`CLAUDE.md`** no lista tareas pendientes: describe el código como es hoy, incluidas sus simplificaciones conocidas.
 
 ## Comandos útiles
 
