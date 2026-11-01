@@ -2,7 +2,8 @@
 // posiciones, tiempos de maniobra y enclavamientos.
 // Funciones puras: reciben la aparamenta y devuelven una nueva.
 
-export type SwitchId = "Q1" | "Q2" | "QE";
+export const switchIds = ["Q1", "Q2", "QE"] as const;
+export type SwitchId = (typeof switchIds)[number];
 // Q1: interruptor AC. Q2: seccionador DC. QE: seccionador de puesta a tierra.
 
 export type SwitchTarget = "open" | "closed";

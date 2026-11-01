@@ -1,16 +1,29 @@
-// La estación: datos que cambian en el tiempo y órdenes del operador.
+// La estación: equipos, potencia y órdenes del operador.
+// El estado no se guarda: se deduce de las posiciones de los equipos.
 // Cada orden devuelve una estación nueva, o un rechazo con motivo.
-// Nunca modifica la estación que recibe.
 
-import { canTransition, type StationState } from "./stationState.ts";
+import {
+  canTransition,
+  deriveState,
+  statePositions,
+  switchgearFor,
+  type StationState,
+} from "./stationState.ts";
+import {
+  defaultSwitchgearConfig,
+  requestSwitch,
+  switchIds,
+  type Switchgear,
+  type SwitchgearConfig,
+} from "./switchgear.ts";
 
 export type Station = {
-  state: StationState;
+  switchgear: Switchgear;
   powerMW: number; // potencia medida
   powerOrderMW: number; // consigna del operador
 };
 
-export type StationConfig = {
+export type StationConfig = SwitchgearConfig & {
   pMinMW: number;
   pMaxMW: number;
   rampRateMWPerMin: number;
@@ -18,6 +31,7 @@ export type StationConfig = {
 };
 
 export const defaultConfig: StationConfig = {
+  ...defaultSwitchgearConfig,
   pMinMW: 50,
   pMaxMW: 500,
   rampRateMWPerMin: 600,
@@ -29,7 +43,7 @@ export type CommandResult =
   | { ok: false; reason: string };
 
 export function createStation(): Station {
-  return { state: "stopped", powerMW: 0, powerOrderMW: 0 };
+  return { switchgear: switchgearFor("stopped"), powerMW: 0, powerOrderMW: 0 };
 }
 
 function reject(reason: string): CommandResult {
@@ -39,20 +53,41 @@ function reject(reason: string): CommandResult {
 export function requestTransition(
   station: Station,
   to: StationState,
+  config: StationConfig,
 ): CommandResult {
-  const from = station.state;
+  const from = deriveState(station.switchgear);
 
+  if (from === "transition") {
+    return reject("La estación está en transición: esperar a que terminen las maniobras");
+  }
+  if (from === "inconsistent") {
+    return reject("Posiciones de equipos inconsistentes: no se aceptan órdenes de estado");
+  }
   if (!canTransition(from, to)) {
     return reject(`Transición no permitida: ${from} → ${to}`);
   }
   if (station.powerMW !== station.powerOrderMW) {
     return reject("No se puede cambiar de estado durante una rampa de potencia");
   }
-  if (from === "coupled" && station.powerMW !== 0) {
-    return reject(`Para desacoplar, P debe ser 0 (P actual: ${station.powerMW} MW)`);
+
+  const target = statePositions[to];
+  const current = statePositions[from];
+  const id = switchIds.find((switchId) => current[switchId] !== target[switchId]);
+
+  if (id === undefined) {
+    return reject(`No hay maniobra definida para ${from} → ${to}`);
+  }
+  if (id === "Q2" && station.powerMW !== 0) {
+    return reject(
+      `Q2 no puede maniobrar con corriente: P debe ser 0 (P actual: ${station.powerMW} MW)`,
+    );
   }
 
-  return { ok: true, station: { ...station, state: to } };
+  const result = requestSwitch(station.switchgear, id, target[id], config);
+  if (!result.ok) {
+    return reject(result.reason);
+  }
+  return { ok: true, station: { ...station, switchgear: result.switchgear } };
 }
 
 export function requestPowerOrder(
@@ -60,10 +95,9 @@ export function requestPowerOrder(
   orderMW: number,
   config: StationConfig,
 ): CommandResult {
-  if (station.state !== "coupled") {
-    return reject(
-      `Solo se puede dar consigna en coupled (estado actual: ${station.state})`,
-    );
+  const state = deriveState(station.switchgear);
+  if (state !== "coupled") {
+    return reject(`Solo se puede dar consigna en coupled (estado actual: ${state})`);
   }
   if (!Number.isFinite(orderMW)) {
     return reject("La consigna debe ser un número válido");
@@ -79,4 +113,3 @@ export function requestPowerOrder(
 
   return { ok: true, station: { ...station, powerOrderMW: orderMW } };
 }
-
