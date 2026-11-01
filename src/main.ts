@@ -1,7 +1,7 @@
 // Punto de entrada del simulador: corre la simulación en el tiempo
 // y ejecuta un escenario de órdenes del operador.
 import { measure } from "./measurements.ts";
-import { step } from "./simulation.ts";
+import { runCycle, type ScheduledCommand } from "./simulationCycle.ts";
 import {
   createStation,
   defaultConfig,
@@ -20,12 +20,6 @@ const TICK_MS = 100; // cada cuánto se calcula un paso (tiempo real)
 const SIMULATION_SPEED = 10; // 10 = la simulación corre 10 veces más rápido
 const DT_SECONDS = (TICK_MS / 1000) * SIMULATION_SPEED; // tiempo simulado por paso
 const END_SECONDS = 120;
-
-type ScheduledCommand = {
-  atSeconds: number;
-  label: string;
-  run: (station: Station) => CommandResult;
-};
 
 // Tiempos por defecto: Q1 = 1 s, Q2 = 8 s, QE = 6 s; Udc: 100 kV/s; P: 10 MW/s.
 const scenario: ScheduledCommand[] = [
@@ -67,39 +61,40 @@ function log(message: string): void {
   console.log(`[t = ${String(timeSeconds).padStart(3)} s] ${message}`);
 }
 
-function apply(label: string, result: CommandResult): void {
+function logCommand(label: string, result: CommandResult): void {
   if (result.ok) {
-    station = result.station;
     log(`✓ ${label}`);
   } else {
     log(`✗ ${label} → rechazada: ${result.reason}`);
   }
 }
 
+function logSnapshot(snapshot: Station): void {
+  const { Q1, Q2, QE } = snapshot.switchgear;
+  const { udcKV, idcKA } = measure(snapshot);
+  log(
+    `  ${deriveState(snapshot.switchgear).padEnd(10)}` +
+      ` | Q1 ${formatSwitch(Q1).padEnd(8)} Q2 ${formatSwitch(Q2).padEnd(8)} QE ${formatSwitch(QE).padEnd(8)}` +
+      ` | ${converterLabels[snapshot.converter].padEnd(12)}` +
+      ` | P = ${String(snapshot.powerMW).padStart(3)} MW` +
+      ` | Udc = ${String(udcKV).padStart(3)} kV | Idc = ${idcKA.toFixed(2)} kA`,
+  );
+}
+
 function tick(): void {
-  // 1. Órdenes programadas para este instante.
-  for (const command of scenario) {
-    if (command.atSeconds === timeSeconds) {
-      apply(command.label, command.run(station));
+  const cycle = runCycle(station, timeSeconds, scenario, DT_SECONDS, defaultConfig);
+
+  // Los eventos se muestran con el instante en que ocurrieron (antes de avanzar).
+  for (const event of cycle.events) {
+    if (event.kind === "command") {
+      logCommand(event.label, event.result);
+    } else {
+      logSnapshot(event.station);
     }
   }
 
-  // 2. Registro del estado en este instante.
-  if (timeSeconds % 5 === 0) {
-    const { Q1, Q2, QE } = station.switchgear;
-    const { udcKV, idcKA } = measure(station);
-    log(
-      `  ${deriveState(station.switchgear).padEnd(10)}` +
-        ` | Q1 ${formatSwitch(Q1).padEnd(8)} Q2 ${formatSwitch(Q2).padEnd(8)} QE ${formatSwitch(QE).padEnd(8)}` +
-        ` | ${converterLabels[station.converter].padEnd(12)}` +
-        ` | P = ${String(station.powerMW).padStart(3)} MW` +
-        ` | Udc = ${String(udcKV).padStart(3)} kV | Idc = ${idcKA.toFixed(2)} kA`,
-    );
-  }
-
-  // 3. Evolución de la planta hasta el instante siguiente.
-  station = step(station, DT_SECONDS, defaultConfig);
-  timeSeconds += DT_SECONDS;
+  station = cycle.station;
+  timeSeconds = cycle.timeSeconds;
 
   if (timeSeconds > END_SECONDS) {
     clearInterval(timer);
