@@ -1,7 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { requestPowerOrder, requestTransition } from "./station.ts";
+import {
+  requestBlock,
+  requestDeblock,
+  requestPowerOrder,
+  requestTransition,
+} from "./station.ts";
 import { deriveState } from "./stationState.ts";
-import { stationAt, testConfig } from "./testSupport.ts";
+import { deblockedAt, stationAt, testConfig } from "./testSupport.ts";
 
 describe("requestTransition", () => {
   test("ir a decoupled ordena cerrar Q1", () => {
@@ -47,12 +52,11 @@ describe("requestTransition", () => {
     const first = requestTransition(stationAt("stopped"), "decoupled", testConfig);
     expect(first.ok).toBe(true);
     if (first.ok) {
-      const second = requestTransition(first.station, "stopped", testConfig);
-      expect(second.ok).toBe(false);
+      expect(requestTransition(first.station, "stopped", testConfig).ok).toBe(false);
     }
   });
 
-  test("desacoplar con P = 0 ordena abrir Q2", () => {
+  test("desacoplar con el convertidor bloqueado y sin tensión ordena abrir Q2", () => {
     const result = requestTransition(stationAt("coupled"), "decoupled", testConfig);
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -64,20 +68,72 @@ describe("requestTransition", () => {
     }
   });
 
-  test("Q2 no puede maniobrar con corriente", () => {
-    const result = requestTransition(stationAt("coupled", 300), "decoupled", testConfig);
+  test("no se puede desacoplar con el convertidor desbloqueado", () => {
+    const result = requestTransition(deblockedAt(), "decoupled", testConfig);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toContain("bloquear primero");
+    }
+  });
+
+  test("Q2 no puede maniobrar con corriente (defensa en profundidad)", () => {
+    const station = { ...stationAt("coupled"), powerMW: 300, powerOrderMW: 300 };
+    const result = requestTransition(station, "decoupled", testConfig);
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.reason).toContain("P debe ser 0");
     }
   });
 
-  test("no se puede cambiar de estado durante una rampa", () => {
-    const result = requestTransition(stationAt("coupled", 100, 300), "decoupled", testConfig);
+  test("no se puede cambiar de estado durante una rampa de potencia", () => {
+    const result = requestTransition(deblockedAt(100, 300), "decoupled", testConfig);
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.reason).toContain("rampa");
     }
+  });
+
+  test("no se puede cambiar de estado mientras la tensión baja", () => {
+    const station = { ...stationAt("coupled"), udcKV: 300 };
+    const result = requestTransition(station, "decoupled", testConfig);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toContain("rampa");
+    }
+  });
+});
+
+describe("requestDeblock y requestBlock", () => {
+  test("se puede desbloquear en coupled", () => {
+    const result = requestDeblock(stationAt("coupled"));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.station.converter).toBe("deblocked");
+    }
+  });
+
+  test("no se puede desbloquear fuera de coupled", () => {
+    expect(requestDeblock(stationAt("decoupled")).ok).toBe(false);
+  });
+
+  test("no se puede desbloquear un convertidor desbloqueado", () => {
+    expect(requestDeblock(deblockedAt()).ok).toBe(false);
+  });
+
+  test("se puede bloquear con P y consigna en 0", () => {
+    const result = requestBlock(deblockedAt());
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.station.converter).toBe("blocked");
+    }
+  });
+
+  test("no se puede bloquear con potencia", () => {
+    expect(requestBlock(deblockedAt(300)).ok).toBe(false);
+  });
+
+  test("no se puede bloquear con una consigna pendiente", () => {
+    expect(requestBlock(deblockedAt(0, 300)).ok).toBe(false);
   });
 });
 
@@ -86,23 +142,32 @@ describe("requestPowerOrder", () => {
     expect(requestPowerOrder(stationAt("decoupled"), 300, testConfig).ok).toBe(false);
   });
 
-  test("no se acepta consigna mientras Q2 se está cerrando", () => {
-    const result = requestTransition(stationAt("decoupled"), "coupled", testConfig);
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(requestPowerOrder(result.station, 300, testConfig).ok).toBe(false);
+  test("con el convertidor bloqueado se rechaza", () => {
+    const result = requestPowerOrder(stationAt("coupled"), 300, testConfig);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toContain("Desbloquear");
+    }
+  });
+
+  test("mientras Udc sube se rechaza", () => {
+    const station = { ...deblockedAt(), udcKV: 200 };
+    const result = requestPowerOrder(station, 300, testConfig);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toContain("Udc");
     }
   });
 
   test.each([0, 50, 250, 500])("acepta una consigna de %s MW", (orderMW) => {
-    const result = requestPowerOrder(stationAt("coupled"), orderMW, testConfig);
-    expect(result).toEqual({ ok: true, station: stationAt("coupled", 0, orderMW) });
+    const result = requestPowerOrder(deblockedAt(), orderMW, testConfig);
+    expect(result).toEqual({ ok: true, station: deblockedAt(0, orderMW) });
   });
 
   test.each([10, 49, 501, -100, Number.NaN, Number.POSITIVE_INFINITY])(
     "rechaza una consigna de %s MW",
     (orderMW) => {
-      expect(requestPowerOrder(stationAt("coupled"), orderMW, testConfig).ok).toBe(false);
+      expect(requestPowerOrder(deblockedAt(), orderMW, testConfig).ok).toBe(false);
     },
   );
 });

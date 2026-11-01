@@ -1,4 +1,4 @@
-// La estación: equipos, potencia y órdenes del operador.
+// La estación: equipos, convertidor, tensión, potencia y órdenes del operador.
 // El estado no se guarda: se deduce de las posiciones de los equipos.
 // Cada orden devuelve una estación nueva, o un rechazo con motivo.
 
@@ -17,8 +17,12 @@ import {
   type SwitchgearConfig,
 } from "./switchgear.ts";
 
+export type ConverterState = "blocked" | "deblocked";
+
 export type Station = {
   switchgear: Switchgear;
+  converter: ConverterState;
+  udcKV: number; // tensión DC (tiene dinámica: sube y baja con su rampa)
   powerMW: number; // potencia medida
   powerOrderMW: number; // consigna del operador
 };
@@ -28,6 +32,7 @@ export type StationConfig = SwitchgearConfig & {
   pMaxMW: number;
   rampRateMWPerMin: number;
   ratedVoltageKV: number;
+  voltageRampKVPerS: number;
 };
 
 export const defaultConfig: StationConfig = {
@@ -36,6 +41,7 @@ export const defaultConfig: StationConfig = {
   pMaxMW: 500,
   rampRateMWPerMin: 600,
   ratedVoltageKV: 500,
+  voltageRampKVPerS: 100,
 };
 
 export type CommandResult =
@@ -43,7 +49,25 @@ export type CommandResult =
   | { ok: false; reason: string };
 
 export function createStation(): Station {
-  return { switchgear: switchgearFor("stopped"), powerMW: 0, powerOrderMW: 0 };
+  return {
+    switchgear: switchgearFor("stopped"),
+    converter: "blocked",
+    udcKV: 0,
+    powerMW: 0,
+    powerOrderMW: 0,
+  };
+}
+
+// La tensión hacia la que va Udc: nominal con el convertidor desbloqueado, 0 bloqueado.
+export function targetUdcKV(station: Station, config: StationConfig): number {
+  return station.converter === "deblocked" ? config.ratedVoltageKV : 0;
+}
+
+function isRamping(station: Station, config: StationConfig): boolean {
+  return (
+    station.powerMW !== station.powerOrderMW ||
+    station.udcKV !== targetUdcKV(station, config)
+  );
 }
 
 function reject(reason: string): CommandResult {
@@ -66,8 +90,8 @@ export function requestTransition(
   if (!canTransition(from, to)) {
     return reject(`Transición no permitida: ${from} → ${to}`);
   }
-  if (station.powerMW !== station.powerOrderMW) {
-    return reject("No se puede cambiar de estado durante una rampa de potencia");
+  if (isRamping(station, config)) {
+    return reject("No se puede cambiar de estado durante una rampa de potencia o de tensión");
   }
 
   const target = statePositions[to];
@@ -76,6 +100,9 @@ export function requestTransition(
 
   if (id === undefined) {
     return reject(`No hay maniobra definida para ${from} → ${to}`);
+  }
+  if (id === "Q2" && station.converter === "deblocked") {
+    return reject("Q2 no puede maniobrar con el convertidor desbloqueado: bloquear primero");
   }
   if (id === "Q2" && station.powerMW !== 0) {
     return reject(
@@ -90,6 +117,29 @@ export function requestTransition(
   return { ok: true, station: { ...station, switchgear: result.switchgear } };
 }
 
+export function requestDeblock(station: Station): CommandResult {
+  const state = deriveState(station.switchgear);
+  if (state !== "coupled") {
+    return reject(`Solo se puede desbloquear en coupled (estado actual: ${state})`);
+  }
+  if (station.converter === "deblocked") {
+    return reject("El convertidor ya está desbloqueado");
+  }
+  return { ok: true, station: { ...station, converter: "deblocked" } };
+}
+
+export function requestBlock(station: Station): CommandResult {
+  if (station.converter === "blocked") {
+    return reject("El convertidor ya está bloqueado");
+  }
+  if (station.powerMW !== 0 || station.powerOrderMW !== 0) {
+    return reject(
+      `Para bloquear, P y la consigna deben ser 0 (P actual: ${station.powerMW} MW, consigna: ${station.powerOrderMW} MW)`,
+    );
+  }
+  return { ok: true, station: { ...station, converter: "blocked" } };
+}
+
 export function requestPowerOrder(
   station: Station,
   orderMW: number,
@@ -98,6 +148,14 @@ export function requestPowerOrder(
   const state = deriveState(station.switchgear);
   if (state !== "coupled") {
     return reject(`Solo se puede dar consigna en coupled (estado actual: ${state})`);
+  }
+  if (station.converter !== "deblocked") {
+    return reject("Desbloquear el convertidor antes de dar consigna");
+  }
+  if (station.udcKV !== config.ratedVoltageKV) {
+    return reject(
+      `Esperar a que Udc alcance el valor nominal (Udc actual: ${station.udcKV} kV)`,
+    );
   }
   if (!Number.isFinite(orderMW)) {
     return reject("La consigna debe ser un número válido");
