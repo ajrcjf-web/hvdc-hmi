@@ -47,7 +47,7 @@ En Claude Code, `/cerrar-fase` guía este procedimiento.
    - ¿Qué cambió respecto del plan?
    - ¿Qué adelantamos o postergamos?
    - ¿Qué aprendimos que modifica lo que sigue?
-   - Actualizarla para que vuelva a ser verdadera.
+   - Actualizar las fases abiertas para que vuelvan a ser verdaderas (las cerradas no se tocan: ver abajo).
 2. **Revisar `CLAUDE.md`**: decisiones de diseño nuevas, preguntas abiertas resueltas o nuevas.
 3. **Actualizar la versión** con `npm version X.Y.Z --no-git-tag-version` (actualiza `package.json` y `package-lock.json`), en una rama con su PR.
 4. **Marcar la versión** en `main`, después del merge:
@@ -57,8 +57,9 @@ En Claude Code, `/cerrar-fase` guía este procedimiento.
    git tag -a v0.1.0 -m "Fase 1: modelo de estados y enclavamientos"
    git push origin v0.1.0
    ```
-
 5. **Publicar un Release** en GitHub a partir del tag, con un resumen de lo que incluye la fase.
+
+Las tareas de las fases cerradas no se reescriben aunque el código cambie después: documentan lo que era cierto en ese momento, igual que las notas de un Release.
 
 ## Comandos útiles
 
