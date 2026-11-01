@@ -59,6 +59,7 @@ supervisa una estación HVDC monopolar.
 ## Simplificaciones conocidas
 Son intencionales: no corregirlas sin que el usuario lo pida. Las mejoras están en los issues de GitHub.
 - Cada transición entre estados vecinos es una sola maniobra de un equipo. En la realidad puede incluir pasos intermedios (por ejemplo, verificaciones de posición o maniobras de seccionadores adicionales).
+- Udc sigue una rampa fija hacia su valor objetivo (nominal o 0). No se modelan la carga de la línea ni el control de tensión.
 
 ## Skills del proyecto
 - `/cerrar-fase`: ritual de cierre de fase y publicación de versión (`.claude/skills/cerrar-fase/`).
