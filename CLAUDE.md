@@ -19,9 +19,11 @@ supervisa una estación HVDC monopolar.
 ## Estructura del código
 - `src/stationState.ts`: estados (`StationState`) y tabla de transiciones permitidas (`canTransition`).
 - `src/station.ts`: la estación (`Station`, `StationConfig`) y las órdenes del operador (`requestTransition`, `requestPowerOrder`).
-- `src/main.ts`: punto de entrada; único lugar donde cambia la estación actual.
+- `src/simulation.ts`: evolución de la planta en el tiempo (`step`).
+- `src/measurements.ts`: valores medidos calculados a partir de la estación (`measure`).
+- `src/switchgear.ts`: equipos Q1, Q2 y QE: posiciones, tiempos de maniobra y enclavamientos (`requestSwitch`, `stepSwitchgear`).
+- `src/main.ts`: punto de entrada; reloj, escenario y único lugar donde cambia la estación actual.
 - `*.test.ts`: tests de Vitest, al lado del archivo que prueban.
-- `src/simulation.ts`: evolución de la planta en el tiempo: step
 
 ## Cómo ayudarme
 - Estoy aprendiendo a programar desde cero con este proyecto.
@@ -43,14 +45,17 @@ supervisa una estación HVDC monopolar.
 - El resultado de una orden es `CommandResult`: `{ ok: true; station }` si se ejecutó, o `{ ok: false; reason }` si se rechazó.
 - Las órdenes no modifican la estación que reciben: devuelven una estación nueva (inmutabilidad). Solo `main.ts` guarda la estación actual.
 - "En rampa" significa potencia medida ≠ consigna.
-- Configuración por defecto (`defaultConfig`): Pmin = 50 MW, Pmax = 500 MW. Los tests usan su propia configuración.
+- Configuración por defecto (`defaultConfig`): Pmin = 50 MW, Pmax = 500 MW, rampa = 600 MW/min, tensión nominal = 500 kV. Los tests usan su propia configuración.
+- La rampa se configura en MW/min (`rampRateMWPerMin`). `step` es una función pura, y la potencia llega exactamente a la consigna para evitar errores de redondeo. El reloj y el escenario viven en `main.ts`.
+- Los valores medidos (Udc, Idc) se calculan a partir de la estación; no se guardan (fuente única de verdad). Idc = P / Udc, y 0 sin tensión.
+- Un equipo en maniobra no cuenta como abierto: ante la duda, bloquear.
+- Tiempos de maniobra por defecto (`defaultSwitchgearConfig`): Q1 = 1 s, Q2 = 8 s, QE = 6 s.
 - Commits y ramas según Conventional Commits; ver docs/WORKFLOW.md.
-- la rampa se configura en MW/min (rampRateMWPerMin, 600 por defecto), step es una función pura y la potencia llega exactamente a la consigna para evitar errores de redondeo; el reloj y el escenario viven en main.ts.
 
 ## Preguntas abiertas
-- Fase 2: enclavamientos de la puesta a tierra. No cerrarla con Q1 o Q2 cerrados (cortocircuito), y no cerrar Q1 ni Q2 con ella cerrada. Hoy solo los garantiza el orden de los estados; al modelar cada equipo habrá que comprobarlos de forma explícita.
-- Sin fecha: secuencia automática de desacople (bajar P y abrir Q2), como orden separada y explícita.
+- Fase 2: estado de la estación deducido de las posiciones de los equipos; transiciones como secuencias de maniobras; enclavamiento de Q2 sin corriente.
 - Fase 2: modelo de Udc más fiel. Hoy Udc es la tensión nominal en coupled y 0 en los demás estados (simplificación). En la realidad depende del estado del convertidor (bloqueado o desbloqueado), la carga de la línea y el control.
+- Sin fecha: secuencia automática de desacople (bajar P y abrir Q2), como orden separada y explícita.
 
 ## Skills del proyecto
 - `/cerrar-fase`: ritual de cierre de fase y publicación de versión (`.claude/skills/cerrar-fase/`).
