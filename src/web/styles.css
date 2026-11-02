@@ -77,21 +77,10 @@ h3 {
   font-weight: bold;
 }
 
-.state-coupled {
-  color: #5fd068;
-}
-
-.state-decoupled {
-  color: #e6c84f;
-}
-
-.state-earthed {
-  color: #6aa9ff;
-}
-
-.state-transition,
+/* Los estados normales (incluido transition) se ven en gris, solo con su texto.
+   El único color es el de lo anormal. */
 .state-inconsistent {
-  color: #ff9d4d;
+  color: var(--abnormal);
 }
 
 .buttons {
@@ -122,8 +111,9 @@ input {
   padding: 0.15rem 0;
 }
 
+/* Un rechazo se distingue por su símbolo ✗ (viene en el texto) y la negrita, no por el color. */
 .log .rejected {
-  color: #ff7b72;
+  font-weight: bold;
 }
 
 .log .time,
