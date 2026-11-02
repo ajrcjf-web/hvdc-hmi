@@ -4,7 +4,7 @@
 
 Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.
 
-> **Estado: en desarrollo (Fase 3).** La Fase 2 está completa ([v0.2.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.2.0)): la planta simulada ya evoluciona en el tiempo, con la rampa de potencia, los equipos Q1, Q2 y QE con sus tiempos de maniobra, el bloqueo y desbloqueo del convertidor, y la tensión Udc con su propia rampa. El estado de la estación se deduce de las posiciones de los equipos. Ahora toca la ventana *overview* con React + Vite: ya hay una primera pantalla web (`npm run dev`) con valores medidos y órdenes del operador; ya incluye el unifilar en SVG, que solo muestra (las órdenes siguen en su panel).
+> **Estado: en desarrollo (Fase 4).** La Fase 3 está completa ([v0.3.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.3.0)): la ventana *overview* web (`npm run dev`) muestra los valores medidos y el unifilar en SVG, y las órdenes del operador se dan con confirmación (*select-before-operate*) y quedan en un registro. Ahora toca la Fase 4: eventos, alarmas y tendencias.
 
 ## Sobre este proyecto
 
@@ -112,7 +112,7 @@ Lógica de control sin interfaz.
 - [x] Estado de la estación deducido de las posiciones de los equipos, con cada transición como la maniobra de un equipo.
 - [x] Modelo de Udc más fiel: tensión según el estado del convertidor (bloqueado o desbloqueado) y el control.
 
-### Fase 3 — La ventana overview
+### Fase 3 — La ventana overview ✅ (v0.3.0)
 
 - [x] Interfaz con React + Vite.
 - [x] Unifilar en SVG con estados de los equipos.
@@ -121,7 +121,7 @@ Lógica de control sin interfaz.
 
 ### Fase 4 — Eventos, alarmas y tendencias
 
-- [ ] Lista de eventos con marca de tiempo.
+- [ ] Ventana SER (registro secuencial de eventos) separada, con todos los eventos y su marca de tiempo, además del registro resumido de la overview.
 - [ ] Alarmas con reconocimiento.
 - [ ] Gráficos de tendencia de potencia y tensión.
 - [ ] Fallas simuladas (por ejemplo, falla en la línea DC).
@@ -135,7 +135,7 @@ Lógica de control sin interfaz.
 
 - [ ] Contenedores con Docker.
 - [ ] Roles de usuario (operador e ingeniero).
-- [ ] Diseño de pantallas según ISA-101.
+- [ ] Completar el diseño de pantallas según ISA-101 (los colores y la jerarquía visual de la overview ya están hechos en la Fase 3): jerarquía de pantallas y navegación entre ellas, e indicadores de los valores en relación con su rango normal de operación (por ejemplo, barras con la zona normal marcada).
 - [ ] Merge en `main` solo con CI en verde.
 
 ## Flujo de trabajo
