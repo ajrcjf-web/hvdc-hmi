@@ -11,6 +11,7 @@ import {
 } from "./stationState.ts";
 import {
   defaultSwitchgearConfig,
+  describeMovingSwitches,
   requestSwitch,
   switchIds,
   type Switchgear,
@@ -74,6 +75,13 @@ function reject(reason: string): CommandResult {
   return { ok: false, reason };
 }
 
+// El motivo cuando hay una maniobra en curso: dice qué equipo se mueve,
+// en qué sentido y cuánto falta.
+function transitionReason(station: Station): string {
+  const moving = describeMovingSwitches(station.switchgear);
+  return `La estación está en transición: ${moving ?? "hay una maniobra en curso"}`;
+}
+
 export function requestTransition(
   station: Station,
   to: StationState,
@@ -82,7 +90,7 @@ export function requestTransition(
   const from = deriveState(station.switchgear);
 
   if (from === "transition") {
-    return reject("La estación está en transición: esperar a que terminen las maniobras");
+    return reject(`${transitionReason(station)}. Esperar a que terminen las maniobras`);
   }
   if (from === "inconsistent") {
     return reject("Posiciones de equipos inconsistentes: no se aceptan órdenes de estado");
@@ -119,6 +127,9 @@ export function requestTransition(
 
 export function requestDeblock(station: Station): CommandResult {
   const state = deriveState(station.switchgear);
+  if (state === "transition") {
+    return reject(transitionReason(station));
+  }
   if (state !== "coupled") {
     return reject(`Solo se puede desbloquear en coupled (estado actual: ${state})`);
   }
@@ -146,6 +157,9 @@ export function requestPowerOrder(
   config: StationConfig,
 ): CommandResult {
   const state = deriveState(station.switchgear);
+  if (state === "transition") {
+    return reject(transitionReason(station));
+  }
   if (state !== "coupled") {
     return reject(`Solo se puede dar consigna en coupled (estado actual: ${state})`);
   }
