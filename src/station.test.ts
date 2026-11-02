@@ -171,3 +171,54 @@ describe("requestPowerOrder", () => {
     },
   );
 });
+
+describe("rechazos por maniobra en curso", () => {
+  // Ir a decoupled deja a Q1 cerrándose (testConfig: 2 s).
+  const closingQ1 = () => {
+    const result = requestTransition(stationAt("stopped"), "decoupled", testConfig);
+    if (!result.ok) throw new Error("la preparación debería ser válida");
+    return result.station;
+  };
+  const expected = "Q1 en maniobra (cierre), faltan 2 s";
+
+  test("una orden de estado indica qué equipo se mueve", () => {
+    const result = requestTransition(closingQ1(), "stopped", testConfig);
+    expect(result).toMatchObject({ ok: false, reason: expect.stringContaining(expected) });
+  });
+
+  test("desbloquear indica qué equipo se mueve", () => {
+    const result = requestDeblock(closingQ1());
+    expect(result).toMatchObject({ ok: false, reason: expect.stringContaining(expected) });
+  });
+
+  test("la consigna indica qué equipo se mueve", () => {
+    const result = requestPowerOrder(closingQ1(), 100, testConfig);
+    expect(result).toMatchObject({ ok: false, reason: expect.stringContaining(expected) });
+  });
+
+  test("con dos equipos en maniobra, el motivo los menciona a los dos", () => {
+    const station = {
+      ...stationAt("coupled"),
+      switchgear: {
+        Q1: { kind: "moving", to: "open", remainingSeconds: 1 },
+        Q2: { kind: "moving", to: "open", remainingSeconds: 3.4 },
+        QE: { kind: "open" },
+      },
+    } as const;
+    const result = requestTransition(station, "decoupled", testConfig);
+    expect(result).toMatchObject({
+      ok: false,
+      reason: expect.stringContaining(
+        "Q1 en maniobra (apertura), faltan 1 s; Q2 en maniobra (apertura), faltan 4 s",
+      ),
+    });
+  });
+
+  test("fuera de una maniobra, el motivo conserva el estado actual", () => {
+    const result = requestDeblock(stationAt("stopped"));
+    expect(result).toMatchObject({
+      ok: false,
+      reason: expect.stringContaining("estado actual: stopped"),
+    });
+  });
+});

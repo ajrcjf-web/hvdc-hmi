@@ -45,6 +45,13 @@ function reject(reason: string): SwitchCommandResult {
   return { ok: false, reason };
 }
 
+// Describe las maniobras en curso para los motivos de rechazo (por ejemplo,
+// "Q2 en maniobra (cierre), faltan 6 s"). Devuelve null si ningún equipo se mueve.
+export function describeMovingSwitches(switchgear: Switchgear): string | null {
+  void switchgear;
+  return null;
+}
+
 export function requestSwitch(
   switchgear: Switchgear,
   id: SwitchId,

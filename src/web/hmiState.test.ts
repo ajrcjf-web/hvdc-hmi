@@ -116,6 +116,18 @@ describe("hmiReducer: seleccionar", () => {
   });
 });
 
+describe("hmiReducer: seleccionar durante una maniobra", () => {
+  test("el aviso y el registro indican qué equipo se mueve", () => {
+    // Ir a decoupled deja a Q1 cerrándose; mientras tanto no se acepta otra orden de estado.
+    const moving = run(initial(), select(transitionCommand("decoupled")), execute, tick);
+    const state = run(moving, select(transitionCommand("stopped")));
+    expect(state.selection).toBeNull();
+    expect(state.selectionNotice).toContain("Q1 en maniobra (cierre)");
+    expect(state.log[0]).toMatchObject({ kind: "selection-rejected" });
+    expect(state.log[0]?.reason).toContain("Q1 en maniobra (cierre)");
+  });
+});
+
 describe("hmiReducer: ejecutar", () => {
   test("la orden queda pendiente y la selección se cierra, sin cambiar aún la estación", () => {
     const state = run(initial(), select(transitionCommand("decoupled")), execute);
