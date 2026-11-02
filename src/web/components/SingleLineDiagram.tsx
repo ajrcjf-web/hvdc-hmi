@@ -92,8 +92,9 @@ export function SingleLineDiagram({ station }: Props) {
         />
         <text className="converter-text" x={CONVERTER.x + 18} y={CONVERTER.y + 26}>~</text>
         <text className="converter-text" x={CONVERTER.x + CONVERTER.width - 28} y={CONVERTER.y + 66}>=</text>
-        <text className="label-name" x={460} y={MAIN_Y - 50} textAnchor="middle">Convertidor</text>
-        <text className="label-detail" x={460} y={MAIN_Y - 36} textAnchor="middle">
+        {/* El nombre va encima de la caja y el estado debajo: ningún texto toca el dibujo. */}
+        <text className="label-name" x={460} y={CONVERTER.y - 12} textAnchor="middle">Convertidor</text>
+        <text className="label-name" x={460} y={CONVERTER.y + CONVERTER.height + 22} textAnchor="middle">
           {converterLabels[model.converter].toUpperCase()}
         </text>
 
@@ -112,9 +113,9 @@ export function SingleLineDiagram({ station }: Props) {
 
         {/* Valores junto al convertidor */}
         <g className="readings">
-          <text x={CONVERTER.x} y={190}>P = {formatValue(readings.powerMW, 0)} MW</text>
-          <text x={CONVERTER.x} y={210}>Udc = {formatValue(readings.udcKV, 0)} kV</text>
-          <text x={CONVERTER.x} y={230}>Idc = {formatValue(readings.idcKA, 2)} kA</text>
+          <text x={CONVERTER.x} y={206}>P = {formatValue(readings.powerMW, 0)} MW</text>
+          <text x={CONVERTER.x} y={226}>Udc = {formatValue(readings.udcKV, 0)} kV</text>
+          <text x={CONVERTER.x} y={246}>Idc = {formatValue(readings.idcKA, 2)} kA</text>
         </g>
       </svg>
     </section>
