@@ -117,7 +117,7 @@ Lógica de control sin interfaz.
 - [x] Interfaz con React + Vite.
 - [x] Unifilar en SVG con estados de los equipos.
 - [x] Valores medidos en pantalla.
-- [ ] Órdenes con confirmación (*select-before-operate*).
+- [x] Órdenes con confirmación (*select-before-operate*).
 
 ### Fase 4 — Eventos, alarmas y tendencias
 
