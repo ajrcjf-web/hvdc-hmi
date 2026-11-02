@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   createSwitchgear,
+  describeMovingSwitches,
   requestSwitch,
   stepSwitchgear,
   type SwitchStatus,
@@ -99,5 +100,79 @@ describe("stepSwitchgear", () => {
   test("los equipos quietos no cambian", () => {
     const switchgear: Switchgear = { Q1: CLOSED, Q2: OPEN, QE: OPEN };
     expect(stepSwitchgear(switchgear, 1)).toEqual(switchgear);
+  });
+});
+
+describe("describeMovingSwitches", () => {
+  const moving = (to: "open" | "closed", remainingSeconds: number): SwitchStatus => ({
+    kind: "moving",
+    to,
+    remainingSeconds,
+  });
+
+  test("sin maniobras en curso devuelve null", () => {
+    expect(describeMovingSwitches(createSwitchgear())).toBeNull();
+    expect(describeMovingSwitches({ Q1: CLOSED, Q2: CLOSED, QE: OPEN })).toBeNull();
+  });
+
+  test("un equipo cerrándose", () => {
+    const switchgear: Switchgear = { Q1: CLOSED, Q2: moving("closed", 6), QE: OPEN };
+    expect(describeMovingSwitches(switchgear)).toBe("Q2 en maniobra (cierre), faltan 6 s");
+  });
+
+  test("un equipo abriéndose", () => {
+    const switchgear: Switchgear = { Q1: moving("open", 2), Q2: OPEN, QE: OPEN };
+    expect(describeMovingSwitches(switchgear)).toBe("Q1 en maniobra (apertura), faltan 2 s");
+  });
+
+  test("con varios equipos los menciona a todos, en el orden Q1, Q2, QE", () => {
+    const switchgear: Switchgear = {
+      Q1: moving("open", 1),
+      Q2: moving("closed", 8),
+      QE: moving("closed", 3),
+    };
+    expect(describeMovingSwitches(switchgear)).toBe(
+      "Q1 en maniobra (apertura), faltan 1 s; " +
+        "Q2 en maniobra (cierre), faltan 8 s; " +
+        "QE en maniobra (cierre), faltan 3 s",
+    );
+  });
+
+  test("los segundos se redondean hacia arriba", () => {
+    const at = (remainingSeconds: number): Switchgear => ({
+      Q1: moving("closed", remainingSeconds),
+      Q2: OPEN,
+      QE: OPEN,
+    });
+    expect(describeMovingSwitches(at(5.2))).toContain("faltan 6 s");
+    expect(describeMovingSwitches(at(0.2))).toContain("faltan 1 s");
+  });
+
+  test("nunca dice 0 s mientras el equipo todavía se mueve", () => {
+    const switchgear: Switchgear = { Q1: moving("closed", 0.0001), Q2: OPEN, QE: OPEN };
+    expect(describeMovingSwitches(switchgear)).toContain("faltan 1 s");
+  });
+
+  test("el ruido decimal del tiempo acumulado no suma un segundo de más", () => {
+    // 8 - 20 × 0.1 no da exactamente 6.
+    let remaining = 8;
+    for (let i = 0; i < 20; i++) remaining -= 0.1;
+    const switchgear: Switchgear = { Q1: CLOSED, Q2: moving("closed", remaining), QE: OPEN };
+    expect(describeMovingSwitches(switchgear)).toContain("faltan 6 s");
+  });
+});
+
+describe("requestSwitch: motivo de rechazo por maniobra en curso", () => {
+  test("indica el equipo, el sentido y el tiempo restante", () => {
+    const switchgear: Switchgear = {
+      Q1: { kind: "moving", to: "closed", remainingSeconds: 1.5 },
+      Q2: OPEN,
+      QE: OPEN,
+    };
+    const result = requestSwitch(switchgear, "Q1", "open", config);
+    expect(result).toMatchObject({
+      ok: false,
+      reason: expect.stringContaining("Q1 en maniobra (cierre), faltan 2 s"),
+    });
   });
 });

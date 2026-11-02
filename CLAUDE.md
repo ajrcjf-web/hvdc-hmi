@@ -23,7 +23,7 @@ supervisa una estación HVDC monopolar.
 - `src/simulation.ts`: evolución de la planta en el tiempo (`step`): avanza las maniobras de los equipos y las rampas de tensión y de potencia.
 - `src/simulationCycle.ts`: el ciclo de cada intervalo [t, t + dt) (`runCycle`), en orden fijo: aplica las órdenes programadas dentro del intervalo, registra el estado cada 5 s y avanza la planta con `step`. Devuelve la estación siguiente y los eventos ocurridos.
 - `src/measurements.ts`: valores medidos de la estación (`measure`): Udc se lee de la estación e Idc se calcula.
-- `src/switchgear.ts`: equipos Q1, Q2 y QE: posiciones, tiempos de maniobra y enclavamientos (`requestSwitch`, `stepSwitchgear`).
+- `src/switchgear.ts`: equipos Q1, Q2 y QE: posiciones, tiempos de maniobra y enclavamientos (`requestSwitch`, `stepSwitchgear`, `describeMovingSwitches`).
 - `src/main.ts`: punto de entrada; reloj, escenario, salida por consola y único lugar donde cambia la estación actual en la consola (en la web, el reducer de `hmiState.ts`).
 - `src/labels.ts`: etiquetas en español (`formatSwitch`, `converterLabels`) y formato de valores (`formatValue`, `formatTime`), compartidos por la consola y la web.
 - `src/web/`: interfaz web (React + Vite; `npm run dev`). `main.tsx` monta la app; `App.tsx` guarda el estado con `useReducer` y corre el reloj; `commands.ts` define las órdenes del operador como datos (`OperatorCommand`) y `runCommand`, que las pide a la lógica de la estación; `hmiState.ts` es el reducer puro (la estación, la hora simulada, la selección, las órdenes pendientes y el registro); `commandView.ts` prepara los textos de la ventana de confirmación y del registro; `diagram.ts` traduce la estación a lo que se dibuja en el unifilar (`describeDiagram`); `components/` solo muestran (`StatusPanel`, `CommandPanel`, `ConfirmationDialog`, `CommandLog`, `SingleLineDiagram`, `SwitchSymbol`).
@@ -44,6 +44,7 @@ supervisa una estación HVDC monopolar.
 - Cambio de estado durante una rampa: se rechaza (por ahora).
 - Orden no permitida → se rechaza. Si el operador pide una maniobra de Q2 con P ≠ 0, el motivo es "Q2 no maniobra con corriente" y el sistema no baja la potencia por su cuenta: una orden hace una sola cosa y el operador sigue al mando.
 - El rechazo lleva un motivo. El resultado de una orden rechazada debe explicar por qué (ej. "rechazado: P debe ser 0"), no basta con devolver `false`.
+- Si una orden se rechaza porque hay una maniobra en curso, el motivo dice qué equipo se mueve, en qué sentido y cuánto falta (ej. "Q2 en maniobra (cierre), faltan 6 s"); con varios equipos, los menciona a todos. Lo arma `describeMovingSwitches` (en la lógica, no en la interfaz). Los segundos son enteros, redondeados hacia arriba, y nunca baja de 1 mientras el equipo se mueve. Solo cambia el texto: los enclavamientos son los mismos.
 - Un rechazo es un resultado normal, no una excepción: no debe romper el simulador.
 - Los enclavamientos viven en la lógica de control, no en la interfaz.
 - Las secuencias automáticas (ej. parada ordenada) serán órdenes separadas y explícitas.

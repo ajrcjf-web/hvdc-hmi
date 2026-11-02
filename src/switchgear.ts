@@ -45,6 +45,34 @@ function reject(reason: string): SwitchCommandResult {
   return { ok: false, reason };
 }
 
+const directionLabels: Record<SwitchTarget, string> = {
+  open: "apertura",
+  closed: "cierre",
+};
+
+// Segundos enteros que faltan, redondeados hacia arriba. Antes se redondea a
+// milisegundos para que el error decimal del tiempo acumulado (6.000000000000001)
+// no sume un segundo de más, y nunca baja de 1 mientras el equipo siga en maniobra.
+function secondsLeft(remainingSeconds: number): number {
+  return Math.max(1, Math.ceil(Math.round(remainingSeconds * 1000) / 1000));
+}
+
+// Describe las maniobras en curso para los motivos de rechazo (por ejemplo,
+// "Q2 en maniobra (cierre), faltan 6 s"). Si hay varios equipos, los menciona a todos.
+// Devuelve null si ningún equipo se mueve.
+export function describeMovingSwitches(switchgear: Switchgear): string | null {
+  const descriptions: string[] = [];
+  for (const id of switchIds) {
+    const status = switchgear[id];
+    if (status.kind === "moving") {
+      descriptions.push(
+        `${id} en maniobra (${directionLabels[status.to]}), faltan ${secondsLeft(status.remainingSeconds)} s`,
+      );
+    }
+  }
+  return descriptions.length > 0 ? descriptions.join("; ") : null;
+}
+
 export function requestSwitch(
   switchgear: Switchgear,
   id: SwitchId,
@@ -54,7 +82,7 @@ export function requestSwitch(
   const current = switchgear[id];
 
   if (current.kind === "moving") {
-    return reject(`${id} está en maniobra`);
+    return reject(describeMovingSwitches(switchgear) ?? `${id} está en maniobra`);
   }
   if (current.kind === to) {
     return reject(`${id} ya está ${targetLabels[to]}`);
