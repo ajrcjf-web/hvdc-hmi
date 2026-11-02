@@ -1,9 +1,10 @@
-// La ventana overview: conecta el reloj, el estado y los tres paneles.
+// La ventana overview: conecta el reloj, el estado, los paneles y la ventana de confirmación.
 import { useEffect, useReducer } from "react";
 import { defaultConfig } from "../station.ts";
 import { CommandLog } from "./components/CommandLog.tsx";
 import { SingleLineDiagram } from "./components/SingleLineDiagram.tsx";
 import { CommandPanel } from "./components/CommandPanel.tsx";
+import { ConfirmationDialog } from "./components/ConfirmationDialog.tsx";
 import { StatusPanel } from "./components/StatusPanel.tsx";
 import { createHmiState, hmiReducer, TICK_MS } from "./hmiState.ts";
 
@@ -23,9 +24,22 @@ export function App() {
       <SingleLineDiagram station={state.station} />
       <div className="layout">
         <StatusPanel station={state.station} timeSeconds={state.timeSeconds} />
-        <CommandPanel onCommand={(command) => dispatch({ type: "select", command })} />
+        <CommandPanel
+          onCommand={(command) => dispatch({ type: "select", command })}
+          notice={state.selectionNotice}
+        />
         <CommandLog entries={state.log} />
       </div>
+      {state.selection !== null && (
+        <ConfirmationDialog
+          selection={state.selection}
+          station={state.station}
+          config={state.config}
+          timeSeconds={state.timeSeconds}
+          onExecute={() => dispatch({ type: "execute" })}
+          onCancel={() => dispatch({ type: "cancel" })}
+        />
+      )}
     </main>
   );
 }
