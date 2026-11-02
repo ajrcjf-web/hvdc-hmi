@@ -3,16 +3,18 @@ import { deriveState } from "../stationState.ts";
 import { testConfig } from "../testSupport.ts";
 import {
   blockCommand,
-  createHmiState,
   deblockCommand,
+  powerOrderCommand,
+  transitionCommand,
+  type OperatorCommand,
+} from "./commands.ts";
+import {
+  createHmiState,
   DT_SECONDS,
   hmiReducer,
   MAX_LOG_ENTRIES,
-  powerOrderCommand,
-  transitionCommand,
   type HmiAction,
   type HmiState,
-  type OperatorCommand,
 } from "./hmiState.ts";
 
 const tick: HmiAction = { type: "tick" };

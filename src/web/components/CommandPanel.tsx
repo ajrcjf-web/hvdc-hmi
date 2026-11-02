@@ -9,7 +9,7 @@ import {
   powerOrderCommand,
   transitionCommand,
   type OperatorCommand,
-} from "../hmiState.ts";
+} from "../commands.ts";
 
 type Props = {
   onCommand: (command: OperatorCommand) => void;

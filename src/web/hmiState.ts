@@ -3,17 +3,8 @@
 // y devuelve el estado nuevo. React la usa con useReducer; aquí no hay nada de React.
 
 import { runCycle, type ScheduledCommand } from "../simulationCycle.ts";
-import {
-  createStation,
-  requestBlock,
-  requestDeblock,
-  requestPowerOrder,
-  requestTransition,
-  type CommandResult,
-  type Station,
-  type StationConfig,
-} from "../station.ts";
-import type { StationState } from "../stationState.ts";
+import { createStation, type Station, type StationConfig } from "../station.ts";
+import { commandLabel, runCommand, type OperatorCommand } from "./commands.ts";
 
 export const TICK_MS = 100; // cada cuánto late el reloj (tiempo real)
 export const DT_SECONDS = 0.1; // tiempo simulado por latido: velocidad 1× (tiempo real)
@@ -34,11 +25,6 @@ export type HmiState = {
   pending: ScheduledCommand[]; // órdenes del operador que esperan al próximo latido
   log: LogEntry[]; // la más reciente primero
   nextLogId: number;
-};
-
-export type OperatorCommand = {
-  label: string;
-  run: (station: Station, config: StationConfig) => CommandResult;
 };
 
 export type HmiAction =
@@ -64,8 +50,8 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
       const { command } = action;
       const scheduled: ScheduledCommand = {
         atSeconds: state.timeSeconds,
-        label: command.label,
-        run: (station) => command.run(station, state.config),
+        label: commandLabel(command),
+        run: (station) => runCommand(command, station, state.config),
       };
       return { ...state, pending: [...state.pending, scheduled] };
     }
@@ -100,28 +86,4 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
       };
     }
   }
-}
-
-// Las órdenes que puede dar el operador.
-
-export function transitionCommand(to: StationState): OperatorCommand {
-  return {
-    label: `Ir a ${to}`,
-    run: (station, config) => requestTransition(station, to, config),
-  };
-}
-
-export function deblockCommand(): OperatorCommand {
-  return { label: "Desbloquear", run: (station) => requestDeblock(station) };
-}
-
-export function blockCommand(): OperatorCommand {
-  return { label: "Bloquear", run: (station) => requestBlock(station) };
-}
-
-export function powerOrderCommand(orderMW: number): OperatorCommand {
-  return {
-    label: `Consigna ${orderMW} MW`,
-    run: (station, config) => requestPowerOrder(station, orderMW, config),
-  };
 }
