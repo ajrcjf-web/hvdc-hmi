@@ -4,8 +4,10 @@
 :root {
   --bg: #1b1f24; /* fondo */
   --surface: #262c33; /* paneles y ventana de confirmación */
+  --surface-raised: #343c45; /* fondo algo más claro: avisos y rechazos */
   --text: #e6e6e6; /* texto principal */
-  --text-muted: #9aa4af; /* etiquetas secundarias */
+  --text-muted: #9aa4af; /* etiquetas secundarias y entradas rutinarias del registro */
+  --text-strong: #ffffff; /* texto de máximo brillo: lo que debe destacar sin color */
   --line: #cfd4d9; /* trazos del unifilar */
   --line-dim: #7b848d; /* tramos sin tensión */
   --fill: #5a636c; /* convertidor desbloqueado */
@@ -107,13 +109,20 @@ input {
   font-size: 0.9rem;
 }
 
+/* Jerarquía sin color: las entradas rutinarias van en gris secundario; un rechazo
+   va en el texto de máximo brillo, en negrita, con fondo más claro y una barra a la
+   izquierda (además del símbolo ✗ que trae su texto). */
 .log li {
-  padding: 0.15rem 0;
+  padding: 0.15rem 0.5rem;
+  border-left: 3px solid transparent;
+  color: var(--text-muted);
 }
 
-/* Un rechazo se distingue por su símbolo ✗ (viene en el texto) y la negrita, no por el color. */
 .log .rejected {
+  color: var(--text-strong);
   font-weight: bold;
+  background: var(--surface-raised);
+  border-left-color: var(--line);
 }
 
 .log .time,
@@ -236,9 +245,15 @@ input {
   background: var(--backdrop);
 }
 
+/* Aviso de rechazo: un recuadro con borde y fondo propios, separado de los botones. */
 .confirmation .invalid,
 .notice {
-  margin: 0.8rem 0;
+  margin: 0.8rem 0 1.2rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--surface-raised);
+  border: 2px solid var(--line);
+  border-radius: 4px;
+  color: var(--text-strong);
   font-weight: bold;
 }
 
