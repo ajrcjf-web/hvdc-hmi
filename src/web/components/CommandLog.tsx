@@ -1,5 +1,6 @@
-// El resultado de cada orden: ejecutada, o rechazada con su motivo.
+// Todo lo que pasó con las órdenes: selección, ejecución, cancelación, expiración y rechazos con su motivo.
 import { formatTime } from "../../labels.ts";
+import { logText } from "../commandView.ts";
 import type { LogEntry } from "../hmiState.ts";
 
 type Props = {
@@ -15,11 +16,9 @@ export function CommandLog({ entries }: Props) {
       ) : (
         <ul className="log">
           {entries.map((entry) => (
-            <li key={entry.id} className={entry.reason === null ? "ok" : "rejected"}>
+            <li key={entry.id} className={entry.reason === null ? undefined : "rejected"}>
               <span className="time">[{formatTime(entry.timeSeconds)} s]</span>{" "}
-              {entry.reason === null
-                ? `✓ ${entry.label}`
-                : `✗ ${entry.label} → rechazada: ${entry.reason}`}
+              {logText(entry)}
             </li>
           ))}
         </ul>

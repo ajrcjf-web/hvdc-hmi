@@ -23,7 +23,7 @@ export function App() {
       <SingleLineDiagram station={state.station} />
       <div className="layout">
         <StatusPanel station={state.station} timeSeconds={state.timeSeconds} />
-        <CommandPanel onCommand={(command) => dispatch({ type: "command", command })} />
+        <CommandPanel onCommand={(command) => dispatch({ type: "select", command })} />
         <CommandLog entries={state.log} />
       </div>
     </main>
