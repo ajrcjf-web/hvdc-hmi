@@ -17,3 +17,14 @@ export const converterLabels: Record<ConverterState, string> = {
 export function formatSwitch(status: SwitchStatus): string {
   return status.kind === "moving" ? "maniobra" : positionLabels[status.kind];
 }
+
+// Los valores calculados acumulan error de redondeo (29.999999999999996):
+// para mostrarlos se fijan los decimales.
+export function formatValue(value: number, decimals: number): string {
+  return value.toFixed(decimals);
+}
+
+// La hora simulada, con un decimal (ej. "12.3").
+export function formatTime(timeSeconds: number): string {
+  return formatValue(timeSeconds, 1);
+}
