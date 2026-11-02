@@ -1,8 +1,23 @@
+/* Única fuente de colores (ISA-101: sin color para lo normal). Un color nuevo se
+   agrega aquí y se usa con var(--nombre); no se escriben colores sueltos más abajo.
+   El ámbar y el rojo de las alarmas quedan reservados para la Fase 4. */
+:root {
+  --bg: #1b1f24; /* fondo */
+  --surface: #262c33; /* paneles y ventana de confirmación */
+  --text: #e6e6e6; /* texto principal */
+  --text-muted: #9aa4af; /* etiquetas secundarias */
+  --line: #cfd4d9; /* trazos del unifilar */
+  --line-dim: #7b848d; /* tramos sin tensión */
+  --fill: #5a636c; /* convertidor desbloqueado */
+  --abnormal: #e5484d; /* lo anormal: hoy solo el estado inconsistent */
+  --backdrop: rgba(0, 0, 0, 0.6); /* fondo detrás de la ventana */
+}
+
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
-  background: #1b1f24;
-  color: #e6e6e6;
+  background: var(--bg);
+  color: var(--text);
 }
 
 main {
@@ -23,7 +38,7 @@ h2 {
 h3 {
   margin: 1rem 0 0.4rem;
   font-size: 0.9rem;
-  color: #9aa4af;
+  color: var(--text-muted);
 }
 
 .layout {
@@ -37,7 +52,7 @@ h3 {
 }
 
 .panel {
-  background: #262c33;
+  background: var(--surface);
   border-radius: 6px;
   padding: 1rem;
 }
@@ -50,7 +65,7 @@ h3 {
 }
 
 .values dt {
-  color: #9aa4af;
+  color: var(--text-muted);
 }
 
 .values dd {
@@ -113,30 +128,30 @@ input {
 
 .log .time,
 .empty {
-  color: #9aa4af;
+  color: var(--text-muted);
 }
 
 /* Unifilar: sobrio. Sin color para lo normal; el rojo solo para "inconsistent". */
 .diagram {
   width: 100%;
   height: auto;
-  background: #1b1f24;
+  background: var(--bg);
   border: 2px solid transparent;
   border-radius: 4px;
 }
 
 .diagram-abnormal {
-  border-color: #e5484d;
+  border-color: var(--abnormal);
 }
 
 .abnormal-text {
-  fill: #e5484d;
+  fill: var(--abnormal);
   font-weight: bold;
   font-size: 18px;
 }
 
 .diagram .wire {
-  stroke: #cfd4d9;
+  stroke: var(--line);
   fill: none;
 }
 
@@ -145,35 +160,35 @@ input {
 }
 
 .diagram .wire-dead {
-  stroke: #7b848d;
+  stroke: var(--line-dim);
   stroke-width: 1.5;
   stroke-dasharray: 6 4;
 }
 
 .diagram .symbol,
 .diagram .ground {
-  stroke: #cfd4d9;
+  stroke: var(--line);
   stroke-width: 2.5;
   fill: none;
 }
 
 .diagram .symbol.filled {
-  fill: #1b1f24;
+  fill: var(--bg);
 }
 
 .diagram .symbol-text {
-  fill: #cfd4d9;
+  fill: var(--line);
   font-size: 22px;
 }
 
 .diagram .terminal {
-  fill: #1b1f24;
-  stroke: #cfd4d9;
+  fill: var(--bg);
+  stroke: var(--line);
   stroke-width: 2;
 }
 
 .diagram .blade {
-  stroke: #cfd4d9;
+  stroke: var(--line);
   stroke-width: 4;
   stroke-linecap: round;
 }
@@ -187,32 +202,32 @@ input {
 }
 
 .diagram .converter-deblocked {
-  fill: #5a636c;
+  fill: var(--fill);
 }
 
 .diagram .converter-line {
-  stroke: #cfd4d9;
+  stroke: var(--line);
   stroke-width: 2;
 }
 
 .diagram .converter-text {
-  fill: #cfd4d9;
+  fill: var(--line);
   font-size: 22px;
 }
 
 .diagram .label-name {
-  fill: #e6e6e6;
+  fill: var(--text);
   font-size: 14px;
   font-weight: bold;
 }
 
 .diagram .label-detail {
-  fill: #9aa4af;
+  fill: var(--text-muted);
   font-size: 13px;
 }
 
 .diagram .readings text {
-  fill: #e6e6e6;
+  fill: var(--text);
   font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
@@ -221,14 +236,14 @@ input {
 .confirmation {
   max-width: 480px;
   padding: 1.2rem;
-  background: #262c33;
-  color: #e6e6e6;
-  border: 2px solid #cfd4d9;
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--line);
   border-radius: 6px;
 }
 
 .confirmation::backdrop {
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--backdrop);
 }
 
 .confirmation .invalid,
