@@ -24,10 +24,15 @@ export type CycleResult = {
   events: CycleEvent[];
 };
 
-// Un ciclo, en este orden:
-// 1. Se aplican las órdenes programadas para este instante.
-// 2. Se registra el estado (cada SNAPSHOT_INTERVAL_SECONDS).
-// 3. La planta evoluciona hasta el instante siguiente.
+// Un ciclo cubre el intervalo [t, t + dt) y hace, en este orden:
+// 1. Aplica las órdenes programadas dentro del intervalo.
+// 2. Registra el estado si un múltiplo de SNAPSHOT_INTERVAL_SECONDS cae en el intervalo.
+// 3. Hace evolucionar la planta hasta el instante siguiente.
+//
+// Se usa un intervalo y no una igualdad exacta porque el tiempo se acumula
+// sumando dt, y con decimales la suma no es exacta (0.1 + 0.1 + 0.1 ≠ 0.3).
+// El fin de un intervalo es exactamente el inicio del siguiente (misma suma),
+// así que cada instante pertenece a un solo ciclo: sin huecos ni repeticiones.
 export function runCycle(
   station: Station,
   timeSeconds: number,
@@ -37,9 +42,10 @@ export function runCycle(
 ): CycleResult {
   const events: CycleEvent[] = [];
   let current = station;
+  const nextTimeSeconds = timeSeconds + dtSeconds;
 
   for (const command of scenario) {
-    if (command.atSeconds === timeSeconds) {
+    if (command.atSeconds >= timeSeconds && command.atSeconds < nextTimeSeconds) {
       const result = command.run(current);
       events.push({ kind: "command", label: command.label, result });
       if (result.ok) {
@@ -48,13 +54,15 @@ export function runCycle(
     }
   }
 
-  if (timeSeconds % SNAPSHOT_INTERVAL_SECONDS === 0) {
+  const nextSnapshotSeconds =
+    Math.ceil(timeSeconds / SNAPSHOT_INTERVAL_SECONDS) * SNAPSHOT_INTERVAL_SECONDS;
+  if (nextSnapshotSeconds < nextTimeSeconds) {
     events.push({ kind: "snapshot", station: current });
   }
 
   return {
     station: step(current, dtSeconds, config),
-    timeSeconds: timeSeconds + dtSeconds,
+    timeSeconds: nextTimeSeconds,
     events,
   };
 }
