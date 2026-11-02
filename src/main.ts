@@ -1,5 +1,6 @@
 // Punto de entrada del simulador: corre la simulación en el tiempo
 // y ejecuta un escenario de órdenes del operador.
+import { converterLabels, formatSwitch } from "./labels.ts";
 import { measure } from "./measurements.ts";
 import { runCycle, type ScheduledCommand } from "./simulationCycle.ts";
 import {
@@ -10,11 +11,9 @@ import {
   requestPowerOrder,
   requestTransition,
   type CommandResult,
-  type ConverterState,
   type Station,
 } from "./station.ts";
 import { deriveState } from "./stationState.ts";
-import type { SwitchStatus } from "./switchgear.ts";
 
 const TICK_MS = 100; // cada cuánto se calcula un paso (tiempo real)
 const SIMULATION_SPEED = 10; // 10 = la simulación corre 10 veces más rápido
@@ -39,20 +38,6 @@ const scenario: ScheduledCommand[] = [
   { atSeconds: 106, label: "Ir a stopped", run: (s) => requestTransition(s, "stopped", defaultConfig) },
   { atSeconds: 109, label: "Ir a earthed", run: (s) => requestTransition(s, "earthed", defaultConfig) },
 ];
-
-const positionLabels: Record<"open" | "closed", string> = {
-  open: "abierto",
-  closed: "cerrado",
-};
-
-const converterLabels: Record<ConverterState, string> = {
-  blocked: "bloqueado",
-  deblocked: "desbloqueado",
-};
-
-function formatSwitch(status: SwitchStatus): string {
-  return status.kind === "moving" ? "maniobra" : positionLabels[status.kind];
-}
 
 let station: Station = createStation();
 let timeSeconds = 0;

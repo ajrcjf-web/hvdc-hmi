@@ -14,8 +14,8 @@ supervisa una estación HVDC monopolar.
 - El convertidor se bloquea y desbloquea por orden del operador. Udc sube y baja con su rampa: hacia la tensión nominal con el convertidor desbloqueado, y hacia 0 con el convertidor bloqueado.
 
 ## Stack
-- **Ahora:** TypeScript, Node.js, GitHub Actions y Vitest (pruebas).
-- **Más adelante:** React + Vite, WebSocket y OPC UA.
+- **Ahora:** TypeScript, Node.js, React + Vite, GitHub Actions y Vitest (pruebas).
+- **Más adelante:** WebSocket y OPC UA.
 
 ## Estructura del código
 - `src/stationState.ts`: estados (`StationState`), tabla de transiciones permitidas (`canTransition`), posiciones de los equipos por estado (`statePositions`) y deducción del estado a partir de los equipos (`deriveState`).
@@ -24,7 +24,9 @@ supervisa una estación HVDC monopolar.
 - `src/simulationCycle.ts`: el ciclo de cada intervalo [t, t + dt) (`runCycle`), en orden fijo: aplica las órdenes programadas dentro del intervalo, registra el estado cada 5 s y avanza la planta con `step`. Devuelve la estación siguiente y los eventos ocurridos.
 - `src/measurements.ts`: valores medidos de la estación (`measure`): Udc se lee de la estación e Idc se calcula.
 - `src/switchgear.ts`: equipos Q1, Q2 y QE: posiciones, tiempos de maniobra y enclavamientos (`requestSwitch`, `stepSwitchgear`).
-- `src/main.ts`: punto de entrada; reloj, escenario, salida por consola y único lugar donde cambia la estación actual.
+- `src/main.ts`: punto de entrada; reloj, escenario, salida por consola y único lugar donde cambia la estación actual en la consola (en la web, el reducer de `hmiState.ts`).
+- `src/labels.ts`: etiquetas en español (`formatSwitch`, `converterLabels`) y formato de valores (`formatValue`, `formatTime`), compartidos por la consola y la web.
+- `src/web/`: interfaz web (React + Vite; `npm run dev`). `main.tsx` monta la app; `App.tsx` guarda el estado con `useReducer` y corre el reloj; `hmiState.ts` es el reducer puro (la estación, la hora simulada, las órdenes pendientes y el registro); `components/` solo muestran (`StatusPanel`, `CommandPanel`, `CommandLog`).
 - `*.test.ts`: tests de Vitest, al lado del archivo que prueban.
 - `src/testSupport.ts`: configuración (`testConfig`) y estaciones de prueba (`stationAt`, `deblockedAt`) compartidas por los tests.
 
@@ -55,6 +57,7 @@ supervisa una estación HVDC monopolar.
 - Configuración por defecto (`defaultConfig`): Pmin = 50 MW, Pmax = 500 MW, rampa = 600 MW/min, tensión nominal = 500 kV, rampa de tensión = 100 kV/s y tiempos de maniobra (Q1 = 1 s, Q2 = 8 s, QE = 6 s). Los tests usan `testConfig` de `testSupport.ts`.
 - La rampa de potencia se configura en MW/min (`rampRateMWPerMin`) y la de tensión en kV/s (`voltageRampKVPerS`, 100 por defecto). Las dos usan la función común `rampTowards`. `step` es una función pura, y cada valor llega exactamente a su objetivo para evitar errores de redondeo. El reloj y el escenario viven en `main.ts`.
 - El tiempo se acumula sumando `dt`, y con decimales la suma no es exacta (0.1 + 0.1 + 0.1 ≠ 0.3). Por eso `runCycle` no compara tiempos con `===`: cada ciclo cubre el intervalo [t, t + dt), y una orden o un registro ocurre en el ciclo cuyo intervalo lo contiene. El fin de un intervalo es el inicio del siguiente, así que ocurre exactamente una vez.
+- Web: las órdenes del operador no se ejecutan al pulsar el botón: el reducer las deja pendientes y las ejecuta `runCycle` en el siguiente latido (100 ms, velocidad 1×), así el orden de los pasos vive en un solo lugar. Los botones siempre están activos; si la orden no vale, se rechaza y el motivo sale en el registro. Los valores se redondean solo al mostrarlos.
 - Udc tiene dinámica y se guarda en `Station`. Idc se calcula: Idc = P / Udc, y 0 sin tensión.
 - Reglas del convertidor: solo se desbloquea en coupled; solo se bloquea con P y consigna en 0; Q2 no maniobra con el convertidor desbloqueado (hay que bloquear primero); la consigna de potencia exige el convertidor desbloqueado y Udc en su valor nominal; no se cambia de estado mientras Udc o P estén en rampa.
 - Un equipo en maniobra no cuenta como abierto: ante la duda, bloquear.

@@ -1,0 +1,117 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #1b1f24;
+  color: #e6e6e6;
+}
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+h1 {
+  font-size: 1.4rem;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+h3 {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.9rem;
+  color: #9aa4af;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.layout > :last-child {
+  grid-column: 1 / -1;
+}
+
+.panel {
+  background: #262c33;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.values {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.3rem 1rem;
+  margin: 0;
+}
+
+.values dt {
+  color: #9aa4af;
+}
+
+.values dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.state {
+  font-weight: bold;
+}
+
+.state-coupled {
+  color: #5fd068;
+}
+
+.state-decoupled {
+  color: #e6c84f;
+}
+
+.state-earthed {
+  color: #6aa9ff;
+}
+
+.state-transition,
+.state-inconsistent {
+  color: #ff9d4d;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+button,
+input {
+  font: inherit;
+  padding: 0.4rem 0.8rem;
+}
+
+input {
+  width: 6rem;
+}
+
+.log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.9rem;
+}
+
+.log li {
+  padding: 0.15rem 0;
+}
+
+.log .rejected {
+  color: #ff7b72;
+}
+
+.log .time,
+.empty {
+  color: #9aa4af;
+}

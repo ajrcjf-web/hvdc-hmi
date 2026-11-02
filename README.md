@@ -4,7 +4,7 @@
 
 Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.
 
-> **Estado: en desarrollo (Fase 3).** La Fase 2 está completa ([v0.2.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.2.0)): la planta simulada ya evoluciona en el tiempo, con la rampa de potencia, los equipos Q1, Q2 y QE con sus tiempos de maniobra, el bloqueo y desbloqueo del convertidor, y la tensión Udc con su propia rampa. El estado de la estación se deduce de las posiciones de los equipos. Ahora toca la ventana *overview* con React + Vite; todavía no hay interfaz gráfica.
+> **Estado: en desarrollo (Fase 3).** La Fase 2 está completa ([v0.2.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.2.0)): la planta simulada ya evoluciona en el tiempo, con la rampa de potencia, los equipos Q1, Q2 y QE con sus tiempos de maniobra, el bloqueo y desbloqueo del convertidor, y la tensión Udc con su propia rampa. El estado de la estación se deduce de las posiciones de los equipos. Ahora toca la ventana *overview* con React + Vite: ya hay una primera pantalla web (`npm run dev`) con valores medidos y órdenes del operador; falta el unifilar.
 
 ## Sobre este proyecto
 
@@ -63,8 +63,8 @@ Un **enclavamiento** es una condición que debe cumplirse para permitir una acci
 
 ## Tecnologías
 
-- **Ahora:** TypeScript, Node.js, Vitest (pruebas) y GitHub Actions (integración continua).
-- **Más adelante:** React + Vite, WebSocket y OPC UA.
+- **Ahora:** TypeScript, Node.js, React + Vite, Vitest (pruebas) y GitHub Actions (integración continua).
+- **Más adelante:** WebSocket y OPC UA.
 
 ## Instalación y uso
 
@@ -79,6 +79,8 @@ npm start
 
 Otros comandos:
 
+- `npm run dev`: abre la interfaz web (servidor de desarrollo de Vite; la dirección aparece en la terminal, normalmente http://localhost:5173).
+- `npm run build`: compila la interfaz web en la carpeta `dist/`.
 - `npm test`: ejecuta los tests automáticos.
 - `npm run typecheck`: verifica los tipos de TypeScript.
 
@@ -112,9 +114,9 @@ Lógica de control sin interfaz.
 
 ### Fase 3 — La ventana overview
 
-- [ ] Interfaz con React + Vite.
+- [x] Interfaz con React + Vite.
 - [ ] Unifilar en SVG con estados de los equipos.
-- [ ] Valores medidos en pantalla.
+- [x] Valores medidos en pantalla.
 - [ ] Órdenes con confirmación (*select-before-operate*).
 
 ### Fase 4 — Eventos, alarmas y tendencias
