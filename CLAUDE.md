@@ -21,7 +21,7 @@ supervisa una estación HVDC monopolar.
 - `src/stationState.ts`: estados (`StationState`), tabla de transiciones permitidas (`canTransition`), posiciones de los equipos por estado (`statePositions`) y deducción del estado a partir de los equipos (`deriveState`).
 - `src/station.ts`: la estación (`Station`, `StationConfig`) y las órdenes del operador (`requestTransition`, `requestPowerOrder`, `requestDeblock`, `requestBlock`).
 - `src/simulation.ts`: evolución de la planta en el tiempo (`step`): avanza las maniobras de los equipos y las rampas de tensión y de potencia.
-- `src/simulationCycle.ts`: el ciclo de cada instante (`runCycle`), en orden fijo: aplica las órdenes programadas, registra el estado cada 5 s y avanza la planta con `step`. Devuelve la estación siguiente y los eventos ocurridos.
+- `src/simulationCycle.ts`: el ciclo de cada intervalo [t, t + dt) (`runCycle`), en orden fijo: aplica las órdenes programadas dentro del intervalo, registra el estado cada 5 s y avanza la planta con `step`. Devuelve la estación siguiente y los eventos ocurridos.
 - `src/measurements.ts`: valores medidos de la estación (`measure`): Udc se lee de la estación e Idc se calcula.
 - `src/switchgear.ts`: equipos Q1, Q2 y QE: posiciones, tiempos de maniobra y enclavamientos (`requestSwitch`, `stepSwitchgear`).
 - `src/main.ts`: punto de entrada; reloj, escenario, salida por consola y único lugar donde cambia la estación actual.
@@ -54,6 +54,7 @@ supervisa una estación HVDC monopolar.
 - "En rampa" significa potencia medida ≠ consigna, o Udc ≠ su valor objetivo (nominal desbloqueado, 0 bloqueado).
 - Configuración por defecto (`defaultConfig`): Pmin = 50 MW, Pmax = 500 MW, rampa = 600 MW/min, tensión nominal = 500 kV, rampa de tensión = 100 kV/s y tiempos de maniobra (Q1 = 1 s, Q2 = 8 s, QE = 6 s). Los tests usan `testConfig` de `testSupport.ts`.
 - La rampa de potencia se configura en MW/min (`rampRateMWPerMin`) y la de tensión en kV/s (`voltageRampKVPerS`, 100 por defecto). Las dos usan la función común `rampTowards`. `step` es una función pura, y cada valor llega exactamente a su objetivo para evitar errores de redondeo. El reloj y el escenario viven en `main.ts`.
+- El tiempo se acumula sumando `dt`, y con decimales la suma no es exacta (0.1 + 0.1 + 0.1 ≠ 0.3). Por eso `runCycle` no compara tiempos con `===`: cada ciclo cubre el intervalo [t, t + dt), y una orden o un registro ocurre en el ciclo cuyo intervalo lo contiene. El fin de un intervalo es el inicio del siguiente, así que ocurre exactamente una vez.
 - Udc tiene dinámica y se guarda en `Station`. Idc se calcula: Idc = P / Udc, y 0 sin tensión.
 - Reglas del convertidor: solo se desbloquea en coupled; solo se bloquea con P y consigna en 0; Q2 no maniobra con el convertidor desbloqueado (hay que bloquear primero); la consigna de potencia exige el convertidor desbloqueado y Udc en su valor nominal; no se cambia de estado mientras Udc o P estén en rampa.
 - Un equipo en maniobra no cuenta como abierto: ante la duda, bloquear.
