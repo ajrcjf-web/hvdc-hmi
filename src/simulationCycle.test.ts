@@ -83,3 +83,57 @@ describe("runCycle: pureza", () => {
     expect(scenario).toHaveLength(1);
   });
 });
+
+// Corre ciclos seguidos acumulando el tiempo, como hace el reloj del simulador.
+// Devuelve cuántas veces corrió cada orden y cuántos registros hubo.
+function runFor(durationSeconds: number, dtSeconds: number, atSeconds: number[]) {
+  const runs = atSeconds.map(() => 0);
+  const scenario: ScheduledCommand[] = atSeconds.map((at, i) => ({
+    atSeconds: at,
+    label: `Orden ${at}`,
+    run: (s) => {
+      runs[i] = (runs[i] ?? 0) + 1;
+      return { ok: true, station: s };
+    },
+  }));
+
+  let station = deblockedAt(0);
+  let timeSeconds = 0;
+  let snapshots = 0;
+  while (timeSeconds < durationSeconds) {
+    const cycle = runCycle(station, timeSeconds, scenario, dtSeconds, testConfig);
+    snapshots += cycle.events.filter((e) => e.kind === "snapshot").length;
+    station = cycle.station;
+    timeSeconds = cycle.timeSeconds;
+  }
+  return { runs, snapshots };
+}
+
+describe("runCycle: dt decimal", () => {
+  test("una orden en 0.3 corre una vez con dt = 0.1 (0.1 + 0.1 + 0.1 ≠ 0.3)", () => {
+    expect(runFor(2, 0.1, [0.3]).runs).toEqual([1]);
+  });
+
+  test("varias órdenes decimales corren exactamente una vez cada una", () => {
+    expect(runFor(3, 0.1, [0.3, 0.7, 1, 2.9]).runs).toEqual([1, 1, 1, 1]);
+  });
+
+  test("con un dt que no divide la hora, corre en el ciclo que la contiene", () => {
+    const result = runCycle(deblockedAt(0), 0.4, [order(0.5, 100)], 0.4, testConfig);
+    expect(result.station.powerOrderMW).toBe(100);
+  });
+
+  test("una orden ya pasada no se vuelve a ejecutar", () => {
+    const result = runCycle(deblockedAt(0), 1, [order(0.5, 100)], 0.1, testConfig);
+    expect(result.events.filter((e) => e.kind === "command")).toEqual([]);
+  });
+
+  test("registra el estado una vez por cada 5 s con dt = 0.1", () => {
+    // Instantes 0, 5, 10 y 15 en 15.5 s.
+    expect(runFor(15.5, 0.1, []).snapshots).toBe(4);
+  });
+
+  test("registra el estado en la frontera de 5 s con dt entero, como antes", () => {
+    expect(runFor(11, 1, []).snapshots).toBe(3);
+  });
+});
