@@ -216,3 +216,27 @@ input {
   font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
+
+/* Ventana de confirmación y avisos: grises, sin color para lo normal. */
+.confirmation {
+  max-width: 480px;
+  padding: 1.2rem;
+  background: #262c33;
+  color: #e6e6e6;
+  border: 2px solid #cfd4d9;
+  border-radius: 6px;
+}
+
+.confirmation::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.confirmation .invalid,
+.notice {
+  margin: 0.8rem 0;
+  font-weight: bold;
+}
+
+.confirmation .buttons {
+  margin-top: 1rem;
+}

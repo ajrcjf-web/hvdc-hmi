@@ -1,6 +1,7 @@
 // Los mandos del operador. Los botones siempre están activos: si la orden no es
 // válida, la lógica de control la rechaza y el motivo aparece en el registro
 // (los enclavamientos viven en el control, no en la interfaz).
+// Un botón no ejecuta la orden: la selecciona, y se confirma en la ventana de confirmación.
 import { useState } from "react";
 import { stationStates } from "../../stationState.ts";
 import {
@@ -9,13 +10,14 @@ import {
   powerOrderCommand,
   transitionCommand,
   type OperatorCommand,
-} from "../hmiState.ts";
+} from "../commands.ts";
 
 type Props = {
-  onCommand: (command: OperatorCommand) => void;
+  onCommand: (command: OperatorCommand) => void; // selecciona la orden (aún no la ejecuta)
+  notice: string | null; // por qué no se pudo seleccionar la última orden
 };
 
-export function CommandPanel({ onCommand }: Props) {
+export function CommandPanel({ onCommand, notice }: Props) {
   // El texto que el operador está escribiendo; solo se convierte en número al enviar.
   const [powerText, setPowerText] = useState("");
 
@@ -28,6 +30,11 @@ export function CommandPanel({ onCommand }: Props) {
   return (
     <section className="panel">
       <h2>Órdenes</h2>
+      {notice !== null && (
+        <p className="notice" role="alert">
+          ✗ No seleccionada — {notice}
+        </p>
+      )}
 
       <h3>Estado de la estación</h3>
       <div className="buttons">
