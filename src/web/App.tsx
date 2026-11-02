@@ -2,6 +2,7 @@
 import { useEffect, useReducer } from "react";
 import { defaultConfig } from "../station.ts";
 import { CommandLog } from "./components/CommandLog.tsx";
+import { SingleLineDiagram } from "./components/SingleLineDiagram.tsx";
 import { CommandPanel } from "./components/CommandPanel.tsx";
 import { StatusPanel } from "./components/StatusPanel.tsx";
 import { createHmiState, hmiReducer, TICK_MS } from "./hmiState.ts";
@@ -19,6 +20,7 @@ export function App() {
   return (
     <main>
       <h1>HMI HVDC — Overview</h1>
+      <SingleLineDiagram station={state.station} />
       <div className="layout">
         <StatusPanel station={state.station} timeSeconds={state.timeSeconds} />
         <CommandPanel onCommand={(command) => dispatch({ type: "command", command })} />

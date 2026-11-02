@@ -4,7 +4,7 @@
 
 Simulador básico de la ventana *overview* de un HMI (interfaz hombre-máquina) que controla y supervisa una estación HVDC monopolar.
 
-> **Estado: en desarrollo (Fase 3).** La Fase 2 está completa ([v0.2.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.2.0)): la planta simulada ya evoluciona en el tiempo, con la rampa de potencia, los equipos Q1, Q2 y QE con sus tiempos de maniobra, el bloqueo y desbloqueo del convertidor, y la tensión Udc con su propia rampa. El estado de la estación se deduce de las posiciones de los equipos. Ahora toca la ventana *overview* con React + Vite: ya hay una primera pantalla web (`npm run dev`) con valores medidos y órdenes del operador; falta el unifilar.
+> **Estado: en desarrollo (Fase 3).** La Fase 2 está completa ([v0.2.0](https://github.com/ajrcjf-web/hvdc-hmi/releases/tag/v0.2.0)): la planta simulada ya evoluciona en el tiempo, con la rampa de potencia, los equipos Q1, Q2 y QE con sus tiempos de maniobra, el bloqueo y desbloqueo del convertidor, y la tensión Udc con su propia rampa. El estado de la estación se deduce de las posiciones de los equipos. Ahora toca la ventana *overview* con React + Vite: ya hay una primera pantalla web (`npm run dev`) con valores medidos y órdenes del operador; ya incluye el unifilar en SVG, que solo muestra (las órdenes siguen en su panel).
 
 ## Sobre este proyecto
 
@@ -115,7 +115,7 @@ Lógica de control sin interfaz.
 ### Fase 3 — La ventana overview
 
 - [x] Interfaz con React + Vite.
-- [ ] Unifilar en SVG con estados de los equipos.
+- [x] Unifilar en SVG con estados de los equipos.
 - [x] Valores medidos en pantalla.
 - [ ] Órdenes con confirmación (*select-before-operate*).
 

@@ -115,3 +115,104 @@ input {
 .empty {
   color: #9aa4af;
 }
+
+/* Unifilar: sobrio. Sin color para lo normal; el rojo solo para "inconsistent". */
+.diagram {
+  width: 100%;
+  height: auto;
+  background: #1b1f24;
+  border: 2px solid transparent;
+  border-radius: 4px;
+}
+
+.diagram-abnormal {
+  border-color: #e5484d;
+}
+
+.abnormal-text {
+  fill: #e5484d;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.diagram .wire {
+  stroke: #cfd4d9;
+  fill: none;
+}
+
+.diagram .wire-live {
+  stroke-width: 3;
+}
+
+.diagram .wire-dead {
+  stroke: #7b848d;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+
+.diagram .symbol,
+.diagram .ground {
+  stroke: #cfd4d9;
+  stroke-width: 2.5;
+  fill: none;
+}
+
+.diagram .symbol.filled {
+  fill: #1b1f24;
+}
+
+.diagram .symbol-text {
+  fill: #cfd4d9;
+  font-size: 22px;
+}
+
+.diagram .terminal {
+  fill: #1b1f24;
+  stroke: #cfd4d9;
+  stroke-width: 2;
+}
+
+.diagram .blade {
+  stroke: #cfd4d9;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.diagram .blade-moving {
+  stroke-dasharray: 5 4;
+}
+
+.diagram .converter-blocked {
+  fill: none;
+}
+
+.diagram .converter-deblocked {
+  fill: #5a636c;
+}
+
+.diagram .converter-line {
+  stroke: #cfd4d9;
+  stroke-width: 2;
+}
+
+.diagram .converter-text {
+  fill: #cfd4d9;
+  font-size: 22px;
+}
+
+.diagram .label-name {
+  fill: #e6e6e6;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.diagram .label-detail {
+  fill: #9aa4af;
+  font-size: 13px;
+}
+
+.diagram .readings text {
+  fill: #e6e6e6;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}

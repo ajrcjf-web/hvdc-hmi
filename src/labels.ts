@@ -4,9 +4,10 @@
 import type { ConverterState } from "./station.ts";
 import type { SwitchStatus } from "./switchgear.ts";
 
-const positionLabels: Record<"open" | "closed", string> = {
+export const positionLabels: Record<SwitchStatus["kind"], string> = {
   open: "abierto",
   closed: "cerrado",
+  moving: "maniobra",
 };
 
 export const converterLabels: Record<ConverterState, string> = {
@@ -15,7 +16,7 @@ export const converterLabels: Record<ConverterState, string> = {
 };
 
 export function formatSwitch(status: SwitchStatus): string {
-  return status.kind === "moving" ? "maniobra" : positionLabels[status.kind];
+  return positionLabels[status.kind];
 }
 
 // Los valores calculados acumulan error de redondeo (29.999999999999996):
