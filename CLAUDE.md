@@ -37,6 +37,7 @@ supervisa una estación HVDC monopolar.
 - Actualiza README y CLAUDE.md si el cambio lo requiere (ver docs/WORKFLOW.md).
 - Puedes usar `gh` para consultar issues, PRs y el estado del CI.
 - Puedes crear la rama de trabajo, hacer commits en ella (Conventional Commits, un commit por motivo), hacer push de esa rama y abrir el PR con `gh pr create`, usando la plantilla `.github/pull_request_template.md`. En el PR, incluye `Closes #N` si resuelve un issue y describe la verificación que realmente ejecutaste.
+- En los cambios de interfaz, el PR deja la revisión visual como pendiente explícito, con los pasos concretos para hacerla en el navegador (qué ejecutar, qué mirar y qué debería verse). No la des por hecha: yo la hago.
 - Nunca hagas merge, ni commits o push directamente en `main`, ni crees tags o Releases, ni cierres o reabras issues a mano: eso lo hago yo.
 
 ## Decisiones de diseño
