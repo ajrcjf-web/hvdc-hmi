@@ -43,23 +43,28 @@
 
 En Claude Code, `/cerrar-fase` guía este procedimiento.
 
-1. **Revisar el milestone** de la fase en GitHub: no debe tener issues abiertos. Los que queden se resuelven antes, o se mueven a otro milestone o al backlog.
+1. **Revisar el milestone** de la fase (Claude lo consulta con `gh`): no debe tener issues abiertos. Los que queden se resuelven antes, o se mueven a otro milestone o al backlog.
 2. **Revisar la hoja de ruta** del README:
    - ¿Qué cambió respecto del plan?
    - ¿Qué adelantamos o postergamos?
    - ¿Qué aprendimos que modifica lo que sigue?
    - Actualizar las fases abiertas para que vuelvan a ser verdaderas (las cerradas no se tocan: ver abajo).
 3. **Revisar `CLAUDE.md`**: decisiones de diseño nuevas; simplificaciones conocidas resueltas o nuevas.
-4. **Actualizar la versión** con `npm version X.Y.Z --no-git-tag-version` (actualiza `package.json` y `package-lock.json`), en una rama con su PR.
-5. **Marcar la versión** en `main`, después del merge:
+4. **Preparar la rama de cierre** `chore/release-0.N.0`: Claude aplica los cambios aprobados, ejecuta `npm version 0.N.0 --no-git-tag-version` (actualiza `package.json` y `package-lock.json`), hace los commits por motivo, el push y abre el PR `chore: release v0.N.0` con `gh`.
+5. **Hacer el merge** del PR (solo el usuario).
+6. **Marcar la versión** en `main`, después del merge (solo el usuario):
    ```
    git switch main
    git pull
    git tag -a v0.1.0 -m "Fase 1: modelo de estados y enclavamientos"
    git push origin v0.1.0
    ```
-6. **Publicar un Release** en GitHub a partir del tag, con un resumen de lo que incluye la fase.
-7. **Cerrar el milestone** de la fase (Issues → Milestones → Close).
+7. **Crear el Release** a partir del tag (solo el usuario). Claude redacta las notas en un archivo del scratchpad (resumen, qué incluye, limitaciones, aprendizajes y próximo paso) y el usuario ejecuta:
+   ```
+   gh release create v0.N.0 --verify-tag --draft --title "v0.N.0 — Fase N: <nombre de la fase>" --generate-notes --notes-file <archivo>
+   ```
+   Las notas propias se anteponen a las generadas por GitHub. `--draft` deja el Release sin publicar: se revisa en GitHub y se publica desde ahí. Cuando se confirme que `--notes-file` se combina bien con `--generate-notes`, se quita `--draft`.
+8. **Cerrar el milestone** de la fase (solo el usuario: Issues → Milestones → Close).
 
 Las tareas de las fases cerradas no se reescriben aunque el código cambie después: documentan lo que era cierto en ese momento, igual que las notas de un Release.
 
