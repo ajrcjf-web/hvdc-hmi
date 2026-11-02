@@ -33,7 +33,9 @@ supervisa una estación HVDC monopolar.
 - Para tareas de código: primero propón un plan breve y espera mi aprobación. Después implementa el cambio completo, con sus tests, y explica qué hiciste y por qué.
 - Antes de darme el trabajo por terminado, ejecuta `npm run typecheck` y `npm test`, y muéstrame los resultados.
 - Actualiza README y CLAUDE.md si el cambio lo requiere (ver docs/WORKFLOW.md).
-- No hagas commits ni push: los hago yo después de revisar el diff.
+- Puedes usar `gh` para consultar issues, PRs y el estado del CI.
+- Puedes crear la rama de trabajo, hacer commits en ella (Conventional Commits, un commit por motivo), hacer push de esa rama y abrir el PR con `gh pr create`, usando la plantilla `.github/pull_request_template.md`. En el PR, incluye `Closes #N` si resuelve un issue y describe la verificación que realmente ejecutaste.
+- Nunca hagas merge, ni commits o push directamente en `main`, ni crees tags o Releases, ni cierres o reabras issues a mano: eso lo hago yo.
 
 ## Decisiones de diseño
 - Consigna de potencia válida: 0, o entre Pmin y Pmax.
