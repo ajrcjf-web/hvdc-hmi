@@ -1,6 +1,6 @@
 # Fase 4 — Diseño: eventos, alarmas, protecciones y tendencias
 
-Este documento recoge las decisiones de diseño de la Fase 4 antes de implementarla. Cuando una subfase se cierre, `CLAUDE.md` pasa a describir el código como es; este documento queda como el registro de por qué se decidió así.
+Este documento recoge las decisiones de diseño de la Fase 4 antes de implementarla. `CLAUDE.md` se actualiza en cada PR, junto con el cambio que lo motiva (no al cerrar una subfase), y describe el código como es; este documento queda como el registro de por qué se decidió así.
 
 ## 1. Ventanas
 
@@ -15,6 +15,7 @@ Siguiendo ISA-18.2 / IEC 62682:
 
 - **Evento**: cualquier cosa registrada (una orden, un cambio de posición, una protección que actúa, una alarma que aparece).
 - **Alarma**: condición anormal que **requiere una acción del operador**. Toda alarma genera eventos, pero no todo evento es una alarma.
+- El estado `inconsistent` genera una **alarma urgente**: es anormal y requiere acción del operador (normalizar en modo manual, ver la sección 6). Así el rojo significa siempre una alarma urgente.
 
 **Prioridades** (tres):
 
@@ -123,4 +124,6 @@ Se publica **una sola versión, v0.4.0**, al cerrar la Fase 4 completa (no una p
 
 ## Impacto en el diseño visual
 
-`CLAUDE.md` hoy dice que el único color de la pantalla es el rojo de `inconsistent` y que el ámbar y el rojo de las alarmas quedan para la Fase 4. Esta fase agrega el ámbar (prioridad alta) y el amarillo (prioridad baja), y el rojo pasa a significar también "urgente". Cada color nuevo se define una sola vez en el `:root` de `src/web/styles.css`, y ningún dato depende solo del color.
+`CLAUDE.md` hoy dice que el único color de la pantalla es el rojo de `inconsistent` y que el ámbar y el rojo de las alarmas quedan para la Fase 4. Esta fase agrega el ámbar (prioridad alta) y el amarillo (prioridad baja). El rojo pasa a ser **solo la prioridad urgente**: como `inconsistent` genera una alarma urgente, sigue en rojo y deja de tener un rojo propio. Cada color nuevo se define una sola vez en el `:root` de `src/web/styles.css`, y ningún dato depende solo del color.
+
+`CLAUDE.md` se actualiza en el PR de la subfase 4.2, junto con el código de los colores.
