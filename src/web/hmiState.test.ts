@@ -266,3 +266,54 @@ describe("hmiReducer: pureza", () => {
     expect(state).toEqual(initial());
   });
 });
+
+describe("hmiReducer: navegar entre ventanas", () => {
+  test("empieza en la overview, o en la ventana indicada", () => {
+    expect(initial().activeWindow).toBe("overview");
+    const inEvents = createHmiState(testConfig, DEFAULT_SELECTION_TIMEOUT_SECONDS, "events");
+    expect(inEvents.activeWindow).toBe("events");
+  });
+
+  test("navigate cambia la ventana activa", () => {
+    const state = run(initial(), { type: "navigate", window: "events" });
+    expect(state.activeWindow).toBe("events");
+  });
+
+  test("navegar a la ventana actual no cambia nada", () => {
+    const before = initial();
+    expect(run(before, { type: "navigate", window: "overview" })).toBe(before);
+  });
+
+  test("navegar no toca la estación, la hora, la selección ni el registro", () => {
+    const before = run(initial(), select(transitionCommand("decoupled")));
+    const after = run(before, { type: "navigate", window: "trends" });
+    expect({ ...after, activeWindow: "overview" }).toEqual(before);
+  });
+
+  test("la simulación sigue avanzando en otra ventana", () => {
+    const state = ticks(run(initial(), { type: "navigate", window: "alarms" }), 5);
+    expect(state.timeSeconds).toBeCloseTo(5 * DT_SECONDS);
+    expect(state.activeWindow).toBe("alarms");
+  });
+
+  test("una orden confirmada se ejecuta aunque se haya navegado a otra ventana", () => {
+    const state = run(
+      initial(),
+      select(transitionCommand("decoupled")),
+      execute,
+      { type: "navigate", window: "faults" },
+      tick,
+    );
+    expect(kinds(state)).toContain("done");
+    expect(state.station.switchgear.Q1.kind).toBe("moving");
+  });
+
+  test("la selección expira aunque se esté en otra ventana", () => {
+    const state = ticks(
+      run(initial(), select(transitionCommand("decoupled")), { type: "navigate", window: "trends" }),
+      160,
+    );
+    expect(state.selection).toBeNull();
+    expect(kinds(state)).toContain("expired");
+  });
+});
