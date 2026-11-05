@@ -200,14 +200,20 @@ describe("hmiReducer: expiración (tiempo simulado)", () => {
     expect(state.selection).not.toBeNull();
   });
 
+  // Issue #46: con 15 s de plazo y latidos de 0.1 s, expira en el latido 150, no en el 151.
+  test("sigue activa en el latido 149 y expira en el 150", () => {
+    const selected = run(initial(), select(transitionCommand("decoupled")));
+    expect(ticks(selected, 149).selection).not.toBeNull();
+    expect(ticks(selected, 150).selection).toBeNull();
+  });
+
   test("expira al cumplirse el plazo y queda registrada con su hora", () => {
     const state = ticks(run(initial(), select(transitionCommand("decoupled"))), 160);
     expect(state.selection).toBeNull();
     const expired = state.log.find((entry) => entry.kind === "expired");
     expect(expired?.label).toBe("Ir a decoupled");
-    // El tiempo acumulado tiene redondeo: puede ser un latido después.
-    expect(expired?.timeSeconds).toBeGreaterThanOrEqual(DEFAULT_SELECTION_TIMEOUT_SECONDS);
-    expect(expired?.timeSeconds).toBeLessThan(DEFAULT_SELECTION_TIMEOUT_SECONDS + 0.2);
+    // El tiempo acumulado tiene redondeo (14.99999999999996): se compara con tolerancia.
+    expect(expired?.timeSeconds).toBeCloseTo(DEFAULT_SELECTION_TIMEOUT_SECONDS, 6);
   });
 
   test("al expirar no se ejecuta la orden", () => {

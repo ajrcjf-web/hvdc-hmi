@@ -61,6 +61,15 @@ describe("remainingSeconds", () => {
     expect(remainingSeconds(15, 14.9)).toBe(1);
   });
 
+  // Issue #46: el tiempo acumulado (100 × 0.1 = 9.99999999999998) no debe sumar un segundo de más.
+  test("no suma un segundo por el error de redondeo del tiempo acumulado", () => {
+    let time = 0;
+    for (let i = 0; i < 100; i++) {
+      time += 0.1;
+    }
+    expect(remainingSeconds(15, time)).toBe(5);
+  });
+
   test("nunca baja de 0", () => {
     expect(remainingSeconds(15, 15)).toBe(0);
     expect(remainingSeconds(15, 16)).toBe(0);
