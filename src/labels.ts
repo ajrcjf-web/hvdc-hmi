@@ -29,3 +29,14 @@ export function formatValue(value: number, decimals: number): string {
 export function formatTime(timeSeconds: number): string {
   return formatValue(timeSeconds, 1);
 }
+
+const pad = (value: number, digits: number) => String(value).padStart(digits, "0");
+
+// Fecha y hora con milisegundos, en hora local (ej. "2026-11-05 14:03:07.123").
+export function formatTimestamp(timestampMs: number): string {
+  const d = new Date(timestampMs);
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1, 2)}-${pad(d.getDate(), 2)} ` +
+    `${pad(d.getHours(), 2)}:${pad(d.getMinutes(), 2)}:${pad(d.getSeconds(), 2)}.${pad(d.getMilliseconds(), 3)}`
+  );
+}
