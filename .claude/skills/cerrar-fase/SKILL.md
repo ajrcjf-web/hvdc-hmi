@@ -7,12 +7,13 @@ description: Ritual de cierre de una fase del proyecto y publicación de su vers
 
 Guía al usuario por el cierre de una fase, según docs/WORKFLOW.md.
 El usuario está aprendiendo: explica cada paso y el porqué.
-Reparto de tareas, igual que en CLAUDE.md: Claude crea la rama de cierre, aplica los cambios aprobados, ejecuta `npm version`, hace los commits, el push y abre el PR con `gh`. El usuario se reserva el merge, el tag, el Release y el cierre del milestone.
+Reparto de tareas, igual que en CLAUDE.md: Claude crea la rama de cierre, aplica los cambios aprobados, ejecuta `npm version`, hace los commits, el push y abre el PR con `gh`. El usuario se reserva el merge, el tag, el Release y el cierre de los milestones. Si la fase tiene subfases (ej. la Fase 4: 4.1 a 4.5), el usuario cierra el milestone de cada subfase en GitHub al terminarla, no durante este ritual; aquí solo se comprueba que ya lo hizo.
 
 ## 1. Verificar el punto de partida
 - Confirmar que la rama actual es `main`, actualizada (`git pull`) y sin cambios pendientes (`git status`).
 - Confirmar que todas las casillas de la fase en la hoja de ruta del README están marcadas. Si falta alguna, avisar y no seguir.
 - Revisar con `gh` el milestone de la fase: `gh issue list --milestone "<nombre del milestone>" --state open`. No debe tener issues abiertos. Si quedan, decidir con el usuario si se resuelven antes o se mueven a otro milestone o al backlog (sin milestone). Para ver el nombre exacto: `gh api repos/:owner/:repo/milestones --jq '.[].title'` (lista solo los milestones abiertos, y el de la fase que se cierra lo está).
+- Si la fase tiene subfases (ej. la Fase 4 tiene cinco milestones, 4.1 a 4.5), comprobar que todos estén cerrados y sin issues abiertos. La consulta anterior no sirve, porque lista solo los abiertos; usar `gh api "repos/:owner/:repo/milestones?state=all" --jq '.[] | "\(.title)\t\(.state)\t\(.open_issues)"'` y mirar las filas de la fase. Si alguno sigue abierto, avisar y no seguir: el usuario lo cierra al terminar esa subfase, antes del cierre de fase.
 - Ejecutar `npm run typecheck` y `npm test`. Si algo falla, no seguir.
 
 ## 2. Revisar la fase con el usuario
@@ -71,4 +72,4 @@ gh release create v0.N.0 --verify-tag --draft --title "v0.N.0 — Fase N: <nombr
 - `--draft` deja el Release sin publicar, para que el usuario revise en GitHub que sus notas quedaron arriba de las generadas y lo publique desde ahí.
 - Nota: la ayuda de `gh release create` documenta que `--notes` se antepone a las notas de `--generate-notes`, pero no lo dice de `--notes-file`. Cuando el usuario confirme que `--notes-file` se combina bien con `--generate-notes`, quitar `--draft` de este comando y de docs/WORKFLOW.md.
 
-Por último, pedir al usuario que cierre el milestone de la fase en GitHub (Issues → Milestones → Close) y que verifique que el enlace al Release de la nota de estado del README funciona.
+Por último, si la fase no tiene subfases, pedir al usuario que cierre el milestone de la fase en GitHub (Issues → Milestones → Close); si las tiene, sus milestones ya están cerrados (se comprobó en el paso 1). Pedirle también que verifique que el enlace al Release de la nota de estado del README funciona.
