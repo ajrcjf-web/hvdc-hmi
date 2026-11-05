@@ -43,6 +43,31 @@ h3 {
   color: var(--text-muted);
 }
 
+/* Barra de ventanas: sin color. La activa va en negrita, con borde inferior grueso y
+   texto de máximo brillo; las pendientes, en gris secundario. */
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--line-dim);
+}
+
+.nav button {
+  background: transparent;
+  color: var(--text-muted);
+  border: 0;
+  border-bottom: 4px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.nav button.nav-active {
+  color: var(--text-strong);
+  font-weight: bold;
+  border-bottom-color: var(--line);
+}
+
 .layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
