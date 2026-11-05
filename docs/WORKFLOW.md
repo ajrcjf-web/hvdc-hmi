@@ -38,6 +38,8 @@
 4. Revisar **Files changed**; corregir en la misma rama si hace falta.
 5. **Merge pull request** y **Delete branch**.
 6. En la terminal: `git switch main` → `git pull` → `git branch -d nombre-rama` → `git fetch --prune`.
+   - Después de un **Squash and merge**, `git branch -d` puede negarse ("not fully merged"): Squash crea un commit nuevo en `main`, y Git no reconoce los commits originales de la rama como mergeados.
+   - En ese caso, primero verificar que el PR se mergeó: `gh pr view <N> --json state,mergedAt` debe mostrar `MERGED`. Solo entonces usar `git branch -D nombre-rama`. Sin esa verificación, `-D` puede borrar trabajo que no está en `main`.
 
 ## Al cerrar una fase
 
