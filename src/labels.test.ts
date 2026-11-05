@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { converterLabels, formatSwitch, formatTime, formatValue } from "./labels.ts";
+import { converterLabels, formatSwitch, formatTime, formatTimestamp, formatValue } from "./labels.ts";
 import { switchgearFor } from "./stationState.ts";
 
 describe("etiquetas", () => {
@@ -28,5 +28,17 @@ describe("etiquetas", () => {
   test("los valores se muestran con los decimales pedidos", () => {
     expect(formatValue(29.999999999999996, 0)).toBe("30");
     expect(formatValue(0.6, 2)).toBe("0.60");
+  });
+});
+
+describe("formatTimestamp", () => {
+  test("fecha y hora local con milisegundos", () => {
+    const ms = new Date(2026, 10, 5, 14, 3, 7, 123).getTime(); // los meses empiezan en 0
+    expect(formatTimestamp(ms)).toBe("2026-11-05 14:03:07.123");
+  });
+
+  test("rellena con ceros los números cortos", () => {
+    const ms = new Date(2026, 0, 2, 3, 4, 5, 6).getTime();
+    expect(formatTimestamp(ms)).toBe("2026-01-02 03:04:05.006");
   });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { Station } from "../station.ts";
 import { deriveState } from "../stationState.ts";
-import { deblockedAt, testConfig } from "../testSupport.ts";
+import { deblockedAt, stationAt, testConfig } from "../testSupport.ts";
 import {
   blockCommand,
   deblockCommand,
@@ -14,6 +14,7 @@ import {
   DEFAULT_SELECTION_TIMEOUT_SECONDS,
   DT_SECONDS,
   hmiReducer,
+  MAX_EVENTS,
   MAX_LOG_ENTRIES,
   type HmiAction,
   type HmiState,
@@ -315,5 +316,127 @@ describe("hmiReducer: navegar entre ventanas", () => {
     );
     expect(state.selection).toBeNull();
     expect(kinds(state)).toContain("expired");
+  });
+});
+
+describe("hmiReducer: eventos del SER", () => {
+  const START_MS = 1_000_000;
+  const fresh = () =>
+    createHmiState(testConfig, DEFAULT_SELECTION_TIMEOUT_SECONDS, "overview", START_MS);
+  const codesAndStates = (state: HmiState) =>
+    [...state.events].reverse().map((e) => `${e.code} ${e.state}`);
+
+  test("empieza sin eventos", () => {
+    expect(fresh().events).toEqual([]);
+    expect(fresh().nextEventId).toBe(0);
+  });
+
+  test("seleccionar deja el evento 'seleccionada' con la marca de tiempo del arranque", () => {
+    const state = run(fresh(), select(transitionCommand("decoupled")));
+    expect(state.events).toEqual([
+      { id: 0, code: "CMD.TO_DECOUPLED", state: "selected", timestampMs: START_MS },
+    ]);
+  });
+
+  test("la marca de tiempo es el arranque más el tiempo simulado", () => {
+    const state = run(ticks(fresh(), 25), select(transitionCommand("decoupled")));
+    expect(state.events[0]?.timestampMs).toBe(START_MS + 2500);
+  });
+
+  test("una selección rechazada deja el evento 'rechazada' con su motivo", () => {
+    const state = run(fresh(), select(transitionCommand("coupled"))); // no es vecino
+    expect(state.events).toHaveLength(1);
+    expect(state.events[0]).toMatchObject({ code: "CMD.TO_COUPLED", state: "rejected" });
+    expect(state.events[0]?.detail).toBe(state.log[0]?.reason);
+  });
+
+  test("cancelar deja el evento 'cancelada'", () => {
+    const state = run(fresh(), select(transitionCommand("decoupled")), cancel);
+    expect(codesAndStates(state)).toEqual(["CMD.TO_DECOUPLED selected", "CMD.TO_DECOUPLED cancelled"]);
+  });
+
+  test("al expirar la selección queda el evento 'expirada'", () => {
+    const state = ticks(run(fresh(), select(transitionCommand("decoupled"))), 160);
+    expect(codesAndStates(state)).toEqual(["CMD.TO_DECOUPLED selected", "CMD.TO_DECOUPLED expired"]);
+    expect(state.events[0]?.timestampMs).toBeGreaterThanOrEqual(START_MS + 15000);
+  });
+
+  test("de stopped a decoupled: orden, maniobra de Q1 y cambio de estado", () => {
+    const state = run(
+      withStation(stationAt("stopped")),
+      select(transitionCommand("decoupled")),
+      execute,
+      tick,
+    );
+    expect(codesAndStates(state)).toEqual([
+      "CMD.TO_DECOUPLED selected",
+      "CMD.TO_DECOUPLED executed",
+      "Q1.POS moving",
+      "STATION.STATE transition",
+    ]);
+  });
+
+  test("al terminar la maniobra aparecen la posición final y el nuevo estado", () => {
+    const state = ticks(
+      run(withStation(stationAt("stopped")), select(transitionCommand("decoupled")), execute),
+      30,
+    );
+    expect(codesAndStates(state).slice(-2)).toEqual(["Q1.POS closed", "STATION.STATE decoupled"]);
+  });
+
+  test("la consigna lleva su valor en MW en sus eventos", () => {
+    const state = run(withStation(deblockedAt(0)), select(powerOrderCommand(300)), execute, tick);
+    const power = state.events.filter((e) => e.code === "CMD.POWER_ORDER");
+    expect(power.map((e) => e.state)).toEqual(["executed", "selected"]);
+    expect(power.every((e) => e.valueMW === 300)).toBe(true);
+  });
+
+  test("desbloquear deja el evento del convertidor", () => {
+    const coupled = { ...deblockedAt(0), converter: "blocked" as const, udcKV: 0 };
+    const state = run(withStation(coupled), select(deblockCommand()), execute, tick);
+    expect(codesAndStates(state)).toContain("CONVERTER.BLOCK deblocked");
+  });
+
+  test("una orden confirmada que se rechaza al ejecutar deja 'rechazada' con su motivo", () => {
+    const state = run(
+      withStation(stationAt("stopped")),
+      select(transitionCommand("decoupled")),
+      execute,
+      select(transitionCommand("decoupled")), // todavía válida: Q1 aún no se movió
+      execute,
+      tick,
+    );
+    const rejected = state.events.find((e) => e.state === "rejected");
+    expect(rejected).toMatchObject({ code: "CMD.TO_DECOUPLED" });
+    expect(rejected?.detail).toEqual(expect.any(String));
+  });
+
+  test("el más reciente va primero y los id crecen sin repetirse", () => {
+    const state = run(fresh(), select(transitionCommand("decoupled")), cancel, select(transitionCommand("decoupled")));
+    expect(state.events.map((e) => e.id)).toEqual([2, 1, 0]);
+  });
+
+  test("navegar no genera eventos", () => {
+    const before = run(fresh(), select(transitionCommand("stopped")));
+    const after = run(before, { type: "navigate", window: "events" });
+    expect(after.events).toBe(before.events);
+  });
+
+  test("el SER guarda como mucho MAX_EVENTS y descarta los más viejos", () => {
+    let state = fresh();
+    for (let i = 0; i < MAX_EVENTS + 5; i++) {
+      state = run(state, select(transitionCommand("coupled"))); // se rechaza: un evento cada vez
+    }
+    expect(state.events).toHaveLength(MAX_EVENTS);
+    expect(state.nextEventId).toBe(MAX_EVENTS + 5);
+    expect(state.nextEventId - state.events.length).toBe(5); // descartados
+    expect(state.events[0]?.id).toBe(MAX_EVENTS + 4); // el más nuevo
+    expect(state.events.at(-1)?.id).toBe(5); // el más viejo que queda
+  });
+
+  test("el reducer no modifica el estado recibido al generar eventos", () => {
+    const state = fresh();
+    run(state, select(transitionCommand("stopped")), execute, tick);
+    expect(state).toEqual(fresh());
   });
 });

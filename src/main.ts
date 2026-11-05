@@ -73,9 +73,9 @@ function tick(): void {
   for (const event of cycle.events) {
     if (event.kind === "command") {
       logCommand(event.label, event.result);
-    } else {
+    } else if (event.kind === "snapshot") {
       logSnapshot(event.station);
-    }
+    } // los eventos de señal son para el SER de la web: la consola no los muestra
   }
 
   station = cycle.station;

@@ -285,3 +285,61 @@ input {
 .confirmation .buttons {
   margin-top: 1rem;
 }
+
+/* Ventana SER: una tabla en grises. El rechazo se distingue como en el registro
+   (negrita, fondo más claro, barra a la izquierda y el símbolo ✗ de su texto). */
+.ser-scroll {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.ser {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.ser th {
+  position: sticky;
+  background: var(--surface);
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  color: var(--text-muted);
+}
+
+.ser thead tr:first-child th {
+  top: 0;
+}
+
+.ser .ser-filters th {
+  top: 2rem;
+  padding-top: 0;
+  border-bottom: 1px solid var(--line-dim);
+}
+
+.ser .ser-filters input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.25rem 0.4rem;
+}
+
+.ser td {
+  padding: 0.2rem 0.5rem;
+  border-left: 3px solid transparent;
+  color: var(--text-muted);
+}
+
+.ser .ser-time {
+  font-family: ui-monospace, monospace;
+  white-space: nowrap;
+}
+
+.ser tr.rejected td {
+  color: var(--text-strong);
+  font-weight: bold;
+  background: var(--surface-raised);
+}
+
+.ser tr.rejected td:first-child {
+  border-left-color: var(--line);
+}
