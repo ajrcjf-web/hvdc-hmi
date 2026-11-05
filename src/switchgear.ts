@@ -2,6 +2,8 @@
 // posiciones, tiempos de maniobra y enclavamientos.
 // Funciones puras: reciben la aparamenta y devuelven una nueva.
 
+import { isTimeUp, wholeSecondsLeft } from "./simulationTime.ts";
+
 export const switchIds = ["Q1", "Q2", "QE"] as const;
 export type SwitchId = (typeof switchIds)[number];
 // Q1: interruptor AC. Q2: seccionador DC. QE: seccionador de puesta a tierra.
@@ -50,11 +52,11 @@ const directionLabels: Record<SwitchTarget, string> = {
   closed: "cierre",
 };
 
-// Segundos enteros que faltan, redondeados hacia arriba. Antes se redondea a
-// milisegundos para que el error decimal del tiempo acumulado (6.000000000000001)
-// no sume un segundo de más, y nunca baja de 1 mientras el equipo siga en maniobra.
+// Segundos enteros que faltan, redondeados hacia arriba. wholeSecondsLeft tolera el
+// error decimal del tiempo acumulado (6.000000000000001 no suma un segundo de más),
+// y aquí nunca baja de 1 mientras el equipo siga en maniobra.
 function secondsLeft(remainingSeconds: number): number {
-  return Math.max(1, Math.ceil(Math.round(remainingSeconds * 1000) / 1000));
+  return Math.max(1, wholeSecondsLeft(remainingSeconds));
 }
 
 // Describe las maniobras en curso para los motivos de rechazo (por ejemplo,
@@ -117,7 +119,8 @@ function stepSwitch(status: SwitchStatus, dtSeconds: number): SwitchStatus {
     return status;
   }
   const remainingSeconds = status.remainingSeconds - dtSeconds;
-  if (remainingSeconds <= 0) {
+  // No se compara con <= 0: restar dt muchas veces deja un residuo positivo (1.39e-16).
+  if (isTimeUp(remainingSeconds)) {
     return { kind: status.to };
   }
   return { ...status, remainingSeconds };

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   createSwitchgear,
+  defaultSwitchgearConfig,
   describeMovingSwitches,
   requestSwitch,
   stepSwitchgear,
@@ -174,5 +175,57 @@ describe("requestSwitch: motivo de rechazo por maniobra en curso", () => {
       ok: false,
       reason: expect.stringContaining("Q1 en maniobra (cierre), faltan 2 s"),
     });
+  });
+});
+
+// Con dt decimal, restar dt muchas veces deja un residuo (1 - 10 × 0.1 = 1.39e-16):
+// la maniobra debe terminar en el ciclo justo, no en el siguiente. Issue #46.
+describe("stepSwitchgear: maniobra con dt decimal", () => {
+  function cyclesToFinish(operatingSeconds: number, dtSeconds: number): number {
+    let switchgear: Switchgear = {
+      Q1: { kind: "moving", to: "closed", remainingSeconds: operatingSeconds },
+      Q2: OPEN,
+      QE: OPEN,
+    };
+    let cycles = 0;
+    while (switchgear.Q1.kind === "moving" && cycles < 100_000) {
+      switchgear = stepSwitchgear(switchgear, dtSeconds);
+      cycles++;
+    }
+    return cycles;
+  }
+
+  test("una maniobra de 1 s con dt = 0.1 termina en el ciclo 10, no en el 11", () => {
+    expect(cyclesToFinish(1, 0.1)).toBe(10);
+  });
+
+  test("y sigue en maniobra en el ciclo 9", () => {
+    let switchgear: Switchgear = {
+      Q1: { kind: "moving", to: "closed", remainingSeconds: 1 },
+      Q2: OPEN,
+      QE: OPEN,
+    };
+    for (let i = 0; i < 9; i++) {
+      switchgear = stepSwitchgear(switchgear, 0.1);
+    }
+    expect(switchgear.Q1.kind).toBe("moving");
+  });
+
+  test.each([
+    { name: "Q1 por defecto", seconds: defaultSwitchgearConfig.operatingTimeSeconds.Q1, dt: 0.1, cycles: 10 },
+    { name: "Q2 por defecto", seconds: defaultSwitchgearConfig.operatingTimeSeconds.Q2, dt: 0.1, cycles: 80 },
+    { name: "QE por defecto", seconds: defaultSwitchgearConfig.operatingTimeSeconds.QE, dt: 0.1, cycles: 60 },
+    { name: "Q1 de test", seconds: config.operatingTimeSeconds.Q1, dt: 0.1, cycles: 20 },
+    { name: "Q2 de test", seconds: config.operatingTimeSeconds.Q2, dt: 0.1, cycles: 40 },
+    { name: "QE de test", seconds: config.operatingTimeSeconds.QE, dt: 0.1, cycles: 30 },
+    { name: "1 s con dt = 0.05", seconds: 1, dt: 0.05, cycles: 20 },
+    { name: "1 s con dt = 0.01", seconds: 1, dt: 0.01, cycles: 100 },
+    { name: "0.3 s con dt = 0.1", seconds: 0.3, dt: 0.1, cycles: 3 },
+  ])("$name: termina en el ciclo $cycles", ({ seconds, dt, cycles }) => {
+    expect(cyclesToFinish(seconds, dt)).toBe(cycles);
+  });
+
+  test("con dt mayor que el tiempo restante termina en un solo ciclo", () => {
+    expect(cyclesToFinish(1, 5)).toBe(1);
   });
 });
