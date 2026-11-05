@@ -13,8 +13,8 @@ describe("lista de ventanas", () => {
     expect(windows.map((w) => w.id)).toEqual([...windowIds]);
   });
 
-  test("por ahora solo la overview tiene contenido", () => {
-    expect(windows.filter((w) => w.available).map((w) => w.id)).toEqual(["overview"]);
+  test("por ahora solo la overview y los eventos tienen contenido", () => {
+    expect(windows.filter((w) => w.available).map((w) => w.id)).toEqual(["overview", "events"]);
   });
 
   test("cada ventana tiene una dirección propia", () => {

@@ -6,13 +6,14 @@ import { ConfirmationDialog } from "./components/ConfirmationDialog.tsx";
 import { NavigationBar } from "./components/NavigationBar.tsx";
 import { OverviewWindow } from "./components/OverviewWindow.tsx";
 import { PendingWindow } from "./components/PendingWindow.tsx";
+import { SerWindow } from "./components/SerWindow.tsx";
 import {
   createHmiState,
   DEFAULT_SELECTION_TIMEOUT_SECONDS,
   hmiReducer,
   TICK_MS,
 } from "./hmiState.ts";
-import { hashForWindow, windowFromHash } from "./windows.ts";
+import { hashForWindow, windowFromHash, windowInfo } from "./windows.ts";
 
 // La ventana inicial sale de la dirección de la página (ej. #/eventos).
 function createInitialState() {
@@ -20,6 +21,7 @@ function createInitialState() {
     defaultConfig,
     DEFAULT_SELECTION_TIMEOUT_SECONDS,
     windowFromHash(window.location.hash),
+    Date.now(), // el instante de arranque: las marcas de tiempo del SER parten de aquí
   );
 }
 
@@ -50,11 +52,11 @@ export function App() {
           window.location.hash = hashForWindow(id);
         }}
       />
-      {state.activeWindow === "overview" ? (
-        <OverviewWindow state={state} dispatch={dispatch} />
-      ) : (
-        <PendingWindow id={state.activeWindow} />
+      {state.activeWindow === "overview" && <OverviewWindow state={state} dispatch={dispatch} />}
+      {state.activeWindow === "events" && (
+        <SerWindow events={state.events} discarded={state.nextEventId - state.events.length} />
       )}
+      {!windowInfo(state.activeWindow).available && <PendingWindow id={state.activeWindow} />}
       {state.selection !== null && (
         <ConfirmationDialog
           selection={state.selection}

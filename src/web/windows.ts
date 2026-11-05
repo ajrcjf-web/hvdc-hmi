@@ -19,7 +19,7 @@ export type WindowInfo = {
 export const windows: WindowInfo[] = [
   { id: "overview", label: "Overview", route: "overview", available: true, subphase: "3" },
   { id: "alarms", label: "Alarmas", route: "alarmas", available: false, subphase: "4.2" },
-  { id: "events", label: "Eventos (SER)", route: "eventos", available: false, subphase: "4.1" },
+  { id: "events", label: "Eventos (SER)", route: "eventos", available: true, subphase: "4.1" },
   { id: "trends", label: "Tendencias", route: "tendencias", available: false, subphase: "4.5" },
   { id: "faults", label: "Simulación de fallas", route: "simulacion", available: false, subphase: "4.4" },
 ];
