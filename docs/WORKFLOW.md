@@ -38,12 +38,14 @@
 4. Revisar **Files changed**; corregir en la misma rama si hace falta.
 5. **Merge pull request** y **Delete branch**.
 6. En la terminal: `git switch main` → `git pull` → `git branch -d nombre-rama` → `git fetch --prune`.
+   - Después de un **Squash and merge**, `git branch -d` puede negarse ("not fully merged"): Squash crea un commit nuevo en `main`, y Git no reconoce los commits originales de la rama como mergeados.
+   - En ese caso, primero verificar que el PR se mergeó: `gh pr view <N> --json state,mergedAt` debe mostrar `MERGED`. Solo entonces usar `git branch -D nombre-rama`. Sin esa verificación, `-D` puede borrar trabajo que no está en `main`.
 
 ## Al cerrar una fase
 
 En Claude Code, `/cerrar-fase` guía este procedimiento.
 
-1. **Revisar el milestone** de la fase (Claude lo consulta con `gh`): no debe tener issues abiertos. Los que queden se resuelven antes, o se mueven a otro milestone o al backlog.
+1. **Revisar el milestone** de la fase (Claude lo consulta con `gh`): no debe tener issues abiertos. Los que queden se resuelven antes, o se mueven a otro milestone o al backlog. Si la fase tiene subfases, todos sus milestones deben estar ya cerrados y sin issues abiertos (Claude lo comprueba con `gh api "repos/:owner/:repo/milestones?state=all"`).
 2. **Revisar la hoja de ruta** del README:
    - ¿Qué cambió respecto del plan?
    - ¿Qué adelantamos o postergamos?
@@ -64,7 +66,7 @@ En Claude Code, `/cerrar-fase` guía este procedimiento.
    gh release create v0.N.0 --verify-tag --draft --title "v0.N.0 — Fase N: <nombre de la fase>" --generate-notes --notes-file <archivo>
    ```
    Las notas propias se anteponen a las generadas por GitHub. `--draft` deja el Release sin publicar: se revisa en GitHub y se publica desde ahí. Cuando se confirme que `--notes-file` se combina bien con `--generate-notes`, se quita `--draft`.
-8. **Cerrar el milestone** de la fase (solo el usuario: Issues → Milestones → Close).
+8. **Cerrar el milestone** de la fase (solo el usuario: Issues → Milestones → Close). Si la fase tiene subfases, no hay nada que cerrar aquí: cada milestone se cerró al terminar su subfase.
 
 Las tareas de las fases cerradas no se reescriben aunque el código cambie después: documentan lo que era cierto en ese momento, igual que las notas de un Release.
 
@@ -73,6 +75,7 @@ Las tareas de las fases cerradas no se reescriben aunque el código cambie despu
 - **La hoja de ruta del README** muestra las grandes tareas de cada fase.
 - **Los issues** registran las mejoras puntuales y los errores que aparecen en el camino. Cada uno explica qué hay hoy, qué se propone y de dónde surgió.
 - **Cada fase tiene un milestone** con el mismo nombre que en el README. Los issues sin milestone forman el backlog: pendientes, sin fase decidida.
+- **Subfases.** Una fase grande puede dividirse en subfases (hoy, la Fase 4: 4.1 a 4.5). Cada subfase tiene su propio milestone, que el usuario cierra en GitHub al terminarla. La versión se publica una sola vez, al cerrar la fase completa.
 - **Un PR que resuelve un issue** lo menciona con `Closes #N`: al hacer merge, GitHub cierra el issue y los deja vinculados.
 - **`CLAUDE.md`** no lista tareas pendientes: describe el código como es hoy, incluidas sus simplificaciones conocidas.
 
