@@ -16,6 +16,7 @@ import {
   type SignalEvent,
 } from "../events.ts";
 import { runCycle, type ScheduledCommand } from "../simulationCycle.ts";
+import { hasReached } from "../simulationTime.ts";
 import { createStation, type Station, type StationConfig } from "../station.ts";
 import { commandLabel, commandSignal, runCommand, type OperatorCommand } from "./commands.ts";
 import { DEFAULT_WINDOW, type WindowId } from "./windows.ts";
@@ -256,10 +257,10 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
         }
       }
 
-      // La selección expira según el tiempo simulado. Se compara con >= (no con ===)
-      // porque el tiempo acumulado tiene error de redondeo.
+      // La selección expira según el tiempo simulado. Se compara con hasReached (no con
+      // === ni con >=) porque el tiempo acumulado tiene error de redondeo.
       let selection = state.selection;
-      if (selection !== null && cycle.timeSeconds >= selection.expiresAtSeconds) {
+      if (selection !== null && hasReached(cycle.timeSeconds, selection.expiresAtSeconds)) {
         drafts.push({
           timeSeconds: cycle.timeSeconds,
           kind: "expired",

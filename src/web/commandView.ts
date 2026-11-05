@@ -2,6 +2,7 @@
 // solo preparan textos y datos; los componentes los ponen en pantalla.
 
 import { formatValue } from "../labels.ts";
+import { wholeSecondsLeft } from "../simulationTime.ts";
 import type { Station, StationConfig } from "../station.ts";
 import { deriveState, type DerivedState } from "../stationState.ts";
 import { commandLabel, runCommand, type OperatorCommand } from "./commands.ts";
@@ -61,9 +62,10 @@ export function describeCommand(
 }
 
 // Segundos que faltan para que expire la selección, redondeados hacia arriba
-// (así nunca se muestra 0 mientras queda algo de tiempo).
+// (así nunca se muestra 0 mientras queda algo de tiempo) y sin sumar un segundo por
+// el error de redondeo del tiempo acumulado.
 export function remainingSeconds(expiresAtSeconds: number, timeSeconds: number): number {
-  return Math.max(0, Math.ceil(expiresAtSeconds - timeSeconds));
+  return wholeSecondsLeft(expiresAtSeconds - timeSeconds);
 }
 
 // El texto de una entrada del registro. Cada tipo lleva su símbolo,
