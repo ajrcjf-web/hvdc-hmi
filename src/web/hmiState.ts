@@ -12,6 +12,7 @@
 import { runCycle, type ScheduledCommand } from "../simulationCycle.ts";
 import { createStation, type Station, type StationConfig } from "../station.ts";
 import { commandLabel, runCommand, type OperatorCommand } from "./commands.ts";
+import { DEFAULT_WINDOW, type WindowId } from "./windows.ts";
 
 export const TICK_MS = 100; // cada cuánto late el reloj (tiempo real)
 export const DT_SECONDS = 0.1; // tiempo simulado por latido: velocidad 1× (tiempo real)
@@ -53,6 +54,7 @@ export type Selection = {
 export type HmiState = {
   config: StationConfig;
   selectionTimeoutSeconds: number;
+  activeWindow: WindowId; // la ventana que se ve; la simulación es la misma en todas
   station: Station;
   timeSeconds: number;
   selection: Selection | null; // como mucho una a la vez
@@ -66,15 +68,18 @@ export type HmiAction =
   | { type: "tick" }
   | { type: "select"; command: OperatorCommand }
   | { type: "execute" }
-  | { type: "cancel" };
+  | { type: "cancel" }
+  | { type: "navigate"; window: WindowId };
 
 export function createHmiState(
   config: StationConfig,
   selectionTimeoutSeconds = DEFAULT_SELECTION_TIMEOUT_SECONDS,
+  activeWindow: WindowId = DEFAULT_WINDOW,
 ): HmiState {
   return {
     config,
     selectionTimeoutSeconds,
+    activeWindow,
     station: createStation(),
     timeSeconds: 0,
     selection: null,
@@ -132,6 +137,12 @@ function selectCommand(state: HmiState, command: OperatorCommand): HmiState {
 
 export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
   switch (action.type) {
+    case "navigate":
+      // Cambiar de ventana no es una orden: no toca la estación, la selección ni el reloj.
+      return action.window === state.activeWindow
+        ? state
+        : { ...state, activeWindow: action.window };
+
     case "select":
       return selectCommand(state, action.command);
 
