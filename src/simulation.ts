@@ -1,6 +1,7 @@
 // Simulación de la planta: cómo evoluciona la estación con el tiempo.
 // Funciones puras: reciben una estación y devuelven la siguiente.
 
+import { isTimeUp } from "./simulationTime.ts";
 import { targetUdcKV, type Station, type StationConfig } from "./station.ts";
 import { stepSwitchgear } from "./switchgear.ts";
 
@@ -17,22 +18,36 @@ export function step(
     udcKV: rampTowards(
       station.udcKV,
       targetUdcKV(station, config),
-      config.voltageRampKVPerS * dtSeconds,
+      config.voltageRampKVPerS,
+      dtSeconds,
     ),
     powerMW: rampTowards(
       station.powerMW,
       station.powerOrderMW,
-      (config.rampRateMWPerMin / 60) * dtSeconds,
+      config.rampRateMWPerMin / 60,
+      dtSeconds,
     ),
   };
 }
 
-// Acerca un valor a su objetivo sin cambiar más que maxChange.
+// Acerca un valor a su objetivo con una rampa (unidades por segundo) durante dtSeconds.
 // Al llegar, queda exactamente en el objetivo (sin errores de redondeo).
-function rampTowards(value: number, target: number, maxChange: number): number {
+// Llega si el tiempo que haría falta no supera dt: se compara en tiempo, con
+// isTimeUp, y no el paso con el error, porque un paso decimal (100/3 × 0.1) deja un
+// residuo que la comparación exacta no tolera y haría llegar un ciclo tarde.
+function rampTowards(
+  value: number,
+  target: number,
+  ratePerSecond: number,
+  dtSeconds: number,
+): number {
   const error = target - value;
-  if (Math.abs(error) <= maxChange) {
+  if (error === 0) {
     return target;
   }
-  return value + Math.sign(error) * maxChange;
+  const secondsNeeded = Math.abs(error) / ratePerSecond;
+  if (isTimeUp(secondsNeeded - dtSeconds)) {
+    return target;
+  }
+  return value + Math.sign(error) * ratePerSecond * dtSeconds;
 }
