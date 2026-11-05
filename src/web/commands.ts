@@ -11,6 +11,8 @@ import {
   type Station,
   type StationConfig,
 } from "../station.ts";
+import type { CommandSignal } from "../events.ts";
+import type { SignalCode } from "../signals.ts";
 import type { StationState } from "../stationState.ts";
 
 export type OperatorCommand =
@@ -69,3 +71,25 @@ export function commandLabel(command: OperatorCommand): string {
         : "Consigna (valor no válido)";
   }
 }
+
+// La señal con la que se registra la orden en el SER: un código por orden y, en la
+// consigna, su valor en MW. Los textos no están aquí: salen de la tabla de señales.
+export function commandSignal(command: OperatorCommand): CommandSignal {
+  switch (command.kind) {
+    case "transition":
+      return { code: transitionSignals[command.to] };
+    case "block":
+      return { code: "CMD.BLOCK" };
+    case "deblock":
+      return { code: "CMD.DEBLOCK" };
+    case "powerOrder":
+      return { code: "CMD.POWER_ORDER", valueMW: command.orderMW };
+  }
+}
+
+const transitionSignals: Record<StationState, SignalCode> = {
+  earthed: "CMD.TO_EARTHED",
+  stopped: "CMD.TO_STOPPED",
+  decoupled: "CMD.TO_DECOUPLED",
+  coupled: "CMD.TO_COUPLED",
+};

@@ -9,14 +9,25 @@
 //             que vuelve a verificarla (la estación pudo cambiar entre los dos pasos)
 // Una selección se cierra con execute, cancel o al expirar (en tiempo simulado).
 
+import {
+  commandStepEvent,
+  timestampMs,
+  type SerEvent,
+  type SignalEvent,
+} from "../events.ts";
 import { runCycle, type ScheduledCommand } from "../simulationCycle.ts";
 import { createStation, type Station, type StationConfig } from "../station.ts";
-import { commandLabel, runCommand, type OperatorCommand } from "./commands.ts";
+import { commandLabel, commandSignal, runCommand, type OperatorCommand } from "./commands.ts";
 import { DEFAULT_WINDOW, type WindowId } from "./windows.ts";
 
 export const TICK_MS = 100; // cada cuánto late el reloj (tiempo real)
 export const DT_SECONDS = 0.1; // tiempo simulado por latido: velocidad 1× (tiempo real)
 export const MAX_LOG_ENTRIES = 20;
+// Eventos que guarda el SER. Al llenarse, se descartan los más viejos (como el buffer
+// circular de un SER real): sin límite, una sesión larga haría crecer la memoria y el
+// redibujo de la tabla sin parar. Con 1000 caben cientos de maniobras (una maniobra
+// completa genera unas 10 señales) y la tabla se filtra al escribir sin que se note.
+export const MAX_EVENTS = 1000;
 export const DEFAULT_SELECTION_TIMEOUT_SECONDS = 15;
 
 // Qué pasó con una orden:
@@ -62,6 +73,9 @@ export type HmiState = {
   pending: ScheduledCommand[]; // órdenes confirmadas que esperan al próximo latido
   log: LogEntry[]; // la más reciente primero
   nextLogId: number;
+  startMs: number; // instante de arranque de la simulación (ms desde 1970)
+  events: SerEvent[]; // los eventos del SER, el más reciente primero (hasta MAX_EVENTS)
+  nextEventId: number; // nunca se repite: nextEventId - events.length = descartados
 };
 
 export type HmiAction =
@@ -75,6 +89,8 @@ export function createHmiState(
   config: StationConfig,
   selectionTimeoutSeconds = DEFAULT_SELECTION_TIMEOUT_SECONDS,
   activeWindow: WindowId = DEFAULT_WINDOW,
+  // Los tests lo fijan; en la web lo pasa App. Aquí solo se lee una vez, al crear el estado.
+  startMs: number = Date.now(),
 ): HmiState {
   return {
     config,
@@ -87,6 +103,9 @@ export function createHmiState(
     pending: [],
     log: [],
     nextLogId: 0,
+    startMs,
+    events: [],
+    nextEventId: 0,
   };
 }
 
@@ -101,6 +120,22 @@ function withLog(state: HmiState, drafts: LogDraft[]): Pick<HmiState, "log" | "n
   };
 }
 
+// Agrega eventos al SER (en orden cronológico; en la lista queda el más reciente primero),
+// con su marca de tiempo: instante de arranque + tiempo simulado.
+function withEvents(
+  state: HmiState,
+  drafts: SignalEvent[],
+): Pick<HmiState, "events" | "nextEventId"> {
+  const stored = drafts.map((draft, i): SerEvent => {
+    const { timeSeconds, ...rest } = draft;
+    return { ...rest, id: state.nextEventId + i, timestampMs: timestampMs(state.startMs, timeSeconds) };
+  });
+  return {
+    events: [...stored.reverse(), ...state.events].slice(0, MAX_EVENTS),
+    nextEventId: state.nextEventId + drafts.length,
+  };
+}
+
 function selectCommand(state: HmiState, command: OperatorCommand): HmiState {
   const label = commandLabel(command);
 
@@ -109,6 +144,9 @@ function selectCommand(state: HmiState, command: OperatorCommand): HmiState {
     selectionNotice: `${label}: ${reason}`,
     ...withLog(state, [
       { timeSeconds: state.timeSeconds, kind: "selection-rejected", label, reason },
+    ]),
+    ...withEvents(state, [
+      commandStepEvent(commandSignal(command), "rejected", state.timeSeconds, reason),
     ]),
   });
 
@@ -132,6 +170,7 @@ function selectCommand(state: HmiState, command: OperatorCommand): HmiState {
     },
     selectionNotice: null,
     ...withLog(state, [{ timeSeconds: state.timeSeconds, kind: "selected", label, reason: null }]),
+    ...withEvents(state, [commandStepEvent(commandSignal(command), "selected", state.timeSeconds)]),
   };
 }
 
@@ -157,6 +196,7 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
       const scheduled: ScheduledCommand = {
         atSeconds: state.timeSeconds,
         label,
+        signal: commandSignal(command),
         run: (station) => runCommand(command, station, state.config),
       };
       return {
@@ -186,6 +226,9 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
             reason: null,
           },
         ]),
+        ...withEvents(state, [
+          commandStepEvent(commandSignal(state.selection.command), "cancelled", state.timeSeconds),
+        ]),
       };
     }
 
@@ -199,8 +242,11 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
       );
 
       const drafts: LogDraft[] = [];
+      const signals: SignalEvent[] = [];
       for (const event of cycle.events) {
-        if (event.kind === "command") {
+        if (event.kind === "signal") {
+          signals.push(event.event);
+        } else if (event.kind === "command") {
           drafts.push({
             timeSeconds: state.timeSeconds,
             kind: event.result.ok ? "done" : "failed",
@@ -220,6 +266,7 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
           label: commandLabel(selection.command),
           reason: null,
         });
+        signals.push(commandStepEvent(commandSignal(selection.command), "expired", cycle.timeSeconds));
         selection = null;
       }
 
@@ -230,6 +277,7 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
         selection,
         pending: [],
         ...withLog(state, drafts),
+        ...withEvents(state, signals),
       };
     }
   }
