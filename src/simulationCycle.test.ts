@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { runCycle, type ScheduledCommand } from "./simulationCycle.ts";
-import { requestPowerOrder } from "./station.ts";
+import { requestPowerOrder, requestTransition } from "./station.ts";
 import { deblockedAt, stationAt, testConfig } from "./testSupport.ts";
 
 const order = (atSeconds: number, powerMW: number): ScheduledCommand => ({
@@ -135,5 +135,65 @@ describe("runCycle: dt decimal", () => {
 
   test("registra el estado en la frontera de 5 s con dt entero, como antes", () => {
     expect(runFor(11, 1, []).snapshots).toBe(3);
+  });
+});
+
+describe("runCycle: eventos de señal", () => {
+  const signals = (events: ReturnType<typeof runCycle>["events"]) =>
+    events.flatMap((e) => (e.kind === "signal" ? [e.event] : []));
+
+  const toDecoupled: ScheduledCommand = {
+    atSeconds: 0,
+    label: "Ir a decoupled",
+    signal: { code: "CMD.TO_DECOUPLED" },
+    run: (s) => requestTransition(s, "decoupled", testConfig),
+  };
+
+  test("una orden ejecutada deja su evento y los cambios que provocó, con la hora t", () => {
+    const result = runCycle(stationAt("stopped"), 0, [toDecoupled], 0.1, testConfig);
+    expect(signals(result.events)).toEqual([
+      { code: "CMD.TO_DECOUPLED", state: "executed", timeSeconds: 0 },
+      { code: "Q1.POS", state: "moving", timeSeconds: 0 },
+      { code: "STATION.STATE", state: "transition", timeSeconds: 0 },
+    ]);
+  });
+
+  test("una orden rechazada deja su evento con el motivo y no cambia nada más", () => {
+    const result = runCycle(deblockedAt(100), 0, [toDecoupled], 0.1, testConfig);
+    const [event, ...rest] = signals(result.events);
+    expect(event).toMatchObject({ code: "CMD.TO_DECOUPLED", state: "rejected", timeSeconds: 0 });
+    expect(event?.detail).toEqual(expect.any(String));
+    expect(rest).toEqual([]);
+  });
+
+  test("la consigna lleva su valor en MW", () => {
+    const power: ScheduledCommand = {
+      ...order(0, 100),
+      signal: { code: "CMD.POWER_ORDER", valueMW: 100 },
+    };
+    const result = runCycle(deblockedAt(0), 0, [power], 1, testConfig);
+    expect(signals(result.events)).toEqual([
+      { code: "CMD.POWER_ORDER", state: "executed", timeSeconds: 0, valueMW: 100 },
+    ]);
+  });
+
+  test("una orden sin señal no deja evento de orden", () => {
+    const result = runCycle(deblockedAt(0), 0, [order(0, 100)], 1, testConfig);
+    expect(signals(result.events)).toEqual([]);
+  });
+
+  test("lo que ocurre al evolucionar la planta lleva la hora t + dt", () => {
+    // Q1 tarda 2 s: con dt = 1, termina de cerrar en el segundo ciclo (t = 1, fin en 2).
+    const first = runCycle(stationAt("stopped"), 0, [toDecoupled], 1, testConfig);
+    const second = runCycle(first.station, 1, [], 1, testConfig);
+    expect(signals(second.events)).toEqual([
+      { code: "Q1.POS", state: "closed", timeSeconds: 2 },
+      { code: "STATION.STATE", state: "decoupled", timeSeconds: 2 },
+    ]);
+  });
+
+  test("sin cambios no hay eventos de señal", () => {
+    const result = runCycle(stationAt("coupled"), 0, [], 0.1, testConfig);
+    expect(signals(result.events)).toEqual([]);
   });
 });
