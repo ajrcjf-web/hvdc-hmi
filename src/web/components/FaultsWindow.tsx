@@ -1,4 +1,6 @@
-// Ventana de simulación del instructor: el operador no provoca nada desde aquí. Por ahora
+// Ventana de simulación del instructor: el operador no provoca nada desde aquí. Los botones
+// hablan de la causa (la condición), no del ciclo de vida: la alarma se activa y se normaliza
+// como consecuencia, igual que con una falla real. Por ahora
 // solo tiene las alarmas de prueba (una por prioridad); las fallas y las protecciones
 // llegan en la subfase 4.4.
 import type { Dispatch } from "react";
@@ -28,20 +30,20 @@ export function FaultsWindow({ alarms, dispatch }: Props) {
               <span className="test-alarm-name">
                 {describeSignal(code)} ({priorityLabels[alarmPriorities[code]]})
               </span>
-              <span className="test-alarm-state">{active ? "Activada" : "Normalizada"}</span>
+              <span className="test-alarm-state">{active ? "Condición presente" : "Condición despejada"}</span>
               <button
                 type="button"
                 disabled={active}
                 onClick={() => dispatch({ type: "set-test-alarm", code, active: true })}
               >
-                Activar
+                Provocar condición
               </button>
               <button
                 type="button"
                 disabled={!active}
                 onClick={() => dispatch({ type: "set-test-alarm", code, active: false })}
               >
-                Normalizar
+                Despejar condición
               </button>
             </li>
           );
