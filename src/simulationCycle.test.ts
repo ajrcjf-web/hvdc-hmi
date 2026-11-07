@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
+import { createAlarmState, setTestAlarm } from "./alarms.ts";
 import { runCycle, type ScheduledCommand } from "./simulationCycle.ts";
-import { requestPowerOrder, requestTransition } from "./station.ts";
+import { requestPowerOrder, requestTransition, type Station } from "./station.ts";
 import { deblockedAt, stationAt, testConfig } from "./testSupport.ts";
 
 const order = (atSeconds: number, powerMW: number): ScheduledCommand => ({
@@ -195,5 +196,62 @@ describe("runCycle: eventos de señal", () => {
   test("sin cambios no hay eventos de señal", () => {
     const result = runCycle(stationAt("coupled"), 0, [], 0.1, testConfig);
     expect(signals(result.events)).toEqual([]);
+  });
+});
+
+describe("runCycle: alarmas", () => {
+  const signals = (events: ReturnType<typeof runCycle>["events"]) =>
+    events.flatMap((e) => (e.kind === "signal" ? [e.event] : []));
+
+  const inconsistent = (): Station => {
+    const station = stationAt("stopped");
+    return {
+      ...station,
+      switchgear: { ...station.switchgear, QE: { kind: "closed" }, Q2: { kind: "closed" } },
+    };
+  };
+
+  test("una estación inconsistent activa la alarma urgente, con la hora t + dt", () => {
+    const result = runCycle(inconsistent(), 0, [], 0.1, testConfig);
+    expect(result.alarms.life["ALARM.INCONSISTENT"]).toBe("active-unacknowledged");
+    expect(signals(result.events)).toContainEqual({
+      code: "ALARM.INCONSISTENT",
+      state: "active-unacknowledged",
+      timeSeconds: 0.1,
+    });
+  });
+
+  test("el evento de la alarma sale una sola vez, no en cada ciclo", () => {
+    let alarms = createAlarmState();
+    let timeSeconds = 0;
+    let count = 0;
+    for (let i = 0; i < 20; i++) {
+      const cycle = runCycle(inconsistent(), timeSeconds, [], 0.1, testConfig, alarms);
+      count += signals(cycle.events).filter((e) => e.code === "ALARM.INCONSISTENT").length;
+      alarms = cycle.alarms;
+      timeSeconds = cycle.timeSeconds;
+    }
+    expect(count).toBe(1);
+  });
+
+  test("una alarma de prueba forzada se activa en el siguiente ciclo y se normaliza al quitarla", () => {
+    let alarms = setTestAlarm(createAlarmState(), "ALARM.TEST_HIGH", true);
+    const on = runCycle(stationAt("stopped"), 0, [], 0.1, testConfig, alarms);
+    expect(on.alarms.life["ALARM.TEST_HIGH"]).toBe("active-unacknowledged");
+
+    alarms = setTestAlarm(on.alarms, "ALARM.TEST_HIGH", false);
+    const off = runCycle(on.station, on.timeSeconds, [], 0.1, testConfig, alarms);
+    expect(off.alarms.life["ALARM.TEST_HIGH"]).toBe("returned-unacknowledged");
+  });
+
+  test("sin alarmas recibidas, parte de alarmas en normal (como la consola)", () => {
+    const result = runCycle(stationAt("coupled"), 0, [], 0.1, testConfig);
+    expect(result.alarms).toEqual(createAlarmState());
+  });
+
+  test("no modifica las alarmas recibidas", () => {
+    const alarms = setTestAlarm(createAlarmState(), "ALARM.TEST_LOW", true);
+    runCycle(stationAt("stopped"), 0, [], 0.1, testConfig, alarms);
+    expect(alarms.life["ALARM.TEST_LOW"]).toBe("normal");
   });
 });

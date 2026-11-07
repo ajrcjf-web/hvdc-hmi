@@ -1,6 +1,7 @@
 // Ciclo de simulación: lo que pasa en cada instante, en un orden fijo.
 // Función pura: recibe la estación y devuelve la siguiente, más lo ocurrido.
 
+import { createAlarmState, evaluateAlarms, type AlarmState } from "./alarms.ts";
 import { commandStepEvent, detectPlantEvents, type CommandSignal, type SignalEvent } from "./events.ts";
 import { step } from "./simulation.ts";
 import type { CommandResult, Station, StationConfig } from "./station.ts";
@@ -25,6 +26,7 @@ export type CycleEvent =
 
 export type CycleResult = {
   station: Station;
+  alarms: AlarmState;
   timeSeconds: number; // el instante siguiente
   events: CycleEvent[];
 };
@@ -35,6 +37,8 @@ export type CycleResult = {
 // 2. Registra el estado si un múltiplo de SNAPSHOT_INTERVAL_SECONDS cae en el intervalo.
 // 3. Hace evolucionar la planta hasta el instante siguiente. Los cambios que ocurren
 //    en este paso (una maniobra que termina) llevan la hora t + dt.
+// 4. Evalúa las alarmas sobre la estación ya avanzada: las que aparecen o se normalizan
+//    en este paso llevan la hora t + dt, y cada cambio es un evento de señal.
 //
 // Los eventos de señal se detectan una vez por ciclo, así que su resolución real es dt
 // (100 ms en la web) aunque la marca de tiempo muestre milisegundos.
@@ -49,6 +53,8 @@ export function runCycle(
   scenario: ScheduledCommand[],
   dtSeconds: number,
   config: StationConfig,
+  // La consola (main.ts) no usa las alarmas: sin ellas, parte de unas alarmas en normal.
+  alarms: AlarmState = createAlarmState(),
 ): CycleResult {
   const events: CycleEvent[] = [];
   let current = station;
@@ -87,5 +93,10 @@ export function runCycle(
     events.push({ kind: "signal", event });
   }
 
-  return { station: next, timeSeconds: nextTimeSeconds, events };
+  const evaluated = evaluateAlarms(alarms, next, nextTimeSeconds);
+  for (const event of evaluated.events) {
+    events.push({ kind: "signal", event });
+  }
+
+  return { station: next, alarms: evaluated.alarms, timeSeconds: nextTimeSeconds, events };
 }
