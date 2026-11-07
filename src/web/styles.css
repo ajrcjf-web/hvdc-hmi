@@ -1,6 +1,6 @@
 /* Única fuente de colores (ISA-101: sin color para lo normal). Un color nuevo se
    agrega aquí y se usa con var(--nombre); no se escriben colores sueltos más abajo.
-   El ámbar y el rojo de las alarmas quedan reservados para la Fase 4. */
+   El color se reserva para las alarmas: uno por prioridad. */
 :root {
   --bg: #1b1f24; /* fondo */
   --surface: #262c33; /* paneles y ventana de confirmación */
@@ -11,7 +11,9 @@
   --line: #cfd4d9; /* trazos del unifilar */
   --line-dim: #7b848d; /* tramos sin tensión */
   --fill: #5a636c; /* convertidor desbloqueado */
-  --abnormal: #e5484d; /* lo anormal: hoy solo el estado inconsistent */
+  --alarm-urgent: #e5484d; /* prioridad urgente (rojo); también el estado inconsistent, que genera una alarma urgente */
+  --alarm-high: #f5a524; /* prioridad alta (ámbar) */
+  --alarm-low: #f2e24b; /* prioridad baja (amarillo) */
   --backdrop: rgba(0, 0, 0, 0.6); /* fondo detrás de la ventana */
 }
 
@@ -107,7 +109,7 @@ h3 {
 /* Los estados normales (incluido transition) se ven en gris, solo con su texto.
    El único color es el de lo anormal. */
 .state-inconsistent {
-  color: var(--abnormal);
+  color: var(--alarm-urgent);
 }
 
 .buttons {
@@ -165,11 +167,11 @@ input {
 }
 
 .diagram-abnormal {
-  border-color: var(--abnormal);
+  border-color: var(--alarm-urgent);
 }
 
 .abnormal-text {
-  fill: var(--abnormal);
+  fill: var(--alarm-urgent);
   font-weight: bold;
   font-size: 18px;
 }
@@ -342,4 +344,97 @@ input {
 
 .ser tr.rejected td:first-child {
   border-left-color: var(--line);
+}
+
+/* Alarmas. El color indica la prioridad, pero la prioridad y el estado van siempre
+   también por texto (!!!, !!, !) y por el símbolo ● de lo no reconocido. Solo lo no
+   reconocido parpadea; el parpadeo baja la opacidad sin apagar el texto. */
+@keyframes alarm-blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.alarm-unacknowledged .alarm-state,
+.nav .alarm-indicator.alarm-unacknowledged {
+  animation: alarm-blink 1s step-start infinite;
+  font-weight: bold;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alarm-unacknowledged .alarm-state,
+  .nav .alarm-indicator.alarm-unacknowledged {
+    animation: none;
+  }
+}
+
+.alarm-urgent {
+  --alarm-color: var(--alarm-urgent);
+}
+
+.alarm-high {
+  --alarm-color: var(--alarm-high);
+}
+
+.alarm-low {
+  --alarm-color: var(--alarm-low);
+}
+
+.ser.alarms td:first-child {
+  border-left-color: var(--alarm-color);
+}
+
+.ser.alarms .alarm-priority {
+  color: var(--alarm-color);
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.ser.alarms .alarm-unacknowledged td {
+  color: var(--text-strong);
+}
+
+.ser.alarms .alarm-unacknowledged .alarm-priority {
+  color: var(--alarm-color);
+}
+
+.ser.alarms td button {
+  padding: 0.15rem 0.5rem;
+}
+
+/* Indicador de la barra: a la derecha, con el color de la prioridad más alta. */
+.nav .alarm-indicator {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.nav .alarm-indicator:is(.alarm-urgent, .alarm-high, .alarm-low) {
+  color: var(--alarm-color);
+  font-weight: bold;
+  border-bottom-color: var(--alarm-color);
+}
+
+/* Alarmas de prueba del instructor. */
+.test-alarms {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.test-alarms li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--line-dim);
+}
+
+.test-alarm-name {
+  flex: 1 1 18rem;
+}
+
+.test-alarm-state {
+  min-width: 6rem;
+  color: var(--text-muted);
 }
