@@ -49,6 +49,10 @@ export type AlarmState = {
   life: Record<AlarmCode, AlarmLifeState>;
   // Qué alarmas de prueba tiene activadas el instructor (la "condición" de esas alarmas).
   forced: Record<TestAlarmCode, boolean>;
+  // Cuándo apareció cada alarma: el instante en que pasó a activa sin reconocer (tiempo
+  // simulado, en s). Si se reactiva, es el de la nueva aparición. Reconocer y normalizar
+  // no lo cambian: eso queda en el SER.
+  activatedAtSeconds: Record<AlarmCode, number>;
 };
 
 export type AlarmResult = { alarms: AlarmState; events: SignalEvent[] };
@@ -60,6 +64,12 @@ export function createAlarmState(): AlarmState {
       "ALARM.TEST_URGENT": "normal",
       "ALARM.TEST_HIGH": "normal",
       "ALARM.TEST_LOW": "normal",
+    },
+    activatedAtSeconds: {
+      "ALARM.INCONSISTENT": 0,
+      "ALARM.TEST_URGENT": 0,
+      "ALARM.TEST_HIGH": 0,
+      "ALARM.TEST_LOW": 0,
     },
     forced: {
       "ALARM.TEST_URGENT": false,
@@ -96,11 +106,20 @@ export function alarmConditions(
   };
 }
 
+// Aplica los cambios del ciclo de vida. Anota la hora solo cuando una alarma aparece
+// (pasa a activa sin reconocer); reconocer o normalizar no la cambian.
 function withLife(
   alarms: AlarmState,
   changes: Partial<Record<AlarmCode, AlarmLifeState>>,
+  timeSeconds: number,
 ): AlarmState {
-  return { ...alarms, life: { ...alarms.life, ...changes } };
+  const activatedAt = { ...alarms.activatedAtSeconds };
+  for (const code of Object.keys(changes) as AlarmCode[]) {
+    if (changes[code] === "active-unacknowledged") {
+      activatedAt[code] = timeSeconds;
+    }
+  }
+  return { ...alarms, life: { ...alarms.life, ...changes }, activatedAtSeconds: activatedAt };
 }
 
 // Qué le pasa a una alarma cuando su condición aparece o desaparece.
@@ -133,7 +152,7 @@ export function evaluateAlarms(
       events.push({ code, state: next, timeSeconds });
     }
   }
-  return events.length === 0 ? { alarms, events } : { alarms: withLife(alarms, changes), events };
+  return events.length === 0 ? { alarms, events } : { alarms: withLife(alarms, changes, timeSeconds), events };
 }
 
 // Reconocer: "la vi". Una activa sin reconocer pasa a reconocida; una normalizada sin
@@ -150,7 +169,7 @@ export function acknowledge(alarms: AlarmState, code: AlarmCode, timeSeconds: nu
     return { alarms, events: [] };
   }
   return {
-    alarms: withLife(alarms, { [code]: next }),
+    alarms: withLife(alarms, { [code]: next }, timeSeconds),
     events: [{ code, state: next, timeSeconds }],
   };
 }

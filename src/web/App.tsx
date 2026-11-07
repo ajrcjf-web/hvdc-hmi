@@ -2,7 +2,9 @@
 // activa y la ventana de confirmación. Todas las ventanas comparten este estado.
 import { useEffect, useReducer } from "react";
 import { defaultConfig } from "../station.ts";
+import { AlarmWindow } from "./components/AlarmWindow.tsx";
 import { ConfirmationDialog } from "./components/ConfirmationDialog.tsx";
+import { FaultsWindow } from "./components/FaultsWindow.tsx";
 import { NavigationBar } from "./components/NavigationBar.tsx";
 import { OverviewWindow } from "./components/OverviewWindow.tsx";
 import { PendingWindow } from "./components/PendingWindow.tsx";
@@ -13,6 +15,7 @@ import {
   hmiReducer,
   TICK_MS,
 } from "./hmiState.ts";
+import { summarizeAlarms } from "./alarmView.ts";
 import { hashForWindow, windowFromHash, windowInfo } from "./windows.ts";
 
 // La ventana inicial sale de la dirección de la página (ej. #/eventos).
@@ -48,6 +51,7 @@ export function App() {
     <main>
       <NavigationBar
         active={state.ui.activeWindow}
+        alarmSummary={summarizeAlarms(state.simulation.alarms)}
         onNavigate={(id) => {
           window.location.hash = hashForWindow(id);
         }}
@@ -55,6 +59,16 @@ export function App() {
       {state.ui.activeWindow === "overview" && <OverviewWindow state={state} dispatch={dispatch} />}
       {state.ui.activeWindow === "events" && (
         <SerWindow events={state.simulation.events} discarded={state.simulation.nextEventId - state.simulation.events.length} />
+      )}
+      {state.ui.activeWindow === "alarms" && (
+        <AlarmWindow
+          alarms={state.simulation.alarms}
+          startMs={state.simulation.startMs}
+          dispatch={dispatch}
+        />
+      )}
+      {state.ui.activeWindow === "faults" && (
+        <FaultsWindow alarms={state.simulation.alarms} dispatch={dispatch} />
       )}
       {!windowInfo(state.ui.activeWindow).available && <PendingWindow id={state.ui.activeWindow} />}
       {state.ui.selection !== null && (
