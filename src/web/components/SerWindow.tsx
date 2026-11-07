@@ -3,7 +3,7 @@
 // Los filtros viven aquí (son de la vista): se pierden al cambiar de ventana.
 import { useState } from "react";
 import type { SerEvent } from "../../events.ts";
-import { MAX_EVENTS } from "../hmiState.ts";
+import { MAX_EVENTS } from "../../simulationState.ts";
 import { filterRows } from "../listFilter.ts";
 import { toSerRows, type SerRow } from "../serView.ts";
 

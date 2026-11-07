@@ -47,22 +47,22 @@ export function App() {
   return (
     <main>
       <NavigationBar
-        active={state.activeWindow}
+        active={state.ui.activeWindow}
         onNavigate={(id) => {
           window.location.hash = hashForWindow(id);
         }}
       />
-      {state.activeWindow === "overview" && <OverviewWindow state={state} dispatch={dispatch} />}
-      {state.activeWindow === "events" && (
-        <SerWindow events={state.events} discarded={state.nextEventId - state.events.length} />
+      {state.ui.activeWindow === "overview" && <OverviewWindow state={state} dispatch={dispatch} />}
+      {state.ui.activeWindow === "events" && (
+        <SerWindow events={state.simulation.events} discarded={state.simulation.nextEventId - state.simulation.events.length} />
       )}
-      {!windowInfo(state.activeWindow).available && <PendingWindow id={state.activeWindow} />}
-      {state.selection !== null && (
+      {!windowInfo(state.ui.activeWindow).available && <PendingWindow id={state.ui.activeWindow} />}
+      {state.ui.selection !== null && (
         <ConfirmationDialog
-          selection={state.selection}
-          station={state.station}
-          config={state.config}
-          timeSeconds={state.timeSeconds}
+          selection={state.ui.selection}
+          station={state.simulation.station}
+          config={state.simulation.config}
+          timeSeconds={state.simulation.timeSeconds}
           onExecute={() => dispatch({ type: "execute" })}
           onCancel={() => dispatch({ type: "cancel" })}
         />

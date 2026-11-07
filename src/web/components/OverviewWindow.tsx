@@ -15,14 +15,14 @@ export function OverviewWindow({ state, dispatch }: Props) {
   return (
     <>
       <h1>HMI HVDC — Overview</h1>
-      <SingleLineDiagram station={state.station} />
+      <SingleLineDiagram station={state.simulation.station} />
       <div className="layout">
-        <StatusPanel station={state.station} timeSeconds={state.timeSeconds} />
+        <StatusPanel station={state.simulation.station} timeSeconds={state.simulation.timeSeconds} />
         <CommandPanel
           onCommand={(command) => dispatch({ type: "select", command })}
-          notice={state.selectionNotice}
+          notice={state.ui.selectionNotice}
         />
-        <CommandLog entries={state.log} />
+        <CommandLog entries={state.ui.log} />
       </div>
     </>
   );
