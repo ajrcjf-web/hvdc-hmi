@@ -230,3 +230,19 @@ describe("alarmas de prueba", () => {
     expect(alarms).toEqual(createAlarmState());
   });
 });
+
+describe("cuándo cambió cada alarma", () => {
+  test("anota el instante de cada cambio del ciclo de vida", () => {
+    const on = evaluateAlarms(setTestAlarm(createAlarmState(), urgent, true), normalStation, 4);
+    expect(on.alarms.changedAtSeconds[urgent]).toBe(4);
+    const acked = acknowledge(on.alarms, urgent, 7);
+    expect(acked.alarms.changedAtSeconds[urgent]).toBe(7);
+  });
+
+  test("lo que no cambia conserva su instante", () => {
+    const on = evaluateAlarms(setTestAlarm(createAlarmState(), urgent, true), normalStation, 4);
+    const later = evaluateAlarms(on.alarms, normalStation, 9);
+    expect(later.alarms.changedAtSeconds[urgent]).toBe(4);
+    expect(on.alarms.changedAtSeconds[high]).toBe(0);
+  });
+});

@@ -49,6 +49,8 @@ export type AlarmState = {
   life: Record<AlarmCode, AlarmLifeState>;
   // Qué alarmas de prueba tiene activadas el instructor (la "condición" de esas alarmas).
   forced: Record<TestAlarmCode, boolean>;
+  // Cuándo cambió por última vez el ciclo de vida de cada alarma (tiempo simulado, en s).
+  changedAtSeconds: Record<AlarmCode, number>;
 };
 
 export type AlarmResult = { alarms: AlarmState; events: SignalEvent[] };
@@ -60,6 +62,12 @@ export function createAlarmState(): AlarmState {
       "ALARM.TEST_URGENT": "normal",
       "ALARM.TEST_HIGH": "normal",
       "ALARM.TEST_LOW": "normal",
+    },
+    changedAtSeconds: {
+      "ALARM.INCONSISTENT": 0,
+      "ALARM.TEST_URGENT": 0,
+      "ALARM.TEST_HIGH": 0,
+      "ALARM.TEST_LOW": 0,
     },
     forced: {
       "ALARM.TEST_URGENT": false,
@@ -96,11 +104,17 @@ export function alarmConditions(
   };
 }
 
+// Aplica los cambios del ciclo de vida y anota cuándo ocurrieron.
 function withLife(
   alarms: AlarmState,
   changes: Partial<Record<AlarmCode, AlarmLifeState>>,
+  timeSeconds: number,
 ): AlarmState {
-  return { ...alarms, life: { ...alarms.life, ...changes } };
+  const changedAt = { ...alarms.changedAtSeconds };
+  for (const code of Object.keys(changes) as AlarmCode[]) {
+    changedAt[code] = timeSeconds;
+  }
+  return { ...alarms, life: { ...alarms.life, ...changes }, changedAtSeconds: changedAt };
 }
 
 // Qué le pasa a una alarma cuando su condición aparece o desaparece.
@@ -133,7 +147,7 @@ export function evaluateAlarms(
       events.push({ code, state: next, timeSeconds });
     }
   }
-  return events.length === 0 ? { alarms, events } : { alarms: withLife(alarms, changes), events };
+  return events.length === 0 ? { alarms, events } : { alarms: withLife(alarms, changes, timeSeconds), events };
 }
 
 // Reconocer: "la vi". Una activa sin reconocer pasa a reconocida; una normalizada sin
@@ -150,7 +164,7 @@ export function acknowledge(alarms: AlarmState, code: AlarmCode, timeSeconds: nu
     return { alarms, events: [] };
   }
   return {
-    alarms: withLife(alarms, { [code]: next }),
+    alarms: withLife(alarms, { [code]: next }, timeSeconds),
     events: [{ code, state: next, timeSeconds }],
   };
 }
