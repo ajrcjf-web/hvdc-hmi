@@ -1,6 +1,7 @@
 // Apoyo compartido para los tests: configuración y estaciones de prueba.
 // No es un archivo de tests (no termina en .test.ts): solo lo importan.
 
+import { createAlarmState } from "./alarms.ts";
 import type { Station, StationConfig } from "./station.ts";
 import { switchgearFor, type StationState } from "./stationState.ts";
 
@@ -35,3 +36,6 @@ export function deblockedAt(powerMW = 0, powerOrderMW = powerMW): Station {
     powerOrderMW,
   };
 }
+
+// Alarmas de partida para los tests de runCycle que no tratan de alarmas: todas en normal.
+export const noAlarms = createAlarmState();

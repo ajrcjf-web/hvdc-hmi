@@ -34,3 +34,13 @@ describe("tabla de señales", () => {
     expect(describeSignalState("rejected")).toBe("rechazada");
   });
 });
+
+describe("alarmas en la tabla de señales", () => {
+  test("cada alarma tiene su descripción y cada paso del ciclo de vida su etiqueta", () => {
+    expect(describeSignal("ALARM.INCONSISTENT")).toBe("Alarma: estación inconsistente");
+    expect(describeSignalState("active-unacknowledged")).toBe("activa sin reconocer");
+    expect(describeSignalState("active-acknowledged")).toBe("activa reconocida");
+    expect(describeSignalState("returned-unacknowledged")).toBe("normalizada sin reconocer");
+    expect(describeSignalState("normal")).toBe("normal");
+  });
+});
