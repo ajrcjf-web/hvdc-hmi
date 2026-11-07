@@ -92,6 +92,7 @@ Las **provoca y despeja el instructor**, desde la ventana de simulación. No hay
   - QE cerrado bloquea el cierre de Q1 y Q2.
   - Q2 solo se cierra con QE abierto y Q1 cerrado.
   - Q1 solo se cierra con Q2 y QE abiertos.
+  - Abrir no tiene más enclavamientos que los de la estación. Se permite abrir Q1 con Q2 cerrado, por flexibilidad en emergencias, aunque lleva a `inconsistent`; la salida de `inconsistent` es abrir Q2.
 - Estos enclavamientos garantizan el cierre **aguas abajo**: primero Q1, después Q2.
 - Los enclavamientos se mueven a **una función de mando por equipo** en la lógica. `requestTransition` también la usa, de modo que viven en **un solo lugar**.
 - Tras un disparo de Q1 (la estación queda `inconsistent`), el operador normaliza en manual abriendo Q2.

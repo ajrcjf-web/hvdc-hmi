@@ -3,7 +3,8 @@
 // no cambia cuando la orden se rechaza.
 import { describe, expect, test } from "vitest";
 import { requestSwitchOrder, requestTransition, type Station } from "./station.ts";
-import type { SwitchId, SwitchStatus, SwitchTarget } from "./switchgear.ts";
+import { deriveState } from "./stationState.ts";
+import { stepSwitchgear, type SwitchId, type SwitchStatus, type SwitchTarget } from "./switchgear.ts";
 import { deblockedAt, stationAt, testConfig } from "./testSupport.ts";
 
 const order = (station: Station, id: SwitchId, to: SwitchTarget) =>
@@ -159,11 +160,38 @@ describe("requestSwitchOrder: el propio equipo", () => {
     expectRejected(withSwitches(CLOSED, OPEN, OPEN), "Q1", "closed", "Q1 ya está cerrado");
     expectRejected(withSwitches(OPEN, OPEN, OPEN), "Q2", "open", "Q2 ya está abierto");
   });
+});
 
-  test("abrir un equipo no tiene más enclavamientos que los de la estación", () => {
-    // Con el convertidor bloqueado y P = 0, abrir Q1 con Q2 cerrado se acepta
-    // (deja la estación en inconsistent, y el operador la normaliza abriendo Q2).
-    expect(order(stationAt("coupled"), "Q1", "open").ok).toBe(true);
+// Decisión: abrir no tiene más enclavamientos que los de la estación. Se permite abrir Q1
+// con Q2 cerrado, por flexibilidad en emergencias, aunque lleva a inconsistent (Q1 abierto
+// y Q2 cerrado no corresponde a ningún estado). La salida de inconsistent es abrir Q2.
+describe("requestSwitchOrder: abrir Q1 con Q2 cerrado", () => {
+  // Corre la maniobra hasta que termina y devuelve la estación resultante.
+  function finish(station: Station): Station {
+    return { ...station, switchgear: stepSwitchgear(station.switchgear, 10) };
+  }
+
+  test("se permite, y lleva a inconsistent", () => {
+    const station = stationAt("coupled");
+    const result = order(station, "Q1", "open");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(deriveState(finish(result.station).switchgear)).toBe("inconsistent");
+    }
+    expect(station.switchgear.Q1).toEqual(CLOSED); // la estación recibida no cambia
+  });
+
+  test("la salida de inconsistent es abrir Q2, no abrir Q1", () => {
+    const inconsistent = withSwitches(OPEN, CLOSED, OPEN);
+    expect(deriveState(inconsistent.switchgear)).toBe("inconsistent");
+
+    const result = order(inconsistent, "Q2", "open");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(deriveState(finish(result.station).switchgear)).toBe("stopped");
+    }
+    // Y Q1 sigue sin poder cerrarse mientras Q2 esté cerrado.
+    expectRejected(inconsistent, "Q1", "closed", "Q2 sin abrir");
   });
 });
 
