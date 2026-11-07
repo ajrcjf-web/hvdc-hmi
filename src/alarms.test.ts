@@ -231,18 +231,41 @@ describe("alarmas de prueba", () => {
   });
 });
 
-describe("cuándo cambió cada alarma", () => {
-  test("anota el instante de cada cambio del ciclo de vida", () => {
-    const on = evaluateAlarms(setTestAlarm(createAlarmState(), urgent, true), normalStation, 4);
-    expect(on.alarms.changedAtSeconds[urgent]).toBe(4);
-    const acked = acknowledge(on.alarms, urgent, 7);
-    expect(acked.alarms.changedAtSeconds[urgent]).toBe(7);
+describe("cuándo apareció cada alarma", () => {
+  const appear = (at: number) =>
+    evaluateAlarms(setTestAlarm(createAlarmState(), urgent, true), normalStation, at).alarms;
+
+  test("anota el instante en que la alarma aparece", () => {
+    expect(appear(4).activatedAtSeconds[urgent]).toBe(4);
+  });
+
+  test("reconocer no cambia la hora de aparición", () => {
+    expect(acknowledge(appear(4), urgent, 7).alarms.activatedAtSeconds[urgent]).toBe(4);
+  });
+
+  test("normalizar no cambia la hora de aparición", () => {
+    const returned = evaluateAlarms(setTestAlarm(appear(4), urgent, false), normalStation, 9).alarms;
+    expect(returned.life[urgent]).toBe("returned-unacknowledged");
+    expect(returned.activatedAtSeconds[urgent]).toBe(4);
   });
 
   test("lo que no cambia conserva su instante", () => {
-    const on = evaluateAlarms(setTestAlarm(createAlarmState(), urgent, true), normalStation, 4);
-    const later = evaluateAlarms(on.alarms, normalStation, 9);
-    expect(later.alarms.changedAtSeconds[urgent]).toBe(4);
-    expect(on.alarms.changedAtSeconds[high]).toBe(0);
+    const later = evaluateAlarms(appear(4), normalStation, 9);
+    expect(later.alarms.activatedAtSeconds[urgent]).toBe(4);
+    expect(appear(4).activatedAtSeconds[high]).toBe(0);
+  });
+
+  test("si la alarma se reactiva, la hora es la de la nueva aparición", () => {
+    let alarms = evaluateAlarms(setTestAlarm(appear(4), urgent, false), normalStation, 6).alarms;
+    alarms = evaluateAlarms(setTestAlarm(alarms, urgent, true), normalStation, 8).alarms;
+    expect(alarms.life[urgent]).toBe("active-unacknowledged");
+    expect(alarms.activatedAtSeconds[urgent]).toBe(8);
+  });
+
+  test("tras reconocer la normalización y volver a aparecer, también es la nueva hora", () => {
+    let alarms = acknowledge(appear(4), urgent, 5).alarms;
+    alarms = evaluateAlarms(setTestAlarm(alarms, urgent, false), normalStation, 6).alarms; // normal
+    alarms = evaluateAlarms(setTestAlarm(alarms, urgent, true), normalStation, 10).alarms;
+    expect(alarms.activatedAtSeconds[urgent]).toBe(10);
   });
 });

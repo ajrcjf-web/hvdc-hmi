@@ -51,7 +51,16 @@ describe("toAlarmRows", () => {
     const [row] = toAlarmRows(alarms, START);
     expect(row?.state).toBe("activa reconocida");
     expect(row?.unacknowledged).toBe(false);
-    expect(row?.timestamp).toBe(formatTimestamp(START + 5000)); // hora del último cambio
+    expect(row?.timestamp).toBe(formatTimestamp(START + 1000)); // sigue la hora de aparición (t = 1), no la del reconocimiento (t = 5)
+  });
+
+  test("la hora es la de la aparición: normalizar no la cambia y reactivar la renueva", () => {
+    let alarms = activate("ALARM.TEST_LOW"); // aparece en t = 1
+    alarms = evaluateAlarms(setTestAlarm(alarms, "ALARM.TEST_LOW", false), station, 3).alarms;
+    expect(toAlarmRows(alarms, START)[0]?.timestamp).toBe(formatTimestamp(START + 1000));
+
+    alarms = evaluateAlarms(setTestAlarm(alarms, "ALARM.TEST_LOW", true), station, 8).alarms;
+    expect(toAlarmRows(alarms, START)[0]?.timestamp).toBe(formatTimestamp(START + 8000));
   });
 
   test("una normalizada sin reconocer sigue visible; reconocida, desaparece", () => {

@@ -31,7 +31,7 @@ export const UNACKNOWLEDGED_SYMBOL = "●";
 // Una fila de la ventana. Las columnas de texto son las que se filtran; el resto son
 // datos para dibujar y para los botones.
 export type AlarmRow = {
-  timestamp: string; // fecha y hora (con milisegundos) del último cambio
+  timestamp: string; // fecha y hora (con milisegundos) de la aparición
   priority: string; // texto de la prioridad, con su símbolo
   description: string;
   state: string; // ciclo de vida; lo no reconocido empieza con el símbolo ●
@@ -41,7 +41,7 @@ export type AlarmRow = {
 };
 
 // Las alarmas visibles (activas o sin reconocer), con la más urgente primero y, dentro
-// de una misma prioridad, la que cambió más recientemente.
+// de una misma prioridad, la que apareció más recientemente.
 export function toAlarmRows(alarms: AlarmState, startMs: number): AlarmRow[] {
   return visibleAlarms(alarms)
     .map((code): AlarmRow => {
@@ -49,7 +49,7 @@ export function toAlarmRows(alarms: AlarmState, startMs: number): AlarmRow[] {
       const unacknowledged = isUnacknowledged(life);
       const level = alarmPriorities[code];
       return {
-        timestamp: formatTimestamp(timestampMs(startMs, alarms.changedAtSeconds[code])),
+        timestamp: formatTimestamp(timestampMs(startMs, alarms.activatedAtSeconds[code])),
         priority: priorityLabels[level],
         description: describeSignal(code),
         state: unacknowledged
@@ -63,7 +63,7 @@ export function toAlarmRows(alarms: AlarmState, startMs: number): AlarmRow[] {
     .sort(
       (a, b) =>
         priorityRank[a.level] - priorityRank[b.level] ||
-        alarms.changedAtSeconds[b.code] - alarms.changedAtSeconds[a.code],
+        alarms.activatedAtSeconds[b.code] - alarms.activatedAtSeconds[a.code],
     );
 }
 
