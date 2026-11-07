@@ -97,6 +97,12 @@ export function requestSwitch(
   if (to === "closed" && id !== "QE" && !isOpen(switchgear.QE)) {
     return reject(`No se puede cerrar ${id} con la puesta a tierra sin abrir`);
   }
+  if (to === "closed" && id === "Q2" && switchgear.Q1.kind !== "closed") {
+    return reject("No se puede cerrar Q2 con Q1 sin cerrar: se cierra primero Q1");
+  }
+  if (to === "closed" && id === "Q1" && !isOpen(switchgear.Q2)) {
+    return reject("No se puede cerrar Q1 con Q2 sin abrir");
+  }
 
   const moving: SwitchStatus = {
     kind: "moving",
