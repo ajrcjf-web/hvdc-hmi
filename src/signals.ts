@@ -16,6 +16,10 @@ export const signalDescriptions = {
   "CMD.BLOCK": "Orden: bloquear el convertidor",
   "CMD.DEBLOCK": "Orden: desbloquear el convertidor",
   "CMD.POWER_ORDER": "Orden: consigna de potencia",
+  "ALARM.INCONSISTENT": "Alarma: estación inconsistente",
+  "ALARM.TEST_URGENT": "Alarma de prueba: urgente",
+  "ALARM.TEST_HIGH": "Alarma de prueba: alta",
+  "ALARM.TEST_LOW": "Alarma de prueba: baja",
 } as const;
 
 export type SignalCode = keyof typeof signalDescriptions;
@@ -42,6 +46,11 @@ export const signalStateLabels = {
   cancelled: "cancelada",
   expired: "expirada",
   rejected: "rechazada",
+  // ciclo de vida de una alarma (ISA-18.2)
+  "active-unacknowledged": "activa sin reconocer",
+  "active-acknowledged": "activa reconocida",
+  "returned-unacknowledged": "normalizada sin reconocer",
+  normal: "normal",
 } as const;
 
 export type SignalState = keyof typeof signalStateLabels;
