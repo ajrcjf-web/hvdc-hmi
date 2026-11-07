@@ -14,6 +14,8 @@ import {
   describeMovingSwitches,
   requestSwitch,
   switchIds,
+  type SwitchId,
+  type SwitchTarget,
   type Switchgear,
   type SwitchgearConfig,
 } from "./switchgear.ts";
@@ -82,6 +84,40 @@ function transitionReason(station: Station): string {
   return `La estación está en transición: ${moving ?? "hay una maniobra en curso"}`;
 }
 
+// Maniobra de un equipo con TODOS sus enclavamientos. Es la única función que ordena una
+// maniobra: la comparten las órdenes públicas (requestTransition y requestSwitchOrder),
+// y así los enclavamientos viven en un solo lugar. No mira el modo de operación: eso lo
+// decide cada orden pública antes de llamarla. No se exporta, para que nada la use
+// saltándose esa verificación.
+//
+// Enclavamientos de la estación: sin rampas, convertidor bloqueado y P = 0.
+// Los de los equipos (QE, Q1 y Q2 entre sí, equipo en maniobra) los aplica requestSwitch.
+function operateSwitch(
+  station: Station,
+  id: SwitchId,
+  to: SwitchTarget,
+  config: StationConfig,
+): CommandResult {
+  if (isRamping(station, config)) {
+    return reject("No se puede maniobrar durante una rampa de potencia o de tensión");
+  }
+  if (station.converter === "deblocked") {
+    return reject(`${id} no puede maniobrar con el convertidor desbloqueado: bloquear primero`);
+  }
+  if (station.powerMW !== 0) {
+    return reject(
+      `${id} no puede maniobrar con corriente: P debe ser 0 (P actual: ${station.powerMW} MW)`,
+    );
+  }
+
+  const result = requestSwitch(station.switchgear, id, to, config);
+  if (!result.ok) {
+    return reject(result.reason);
+  }
+  return { ok: true, station: { ...station, switchgear: result.switchgear } };
+}
+
+// Orden de estado: lleva la estación a un estado vecino con la maniobra de un equipo.
 export function requestTransition(
   station: Station,
   to: StationState,
@@ -98,9 +134,6 @@ export function requestTransition(
   if (!canTransition(from, to)) {
     return reject(`Transición no permitida: ${from} → ${to}`);
   }
-  if (isRamping(station, config)) {
-    return reject("No se puede cambiar de estado durante una rampa de potencia o de tensión");
-  }
 
   const target = statePositions[to];
   const current = statePositions[from];
@@ -109,20 +142,18 @@ export function requestTransition(
   if (id === undefined) {
     return reject(`No hay maniobra definida para ${from} → ${to}`);
   }
-  if (id === "Q2" && station.converter === "deblocked") {
-    return reject("Q2 no puede maniobrar con el convertidor desbloqueado: bloquear primero");
-  }
-  if (id === "Q2" && station.powerMW !== 0) {
-    return reject(
-      `Q2 no puede maniobrar con corriente: P debe ser 0 (P actual: ${station.powerMW} MW)`,
-    );
-  }
+  return operateSwitch(station, id, target[id], config);
+}
 
-  const result = requestSwitch(station.switchgear, id, target[id], config);
-  if (!result.ok) {
-    return reject(result.reason);
-  }
-  return { ok: true, station: { ...station, switchgear: result.switchgear } };
+// Orden por equipo: abrir o cerrar Q1, Q2 o QE. Con los mismos enclavamientos que la
+// orden de estado. (El modo de operación se verifica aquí desde el PR siguiente.)
+export function requestSwitchOrder(
+  station: Station,
+  id: SwitchId,
+  to: SwitchTarget,
+  config: StationConfig,
+): CommandResult {
+  return operateSwitch(station, id, to, config);
 }
 
 export function requestDeblock(station: Station): CommandResult {
