@@ -1,9 +1,19 @@
 // Estado de la simulación: lo que existiría en el servidor en la Fase 5. Reúne la
-// estación, el reloj, las órdenes confirmadas que esperan al próximo ciclo y los
+// estación, las alarmas, el reloj, las órdenes confirmadas que esperan al próximo ciclo y los
 // eventos del SER. No sabe nada de la interfaz (ventana activa, selección, registro
 // de órdenes): eso es el estado de la interfaz, en `web/hmiState.ts`.
 // Funciones puras: reciben el estado y devuelven uno nuevo.
 
+import {
+  acknowledge,
+  acknowledgeMany,
+  createAlarmState,
+  setTestAlarm as setForced,
+  type AlarmCode,
+  type AlarmResult,
+  type AlarmState,
+  type TestAlarmCode,
+} from "./alarms.ts";
 import { timestampMs, type SerEvent, type SignalEvent } from "./events.ts";
 import { runCycle, type CycleEvent, type ScheduledCommand } from "./simulationCycle.ts";
 import { createStation, type Station, type StationConfig } from "./station.ts";
@@ -17,6 +27,7 @@ export const MAX_EVENTS = 1000;
 export type SimulationState = {
   config: StationConfig;
   station: Station;
+  alarms: AlarmState;
   timeSeconds: number;
   pending: ScheduledCommand[]; // órdenes confirmadas que esperan al próximo latido
   startMs: number; // instante de arranque de la simulación (ms desde 1970)
@@ -28,6 +39,7 @@ export function createSimulationState(config: StationConfig, startMs: number): S
   return {
     config,
     station: createStation(),
+    alarms: createAlarmState(),
     timeSeconds: 0,
     pending: [],
     startMs,
@@ -61,13 +73,47 @@ export function advance(
   state: SimulationState,
   dtSeconds: number,
 ): { state: SimulationState; events: CycleEvent[] } {
-  const cycle = runCycle(state.station, state.timeSeconds, state.pending, dtSeconds, state.config);
+  const cycle = runCycle(
+    state.station,
+    state.timeSeconds,
+    state.pending,
+    dtSeconds,
+    state.config,
+    state.alarms,
+  );
   const signals = cycle.events.flatMap((e) => (e.kind === "signal" ? [e.event] : []));
   return {
     state: appendEvents(
-      { ...state, station: cycle.station, timeSeconds: cycle.timeSeconds, pending: [] },
+      { ...state, station: cycle.station, alarms: cycle.alarms, timeSeconds: cycle.timeSeconds, pending: [] },
       signals,
     ),
     events: cycle.events,
   };
+}
+
+// Aplica el resultado de una acción sobre las alarmas: las alarmas nuevas y sus eventos.
+function withAlarmResult(state: SimulationState, result: AlarmResult): SimulationState {
+  return appendEvents({ ...state, alarms: result.alarms }, result.events);
+}
+
+// Reconocer no es una orden de mando: no pasa por runCommand, ni por select-before-operate,
+// ni por los enclavamientos. Es el operador diciendo "la vi", con la hora simulada actual.
+export function acknowledgeAlarm(state: SimulationState, code: AlarmCode): SimulationState {
+  return withAlarmResult(state, acknowledge(state.alarms, code, state.timeSeconds));
+}
+
+// Reconoce solo las alarmas de la lista: la ventana pasa las que muestra con sus filtros.
+export function acknowledgeAlarms(state: SimulationState, codes: AlarmCode[]): SimulationState {
+  return withAlarmResult(state, acknowledgeMany(state.alarms, codes, state.timeSeconds));
+}
+
+// El instructor activa o normaliza una alarma de prueba. El ciclo de vida lo avanza el
+// siguiente ciclo (advance), como con cualquier otra alarma.
+export function setTestAlarm(
+  state: SimulationState,
+  code: TestAlarmCode,
+  active: boolean,
+): SimulationState {
+  const alarms = setForced(state.alarms, code, active);
+  return alarms === state.alarms ? state : { ...state, alarms };
 }

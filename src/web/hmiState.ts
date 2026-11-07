@@ -10,13 +10,17 @@
 //             que vuelve a verificarla (la estación pudo cambiar entre los dos pasos)
 // Una selección se cierra con execute, cancel o al expirar (en tiempo simulado).
 
+import type { AlarmCode, TestAlarmCode } from "../alarms.ts";
 import { commandStepEvent, type SignalEvent } from "../events.ts";
 import type { ScheduledCommand } from "../simulationCycle.ts";
 import {
+  acknowledgeAlarm,
+  acknowledgeAlarms,
   advance,
   appendEvents,
   createSimulationState,
   schedule,
+  setTestAlarm,
   type SimulationState,
 } from "../simulationState.ts";
 import { hasReached } from "../simulationTime.ts";
@@ -81,7 +85,11 @@ export type HmiAction =
   | { type: "select"; command: OperatorCommand }
   | { type: "execute" }
   | { type: "cancel" }
-  | { type: "navigate"; window: WindowId };
+  | { type: "navigate"; window: WindowId }
+  // Alarmas: reconocer no es una orden de mando (no hay selección ni enclavamientos).
+  | { type: "acknowledge-alarm"; code: AlarmCode }
+  | { type: "acknowledge-alarms"; codes: AlarmCode[] } // las que la ventana muestra
+  | { type: "set-test-alarm"; code: TestAlarmCode; active: boolean }; // del instructor
 
 export function createHmiState(
   config: StationConfig,
@@ -170,6 +178,15 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
       return action.window === ui.activeWindow
         ? state
         : { simulation, ui: { ...ui, activeWindow: action.window } };
+
+    case "acknowledge-alarm":
+      return { simulation: acknowledgeAlarm(simulation, action.code), ui };
+
+    case "acknowledge-alarms":
+      return { simulation: acknowledgeAlarms(simulation, action.codes), ui };
+
+    case "set-test-alarm":
+      return { simulation: setTestAlarm(simulation, action.code, action.active), ui };
 
     case "select":
       return selectCommand(state, action.command);

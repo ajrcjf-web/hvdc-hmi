@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import type { AlarmCode, TestAlarmCode } from "../alarms.ts";
 import type { Station } from "../station.ts";
 import { deriveState } from "../stationState.ts";
 import { MAX_EVENTS } from "../simulationState.ts";
@@ -275,8 +276,9 @@ describe("hmiReducer: registro", () => {
 describe("hmiReducer: pureza", () => {
   test("no modifica el estado recibido", () => {
     const state = initial();
+    const copy = structuredClone(state);
     run(state, select(transitionCommand("decoupled")), execute, tick);
-    expect(state).toEqual(initial());
+    expect(state).toEqual(copy);
   });
 });
 
@@ -451,5 +453,108 @@ describe("hmiReducer: eventos del SER", () => {
     const state = fresh();
     run(state, select(transitionCommand("stopped")), execute, tick);
     expect(state).toEqual(fresh());
+  });
+});
+
+describe("hmiReducer: alarmas", () => {
+  const START = 1_700_000_000_000;
+  const fresh = () => createHmiState(testConfig, DEFAULT_SELECTION_TIMEOUT_SECONDS, "overview", START);
+  const setTest = (code: TestAlarmCode, active: boolean): HmiAction => ({
+    type: "set-test-alarm",
+    code,
+    active,
+  });
+  const alarmEvents = (state: HmiState) =>
+    [...state.simulation.events].reverse().filter((e) => e.code.startsWith("ALARM."));
+  const life = (state: HmiState, code: AlarmCode) => state.simulation.alarms.life[code];
+
+  test("el instructor activa una alarma de prueba y se activa en el siguiente latido", () => {
+    const forced = run(fresh(), setTest("ALARM.TEST_URGENT", true));
+    expect(life(forced, "ALARM.TEST_URGENT")).toBe("normal"); // todavía no: lo hace el ciclo
+    const state = run(forced, tick);
+    expect(life(state, "ALARM.TEST_URGENT")).toBe("active-unacknowledged");
+    expect(alarmEvents(state)).toMatchObject([
+      { code: "ALARM.TEST_URGENT", state: "active-unacknowledged", timestampMs: START + 100 },
+    ]);
+  });
+
+  test("ciclo de vida completo por el reducer, con un evento del SER por cambio", () => {
+    const state = run(
+      fresh(),
+      setTest("ALARM.TEST_HIGH", true),
+      tick,
+      { type: "acknowledge-alarm", code: "ALARM.TEST_HIGH" },
+      setTest("ALARM.TEST_HIGH", false),
+      tick,
+    );
+    expect(life(state, "ALARM.TEST_HIGH")).toBe("normal");
+    expect(alarmEvents(state).map((e) => e.state)).toEqual([
+      "active-unacknowledged",
+      "active-acknowledged",
+      "normal",
+    ]);
+  });
+
+  test("una alarma normalizada sin reconocer sigue visible hasta que se reconoce", () => {
+    const state = run(fresh(), setTest("ALARM.TEST_LOW", true), tick, setTest("ALARM.TEST_LOW", false), tick);
+    expect(life(state, "ALARM.TEST_LOW")).toBe("returned-unacknowledged");
+    const acked = run(state, { type: "acknowledge-alarm", code: "ALARM.TEST_LOW" });
+    expect(life(acked, "ALARM.TEST_LOW")).toBe("normal");
+  });
+
+  test("reconocer todas reconoce solo las de la lista que recibe", () => {
+    const state = run(
+      fresh(),
+      setTest("ALARM.TEST_URGENT", true),
+      setTest("ALARM.TEST_HIGH", true),
+      setTest("ALARM.TEST_LOW", true),
+      tick,
+      { type: "acknowledge-alarms", codes: ["ALARM.TEST_HIGH"] },
+    );
+    expect(life(state, "ALARM.TEST_HIGH")).toBe("active-acknowledged");
+    expect(life(state, "ALARM.TEST_URGENT")).toBe("active-unacknowledged");
+    expect(life(state, "ALARM.TEST_LOW")).toBe("active-unacknowledged");
+  });
+
+  test("una estación inconsistent activa la alarma urgente a través del reducer", () => {
+    const base = fresh();
+    const station = stationAt("stopped");
+    const inconsistent: HmiState = {
+      ...base,
+      simulation: {
+        ...base.simulation,
+        station: { ...station, switchgear: { ...station.switchgear, QE: { kind: "closed" }, Q2: { kind: "closed" } } },
+      },
+    };
+    const state = run(inconsistent, tick);
+    expect(life(state, "ALARM.INCONSISTENT")).toBe("active-unacknowledged");
+  });
+
+  test("reconocer y activar no son órdenes: no tocan la estación, la selección ni el registro", () => {
+    const selected = run(fresh(), select(transitionCommand("decoupled")));
+    const after = run(
+      selected,
+      setTest("ALARM.TEST_URGENT", true),
+      tick,
+      { type: "acknowledge-alarm", code: "ALARM.TEST_URGENT" },
+      { type: "acknowledge-alarms", codes: ["ALARM.TEST_URGENT"] },
+    );
+    expect(after.ui.selection).toEqual(selected.ui.selection); // se pueden reconocer con una selección abierta
+    expect(after.ui.log).toEqual(selected.ui.log);
+    expect(after.simulation.station).toEqual(selected.simulation.station);
+    expect(after.simulation.pending).toEqual([]);
+  });
+
+  test("reconocer una alarma que no está pendiente de reconocer no deja eventos", () => {
+    const state = run(fresh(), { type: "acknowledge-alarm", code: "ALARM.TEST_URGENT" });
+    expect(state.simulation.events).toEqual([]);
+    expect(state.simulation.nextEventId).toBe(0);
+  });
+
+  test("el reducer no modifica el estado recibido al manejar alarmas", () => {
+    const state = fresh();
+    const copy = structuredClone(state);
+    run(state, setTest("ALARM.TEST_URGENT", true), tick, { type: "acknowledge-alarm", code: "ALARM.TEST_URGENT" });
+    expect(state).toEqual(copy);
   });
 });
