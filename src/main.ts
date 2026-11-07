@@ -1,5 +1,6 @@
 // Punto de entrada del simulador: corre la simulación en el tiempo
 // y ejecuta un escenario de órdenes del operador.
+import { createAlarmState, type AlarmState } from "./alarms.ts";
 import { converterLabels, formatSwitch } from "./labels.ts";
 import { measure } from "./measurements.ts";
 import { runCycle, type ScheduledCommand } from "./simulationCycle.ts";
@@ -40,6 +41,7 @@ const scenario: ScheduledCommand[] = [
 ];
 
 let station: Station = createStation();
+let alarms: AlarmState = createAlarmState(); // la consola no las muestra, pero el ciclo las necesita
 let timeSeconds = 0;
 
 function log(message: string): void {
@@ -67,7 +69,7 @@ function logSnapshot(snapshot: Station): void {
 }
 
 function tick(): void {
-  const cycle = runCycle(station, timeSeconds, scenario, DT_SECONDS, defaultConfig);
+  const cycle = runCycle(station, timeSeconds, scenario, DT_SECONDS, defaultConfig, alarms);
 
   // Los eventos se muestran con el instante en que ocurrieron (antes de avanzar).
   for (const event of cycle.events) {
@@ -79,6 +81,7 @@ function tick(): void {
   }
 
   station = cycle.station;
+  alarms = cycle.alarms;
   timeSeconds = cycle.timeSeconds;
 
   if (timeSeconds > END_SECONDS) {

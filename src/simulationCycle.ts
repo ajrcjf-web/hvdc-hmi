@@ -1,7 +1,7 @@
 // Ciclo de simulación: lo que pasa en cada instante, en un orden fijo.
 // Función pura: recibe la estación y devuelve la siguiente, más lo ocurrido.
 
-import { createAlarmState, evaluateAlarms, type AlarmState } from "./alarms.ts";
+import { evaluateAlarms, type AlarmState } from "./alarms.ts";
 import { commandStepEvent, detectPlantEvents, type CommandSignal, type SignalEvent } from "./events.ts";
 import { step } from "./simulation.ts";
 import type { CommandResult, Station, StationConfig } from "./station.ts";
@@ -53,8 +53,7 @@ export function runCycle(
   scenario: ScheduledCommand[],
   dtSeconds: number,
   config: StationConfig,
-  // La consola (main.ts) no usa las alarmas: sin ellas, parte de unas alarmas en normal.
-  alarms: AlarmState = createAlarmState(),
+  alarms: AlarmState,
 ): CycleResult {
   const events: CycleEvent[] = [];
   let current = station;
