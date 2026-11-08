@@ -13,7 +13,7 @@ import { toSerRows, type SerRow } from "../serView.ts";
 type Props = {
   events: SerEvent[];
   discarded: number; // eventos que ya no caben (se descartaron los más viejos)
-  nowMs: number; // hora simulada actual: nombre del archivo y encabezado del PDF
+  nowMs: number; // hora simulada actual: nombre del archivo
 };
 
 type Column = "timestamp" | "description" | "state";
@@ -35,9 +35,10 @@ function downloadText(text: string, fileName: string) {
 }
 
 export function SerWindow({ events, discarded, nowMs }: Props) {
-  // Instante de la última exportación a PDF: el encabezado de la impresión no debe
-  // cambiar con cada latido del reloj.
-  const [exportedAtMs, setExportedAtMs] = useState(nowMs);
+  // Hora REAL (reloj del equipo) de la última exportación a PDF: los eventos llevan hora
+  // simulada, pero el informe documenta cuándo se generó. Se fija al pulsar el botón para
+  // que el encabezado no cambie con cada latido.
+  const [exportedAtMs, setExportedAtMs] = useState(() => Date.now());
   const [filters, setFilters] = useState<Record<Column, string>>({
     timestamp: "",
     description: "",
@@ -57,7 +58,7 @@ export function SerWindow({ events, discarded, nowMs }: Props) {
   // El PDF usa la impresión del navegador (el usuario elige "Guardar como PDF"). El
   // título de la página es el nombre de archivo que propone el navegador.
   const exportPdf = () => {
-    flushSync(() => setExportedAtMs(nowMs)); // fija el encabezado antes de imprimir
+    flushSync(() => setExportedAtMs(Date.now())); // fija el encabezado antes de imprimir
     const previousTitle = document.title;
     document.title = exportFileName("pdf", nowMs).replace(/\.pdf$/, "");
     window.addEventListener("afterprint", () => (document.title = previousTitle), { once: true });
