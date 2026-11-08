@@ -123,8 +123,10 @@ Se implementan en este orden, cada una con su rama(s), PR(s) y milestone:
 | 4.1 | Navegación y eventos: barra de ventanas, tabla de señales, ventana SER |
 | 4.2 | Alarmas: modelo, ventana, reconocimiento |
 | 4.3 | Modo manual (#36) |
-| 4.4 | Fallas y protecciones: ventana de simulación, protecciones, discrepancia, reset remoto |
-| 4.5 | Línea de mensajes (#39) y tendencias |
+| 4.4 | Trabajo previo: línea de mensajes (#39) e indicador de foco (#62). Después, fallas y protecciones: ventana de simulación, protecciones, discrepancia, reset remoto |
+| 4.5 | Tendencias |
+
+**Por qué la línea de mensajes (#39) pasó de la 4.5 a la 4.4:** el aviso de rechazo del panel de órdenes empuja los botones unos 40 px hacia abajo al aparecer, y suben al desaparecer. Un segundo clic apurado puede seleccionar otra orden, así que es un riesgo de operación, no una mejora estética. La 4.4 agrega muchos mensajes nuevos (fallas, protecciones), y el problema se agravaría; por eso se resuelve antes, como trabajo previo de la subfase. El indicador de foco (#62) va en el mismo bloque por la misma razón: en una pantalla de mando, el operador debe ver qué elemento recibirá la acción.
 
 Se publica **una sola versión, v0.4.0**, al cerrar la Fase 4 completa (no una por subfase).
 

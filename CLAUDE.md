@@ -43,7 +43,9 @@ supervisa una estación HVDC monopolar.
 - Actualiza README y CLAUDE.md si el cambio lo requiere (ver docs/WORKFLOW.md).
 - Puedes usar `gh` para consultar issues, PRs y el estado del CI.
 - Puedes crear la rama de trabajo, hacer commits en ella (Conventional Commits, un commit por motivo), hacer push de esa rama y abrir el PR con `gh pr create`, usando la plantilla `.github/pull_request_template.md`. En el PR, incluye `Closes #N` si resuelve un issue y describe la verificación que realmente ejecutaste.
-- En los cambios de interfaz, el PR deja la revisión visual como pendiente explícito, con los pasos concretos para hacerla en el navegador (qué ejecutar, qué mirar y qué debería verse). No la des por hecha: yo la hago.
+- En los cambios de interfaz, la revisión visual tiene dos pasos:
+  1. Antes de abrir el PR, tú haces una primera revisión visual interactiva con el navegador: arrancas la aplicación (`npm run dev`), recorres lo que cambió haciendo clic en los flujos (no basta con fotografiar ventanas: hay problemas, como botones que se desplazan solos, que solo se ven al interactuar), verificas textos, solapes y cortes, y ejecutas el escenario principal. Adjuntas las capturas al PR. Al terminar, detienes el servidor que arrancaste y verificas que el puerto quedó libre.
+  2. El PR deja mi revisión visual como pendiente explícito, con los pasos concretos para hacerla en el navegador (qué ejecutar, qué mirar y qué debería verse). No la des por hecha: yo la hago, y evalúo el juicio de operación (qué llama la atención y qué se distingue de un vistazo), que tu revisión no sustituye.
 - Nunca hagas merge, ni commits o push directamente en `main`, ni crees tags o Releases, ni cierres o reabras issues a mano: eso lo hago yo.
 
 ## Planes de varios PRs
