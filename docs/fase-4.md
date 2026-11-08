@@ -116,7 +116,8 @@ Barra fija abajo con los **últimos 3 eventos del SER**, del más reciente al m�
 
 - Altura reservada para 3 filas de una línea, aunque haya menos eventos: nada se mueve al llegar un evento nuevo. Reemplaza al aviso del panel de órdenes.
 - Los textos salen de la tabla de señales (como el SER), sin duplicarlos, y la hora tiene el formato del SER, para buscar el evento en su ventana.
-- Cada fila ocupa una sola línea; si no cabe se corta con puntos suspensivos y el texto completo queda como tooltip.
+- Cada fila ocupa una sola línea, con el orden de campos del SER (hora · descripción · estado); si no cabe se corta con puntos suspensivos y el texto completo queda como tooltip.
+- El fondo ocupa todo el ancho, pero las filas se alinean con la columna del contenido principal (siguen sus variables, no un ancho fijo), y el texto no es menor que el del registro.
 - Los rechazos conservan su jerarquía visual (negrita, ✗) y las alarmas su símbolo y el color de su prioridad.
 - Un clic en la barra abre la ventana del SER.
 - La página reserva abajo un margen igual a la altura de la barra, para no tapar las últimas filas. La barra no se imprime.
