@@ -16,8 +16,9 @@ export const PANEL_EVENT_LIMIT = 50;
 export type EventRow = {
   id: number;
   timestamp: string; // el mismo formato que el SER
-  text: string; // una sola línea: descripción · estado
-  tooltip: string; // la fila completa, con hora
+  description: string; // con el símbolo al principio (prioridad de la alarma, o ✗); es lo que se corta
+  state: string; // el estado de la señal: va aparte y no se corta
+  tooltip: string; // la fila completa: hora · descripción · estado
   rejected: boolean; // un rechazo se destaca (✗, negrita)
   alarm: AlarmPriority | null; // la prioridad, si el evento es de una alarma
   active: boolean; // la alarma sigue siendo visible (no está en "normal")
@@ -37,17 +38,21 @@ export function toEventRows(events: SerEvent[]): EventRow[] {
   return events.slice(0, PANEL_EVENT_LIMIT).map((event): EventRow => {
     const row = toSerRow(event);
     const alarm = alarmPriority(event.code);
-    // Mismo orden que el SER: hora · descripción · estado. Si el texto no cabe en la línea
-    // se corta el final, así que el símbolo de la prioridad y el ✗ de un rechazo van al
-    // principio (antes de la descripción) y no se pierden. El ✗ no se repite en el estado.
+    // El estado es lo más importante y no se puede cortar: va aparte, en la línea de la
+    // hora. La descripción es lo que se corta con puntos suspensivos si no cabe, así que el
+    // símbolo de la prioridad y el ✗ de un rechazo van al principio de ella y no se pierden.
+    // El ✗ no se repite en el estado.
     const rejected = event.state === "rejected";
     const prefix = alarm === null ? (rejected ? "✗ " : "") : `${prioritySymbol(alarm)} `;
-    const text = `${prefix}${row.description} · ${describeSignalState(event.state)}`;
+    const description = `${prefix}${row.description}`;
+    const state = describeSignalState(event.state);
     return {
       id: row.id,
       timestamp: row.timestamp,
-      text,
-      tooltip: `${row.timestamp} ${text}`,
+      description,
+      state,
+      // Mismo orden que el SER: hora · descripción · estado.
+      tooltip: `${row.timestamp} ${description} · ${state}`,
       rejected,
       alarm,
       active: alarm !== null && event.state !== "normal",
