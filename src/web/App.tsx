@@ -6,6 +6,7 @@ import { defaultConfig } from "../station.ts";
 import { AlarmWindow } from "./components/AlarmWindow.tsx";
 import { ConfirmationDialog } from "./components/ConfirmationDialog.tsx";
 import { FaultsWindow } from "./components/FaultsWindow.tsx";
+import { MessageLine } from "./components/MessageLine.tsx";
 import { NavigationBar } from "./components/NavigationBar.tsx";
 import { OverviewWindow } from "./components/OverviewWindow.tsx";
 import { PendingWindow } from "./components/PendingWindow.tsx";
@@ -17,6 +18,7 @@ import {
   TICK_MS,
 } from "./hmiState.ts";
 import { summarizeAlarms } from "./alarmView.ts";
+import { toMessageLine } from "./commandView.ts";
 import { hashForWindow, windowFromHash, windowInfo } from "./windows.ts";
 
 // La ventana inicial sale de la dirección de la página (ej. #/eventos).
@@ -86,6 +88,7 @@ export function App() {
           onCancel={() => dispatch({ type: "cancel" })}
         />
       )}
+      <MessageLine message={toMessageLine(state.ui.log, state.simulation.startMs)} />
     </main>
   );
 }

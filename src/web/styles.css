@@ -14,11 +14,14 @@
   --alarm-urgent: #e5484d; /* prioridad urgente (rojo); también el estado inconsistent, que genera una alarma urgente */
   --alarm-high: #f5a524; /* prioridad alta (ámbar) */
   --alarm-low: #f2e24b; /* prioridad baja (amarillo) */
+  --message-line-height: 3.4rem; /* altura fija de la línea de mensajes (dos líneas) */
   --backdrop: rgba(0, 0, 0, 0.6); /* fondo detrás de la ventana */
 }
 
 body {
   margin: 0;
+  /* Margen igual a la altura de la línea de mensajes: no tapa las últimas filas. */
+  padding-bottom: var(--message-line-height);
   font-family: system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -453,6 +456,11 @@ input {
 /* Impresión (PDF): solo el SER, en blanco y negro, sin barra, botones ni filtros.
    Se usan los colores del navegador para papel (negro sobre blanco), sin colores sueltos. */
 @media print {
+  body {
+    padding-bottom: 0;
+  }
+
+  .message-line,
   .nav,
   .ser-actions,
   .ser-filters,
@@ -517,4 +525,47 @@ input {
 .switch-name {
   flex-basis: 100%;
   color: var(--text-muted);
+}
+
+/* Línea de mensajes: fija abajo, en todas las ventanas. Altura reservada de dos líneas,
+   con o sin mensaje, para que nada se mueva. Sin color (ISA-101): el rechazo se distingue
+   como en el registro, con negrita, fondo más claro, barra a la izquierda y el símbolo ✗. */
+.message-line {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  height: var(--message-line-height);
+  padding: 0.35rem 1rem;
+  background: var(--surface);
+  border-top: 1px solid var(--line-dim);
+  border-left: 4px solid transparent;
+  color: var(--text-muted);
+  font-family: ui-monospace, monospace;
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.message-line.rejected {
+  background: var(--surface-raised);
+  border-left-color: var(--line);
+  color: var(--text-strong);
+  font-weight: bold;
+}
+
+.message-text {
+  margin: 0 auto;
+  max-width: 1100px;
+  /* Se ajusta en dos líneas y recién después se corta con puntos suspensivos. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.message-line .time {
+  color: inherit;
+  opacity: 0.8;
 }
