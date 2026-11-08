@@ -18,6 +18,7 @@ export const testConfig: StationConfig = {
 // Una estación en un estado: equipos en reposo, convertidor bloqueado, sin tensión.
 export function stationAt(state: StationState): Station {
   return {
+    mode: "automatic",
     switchgear: switchgearFor(state),
     converter: "blocked",
     udcKV: 0,
@@ -29,6 +30,7 @@ export function stationAt(state: StationState): Station {
 // Una estación acoplada, con el convertidor desbloqueado y la tensión establecida.
 export function deblockedAt(powerMW = 0, powerOrderMW = powerMW): Station {
   return {
+    mode: "automatic",
     switchgear: switchgearFor("coupled"),
     converter: "deblocked",
     udcKV: testConfig.ratedVoltageKV,

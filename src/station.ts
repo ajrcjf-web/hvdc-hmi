@@ -22,7 +22,12 @@ import {
 
 export type ConverterState = "blocked" | "deblocked";
 
+// Modo de operación: en automático el operador da órdenes de estado (requestTransition);
+// en manual da órdenes por equipo (requestSwitchOrder). Cada modo rechaza las del otro.
+export type OperatingMode = "automatic" | "manual";
+
 export type Station = {
+  mode: OperatingMode;
   switchgear: Switchgear;
   converter: ConverterState;
   udcKV: number; // tensión DC (tiene dinámica: sube y baja con su rampa)
@@ -53,6 +58,7 @@ export type CommandResult =
 
 export function createStation(): Station {
   return {
+    mode: "automatic",
     switchgear: switchgearFor("stopped"),
     converter: "blocked",
     udcKV: 0,
@@ -117,12 +123,47 @@ function operateSwitch(
   return { ok: true, station: { ...station, switchgear: result.switchgear } };
 }
 
+// Orden de cambio de modo.
+// Regla central: volver a automático exige que la estación esté en uno de los cuatro
+// estados válidos (earthed, stopped, decoupled o coupled): ni en transition ni en
+// inconsistent. Así el modo automático nunca arranca con posiciones que no entiende.
+// Pasar a manual se acepta desde inconsistent: es la vía para normalizar la estación.
+// Además se rechaza si ya está en ese modo, si hay una maniobra en curso o si hay una
+// rampa de potencia o de tensión: cambiar de mando a mitad de una maniobra deja dudas
+// sobre quién la controla.
+export function requestMode(
+  station: Station,
+  to: OperatingMode,
+  config: StationConfig,
+): CommandResult {
+  if (station.mode === to) {
+    return reject(`La estación ya está en modo ${to === "manual" ? "manual" : "automático"}`);
+  }
+  const state = deriveState(station.switchgear);
+  if (state === "transition") {
+    return reject(`${transitionReason(station)}. Esperar a que terminen las maniobras`);
+  }
+  if (to === "automatic" && state === "inconsistent") {
+    return reject(
+      "No se puede volver a automático con posiciones de equipos inconsistentes: normalizar primero en manual",
+    );
+  }
+  if (isRamping(station, config)) {
+    return reject("No se puede cambiar de modo durante una rampa de potencia o de tensión");
+  }
+  return { ok: true, station: { ...station, mode: to } };
+}
+
 // Orden de estado: lleva la estación a un estado vecino con la maniobra de un equipo.
+// Solo en modo automático.
 export function requestTransition(
   station: Station,
   to: StationState,
   config: StationConfig,
 ): CommandResult {
+  if (station.mode !== "automatic") {
+    return reject("Las órdenes de estado solo se aceptan en modo automático");
+  }
   const from = deriveState(station.switchgear);
 
   if (from === "transition") {
@@ -146,13 +187,16 @@ export function requestTransition(
 }
 
 // Orden por equipo: abrir o cerrar Q1, Q2 o QE. Con los mismos enclavamientos que la
-// orden de estado. (El modo de operación se verifica aquí desde el PR siguiente.)
+// orden de estado. Solo en modo manual.
 export function requestSwitchOrder(
   station: Station,
   id: SwitchId,
   to: SwitchTarget,
   config: StationConfig,
 ): CommandResult {
+  if (station.mode !== "manual") {
+    return reject("Las órdenes por equipo solo se aceptan en modo manual");
+  }
   return operateSwitch(station, id, to, config);
 }
 
