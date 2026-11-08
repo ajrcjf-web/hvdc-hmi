@@ -114,7 +114,7 @@ Las **provoca y despeja el instructor**, desde la ventana de simulación. No hay
 
 Panel a la derecha, en vertical, con los **últimos eventos del SER** (del más reciente al más viejo, con scroll interno), **visible en todas las ventanas**. Reemplaza al aviso del panel de órdenes. (El issue pedía una línea de mensajes fija; el diseño pasó por una barra de abajo y terminó en este panel.)
 
-- Cada evento ocupa dos líneas. Línea 1: la hora en formato SER (en chico) y, a la derecha, el estado, que es lo más importante y no se corta. Línea 2: la descripción, con el símbolo al principio; si no cabe se corta con puntos suspensivos y el texto completo queda como tooltip.
+- Cada evento ocupa dos líneas. Línea 1: la hora en formato SER (en chico) y, a la derecha, el estado, que es lo más importante y no se corta. Línea 2: la descripción, con el símbolo al principio; si no cabe se corta con puntos suspensivos y el texto completo queda como tooltip. Las filas de rechazo pueden ocupar hasta tres líneas (la descripción en dos), para que el motivo se lea completo: sin el registro, el panel es el único lugar de la overview donde aparece.
 - Los textos salen de la tabla de señales (como el SER), sin duplicarlos. Los rechazos conservan su jerarquía visual (negrita, ✗) y las alarmas su símbolo y el color de su prioridad.
 - Se puede plegar y desplegar con un botón del encabezado. Plegado queda una pestaña angosta en el borde derecho con el contador de eventos llegados desde que se plegó. La elección se recuerda entre sesiones; en pantallas angostas arranca plegado si nunca se eligió.
 - "Ver SER completo" abre la ventana del SER.
