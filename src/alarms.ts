@@ -17,6 +17,7 @@ import type { SignalEvent } from "./events.ts";
 import type { SignalCode } from "./signals.ts";
 import type { Station } from "./station.ts";
 import { deriveState } from "./stationState.ts";
+import { atOrigin } from "./switchgear.ts";
 
 export type AlarmPriority = "urgent" | "high" | "low";
 
@@ -99,7 +100,9 @@ export function alarmConditions(
   alarms: AlarmState,
 ): Record<AlarmCode, boolean> {
   return {
-    "ALARM.INCONSISTENT": deriveState(station.switchgear) === "inconsistent",
+    // Un equipo en maniobra cuenta en su posición de origen: la alarma no se normaliza al
+    // empezar la maniobra que la resuelve (ni aparece antes de que termine la que la causa).
+    "ALARM.INCONSISTENT": deriveState(atOrigin(station.switchgear)) === "inconsistent",
     "ALARM.TEST_URGENT": alarms.forced["ALARM.TEST_URGENT"],
     "ALARM.TEST_HIGH": alarms.forced["ALARM.TEST_HIGH"],
     "ALARM.TEST_LOW": alarms.forced["ALARM.TEST_LOW"],
