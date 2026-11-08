@@ -1,7 +1,7 @@
 // Etiquetas en español para mostrar los datos de la estación.
 // Las comparten la consola (main.ts) y la web.
 
-import type { ConverterState } from "./station.ts";
+import type { ConverterState, OperatingMode } from "./station.ts";
 import type { SwitchStatus } from "./switchgear.ts";
 
 export const positionLabels: Record<SwitchStatus["kind"], string> = {
@@ -13,6 +13,12 @@ export const positionLabels: Record<SwitchStatus["kind"], string> = {
 export const converterLabels: Record<ConverterState, string> = {
   blocked: "bloqueado",
   deblocked: "desbloqueado",
+};
+
+// Modo de operación, en palabras. El indicador de la pantalla le suma forma y símbolo.
+export const modeLabels: Record<OperatingMode, string> = {
+  automatic: "automático",
+  manual: "manual",
 };
 
 export function formatSwitch(status: SwitchStatus): string {
