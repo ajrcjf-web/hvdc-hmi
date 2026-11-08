@@ -1,33 +1,46 @@
-// La línea de mensajes: la última respuesta del sistema a una orden, siempre visible
-// en todas las ventanas. Solo muestra: el texto y la hora los prepara toMessageLine.
-// Su altura es fija (dos líneas, también sin mensaje): nada se mueve al cambiar el mensaje.
-// Si el texto no cabe en las dos líneas se corta con puntos suspensivos, y el texto
+// La barra de mensajes: los últimos eventos del SER, del más reciente al más viejo, siempre
+// visibles en todas las ventanas. Un clic en la barra abre la ventana del SER.
+// Solo muestra: los textos los prepara toMessageRows.
+// La altura es fija (3 filas, aunque haya menos eventos): nada se mueve al llegar uno nuevo.
+// Cada fila ocupa una sola línea; si no cabe se corta con puntos suspensivos y el texto
 // completo queda como tooltip (title).
-import type { MessageLine as MessageLineData } from "../commandView.ts";
+import { MESSAGE_ROWS, type MessageRow } from "../messageRows.ts";
 
 type Props = {
-  message: MessageLineData | null;
+  rows: MessageRow[];
+  onOpen: () => void; // abre la ventana del SER
 };
 
-export function MessageLine({ message }: Props) {
-  if (message === null) {
-    return (
-      <div className="message-line" role="status" aria-live="polite">
-        <p className="message-text empty">Aún no hay respuestas.</p>
-      </div>
-    );
-  }
+function rowClass(row: MessageRow): string {
+  const classes = ["message-row"];
+  if (row.rejected) classes.push("rejected");
+  if (row.alarm !== null) classes.push("message-alarm", `alarm-${row.alarm}`);
+  if (row.active) classes.push("message-alarm-active");
+  return classes.join(" ");
+}
 
-  const full = `${message.timestamp} ${message.text}`;
+export function MessageLine({ rows, onOpen }: Props) {
+  // Siempre MESSAGE_ROWS filas: las que faltan quedan vacías, para reservar la altura.
+  const slots = Array.from({ length: MESSAGE_ROWS }, (_, i) => rows[i] ?? null);
+
   return (
-    <div
-      className={message.rejected ? "message-line rejected" : "message-line"}
-      role="status"
-      aria-live="polite"
+    <button
+      type="button"
+      className="message-line"
+      onClick={onOpen}
+      aria-label="Últimos eventos del SER. Abrir la ventana de eventos"
     >
-      <p className="message-text" title={full}>
-        <span className="time">{message.timestamp}</span> {message.text}
-      </p>
-    </div>
+      {slots.map((row, i) =>
+        row === null ? (
+          <span key={`empty-${i}`} className="message-row empty">
+            {i === 0 && rows.length === 0 ? "Aún no hay eventos." : " "}
+          </span>
+        ) : (
+          <span key={row.id} className={rowClass(row)} title={row.tooltip}>
+            <span className="time">{row.timestamp}</span> {row.text}
+          </span>
+        ),
+      )}
+    </button>
   );
 }

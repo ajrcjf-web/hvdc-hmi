@@ -18,7 +18,7 @@ import {
   TICK_MS,
 } from "./hmiState.ts";
 import { summarizeAlarms } from "./alarmView.ts";
-import { toMessageLine } from "./commandView.ts";
+import { toMessageRows } from "./messageRows.ts";
 import { hashForWindow, windowFromHash, windowInfo } from "./windows.ts";
 
 // La ventana inicial sale de la dirección de la página (ej. #/eventos).
@@ -88,7 +88,12 @@ export function App() {
           onCancel={() => dispatch({ type: "cancel" })}
         />
       )}
-      <MessageLine message={toMessageLine(state.ui.log, state.simulation.startMs)} />
+      <MessageLine
+        rows={toMessageRows(state.simulation.events)}
+        onOpen={() => {
+          window.location.hash = hashForWindow("events");
+        }}
+      />
     </main>
   );
 }
