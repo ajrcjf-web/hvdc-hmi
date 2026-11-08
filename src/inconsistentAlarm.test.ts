@@ -7,7 +7,7 @@ import type { AlarmLifeState, AlarmState } from "./alarms.ts";
 import { runCycle } from "./simulationCycle.ts";
 import { requestSwitchOrder, type Station } from "./station.ts";
 import { deriveState } from "./stationState.ts";
-import type { SwitchId, SwitchTarget } from "./switchgear.ts";
+import { atOrigin, type SwitchId, type SwitchStatus, type SwitchTarget } from "./switchgear.ts";
 import { noAlarms, stationAt, testConfig } from "./testSupport.ts";
 
 const DT = 0.1; // con decimales, como en la web (issue #46)
@@ -80,6 +80,52 @@ describe("alarma de inconsistencia: salir de la inconsistencia (abrir Q2)", () =
     const firstArrived = arrived[0]!;
     const before = samples[samples.indexOf(firstArrived) - 1]!;
     expect(before.life).toBe("active-unacknowledged");
+  });
+});
+
+describe("alarma de inconsistencia: eventos del SER", () => {
+  test("la alarma se normaliza en el mismo ciclo en que Q2 llega a abierto", () => {
+    const command = {
+      atSeconds: 1,
+      label: "abrir Q2",
+      run: (s: Station) => requestSwitchOrder(s, "Q2", "open", testConfig),
+    };
+    let station = inconsistentStation();
+    let alarms = noAlarms;
+    let time = 0;
+    const events: { code: string; state: string; timeSeconds: number }[] = [];
+    while (time < 7 - 1e-9) {
+      const result = runCycle(station, time, [command], DT, testConfig, alarms);
+      for (const event of result.events) {
+        if (event.kind === "signal") events.push(event.event);
+      }
+      station = result.station;
+      alarms = result.alarms;
+      time = result.timeSeconds;
+    }
+
+    const q2Open = events.find((e) => e.code === "Q2.POS" && e.state === "open");
+    const normalized = events.find(
+      (e) => e.code === "ALARM.INCONSISTENT" && e.state === "returned-unacknowledged",
+    );
+    expect(q2Open).toBeDefined();
+    expect(normalized).toBeDefined();
+    expect(normalized!.timeSeconds).toBe(q2Open!.timeSeconds);
+    // Y ocurre después de que Q2 empezó a moverse, no al empezar.
+    const q2Moving = events.find((e) => e.code === "Q2.POS" && e.state === "moving")!;
+    expect(normalized!.timeSeconds).toBeGreaterThan(q2Moving.timeSeconds + 3);
+  });
+});
+
+describe("atOrigin", () => {
+  test("un equipo en maniobra cuenta en su posición de origen", () => {
+    const closing: SwitchStatus = { kind: "moving", to: "closed", remainingSeconds: 1 };
+    const opening: SwitchStatus = { kind: "moving", to: "open", remainingSeconds: 1 };
+    expect(atOrigin({ Q1: closing, Q2: opening, QE: { kind: "open" } })).toEqual({
+      Q1: { kind: "open" },
+      Q2: { kind: "closed" },
+      QE: { kind: "open" },
+    });
   });
 });
 
