@@ -118,3 +118,19 @@ Ejemplo: `feat/power-interlocks`
 - Nunca commitear secretos (`.env`, contraseñas, claves).
 - Cambiar de rama cambia los archivos del disco: guardar y commitear antes de cambiar.
 - La documentación se actualiza en el mismo PR que el código.
+
+## Cerrar un worktree
+
+Los worktrees de las sesiones en paralelo viven en `.claude/worktrees/`. Cuando su PR ya está mergeado:
+
+1. `git worktree remove <carpeta>` para quitar el worktree.
+2. `git branch -d <rama>` para borrar la rama local. Git no borra una rama que está activa en un worktree, por eso va después del paso 1.
+3. `git fetch --prune` para olvidar las ramas remotas que ya no existen.
+4. `git worktree prune` y `git worktree list` para comprobar que no queda ninguno de más.
+
+Si Windows no deja borrar la carpeta ("Permission denied" o "von einem anderen Prozess verwendet"):
+1. Cerrar la aplicación de Claude y los servidores de Vite (`npm run dev`).
+2. Si sigue, identificar el proceso con `resmon` (pestaña CPU → "Zugeordnete Handles"; buscar el nombre de la carpeta).
+3. Verificar qué es con `Get-Process -Id <id>` y detenerlo con `Stop-Process -Id <id>`.
+
+Las sesiones del agente pueden dejar procesos huérfanos que mantienen la carpeta abierta.
