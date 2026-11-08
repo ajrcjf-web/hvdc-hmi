@@ -23,7 +23,6 @@ export function OverviewWindow({ state, dispatch }: Props) {
         <CommandPanel
           mode={state.simulation.station.mode}
           onCommand={(command) => dispatch({ type: "select", command })}
-          notice={state.ui.selectionNotice}
         />
         <CommandLog entries={state.ui.log} />
       </div>

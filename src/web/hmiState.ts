@@ -70,7 +70,6 @@ export type UiState = {
   selectionTimeoutSeconds: number;
   activeWindow: WindowId; // la ventana que se ve; la simulación es la misma en todas
   selection: Selection | null; // como mucho una a la vez
-  selectionNotice: string | null; // motivo del último rechazo al seleccionar
   log: LogEntry[]; // la más reciente primero
   nextLogId: number;
 };
@@ -104,7 +103,6 @@ export function createHmiState(
       selectionTimeoutSeconds,
       activeWindow,
       selection: null,
-      selectionNotice: null,
       log: [],
       nextLogId: 0,
     },
@@ -132,7 +130,6 @@ function selectCommand(state: HmiState, command: OperatorCommand): HmiState {
     ]),
     ui: {
       ...ui,
-      selectionNotice: `${label}: ${reason}`,
       ...withLog(ui, [
         { timeSeconds: simulation.timeSeconds, kind: "selection-rejected", label, reason },
       ]),
@@ -161,7 +158,6 @@ function selectCommand(state: HmiState, command: OperatorCommand): HmiState {
         selectedAtSeconds: simulation.timeSeconds,
         expiresAtSeconds: simulation.timeSeconds + ui.selectionTimeoutSeconds,
       },
-      selectionNotice: null,
       ...withLog(ui, [
         { timeSeconds: simulation.timeSeconds, kind: "selected", label, reason: null },
       ]),
@@ -210,7 +206,6 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
         ui: {
           ...ui,
           selection: null,
-          selectionNotice: null,
           ...withLog(ui, [
             { timeSeconds: simulation.timeSeconds, kind: "execute-ordered", label, reason: null },
           ]),
@@ -229,7 +224,6 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
         ui: {
           ...ui,
           selection: null,
-          selectionNotice: null,
           ...withLog(ui, [
             {
               timeSeconds: simulation.timeSeconds,

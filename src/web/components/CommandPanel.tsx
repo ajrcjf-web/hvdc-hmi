@@ -27,10 +27,9 @@ const switchNames: Record<SwitchId, string> = {
 type Props = {
   mode: OperatingMode;
   onCommand: (command: OperatorCommand) => void; // selecciona la orden (aún no la ejecuta)
-  notice: string | null; // por qué no se pudo seleccionar la última orden
 };
 
-export function CommandPanel({ mode, onCommand, notice }: Props) {
+export function CommandPanel({ mode, onCommand }: Props) {
   // El texto que el operador está escribiendo; solo se convierte en número al enviar.
   const [powerText, setPowerText] = useState("");
 
@@ -43,11 +42,6 @@ export function CommandPanel({ mode, onCommand, notice }: Props) {
   return (
     <section className="panel">
       <h2>Órdenes</h2>
-      {notice !== null && (
-        <p className="notice" role="alert">
-          ✗ No seleccionada — {notice}
-        </p>
-      )}
 
       <h3>Modo de operación</h3>
       <div className="buttons">

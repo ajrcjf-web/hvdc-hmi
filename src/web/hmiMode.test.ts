@@ -66,7 +66,7 @@ describe("reducer: cambio de modo", () => {
   test("pedir el modo en que ya está se rechaza al seleccionar, con motivo", () => {
     const state = run(withStation(stationAt("stopped")), select(modeCommand("automatic")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.selectionNotice).toContain("ya está en modo automático");
+    expect(state.ui.log[0]?.reason).toContain("ya está en modo automático");
     expect(kinds(state)).toEqual(["selection-rejected"]);
   });
 });
@@ -75,14 +75,14 @@ describe("reducer: rechazos por modo (la lógica decide, no la interfaz)", () =>
   test("una orden de estado en manual se rechaza al seleccionar", () => {
     const state = run(withStation(manual(stationAt("stopped"))), select(transitionCommand("decoupled")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.selectionNotice).toContain("solo se aceptan en modo automático");
+    expect(state.ui.log[0]?.reason).toContain("solo se aceptan en modo automático");
     expect(eventsOf(state, "CMD.TO_DECOUPLED")).toEqual(["rejected"]);
   });
 
   test("una orden por equipo en automático se rechaza al seleccionar", () => {
     const state = run(withStation(stationAt("stopped")), select(switchCommand("Q1", "closed")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.selectionNotice).toContain("solo se aceptan en modo manual");
+    expect(state.ui.log[0]?.reason).toContain("solo se aceptan en modo manual");
     expect(eventsOf(state, "CMD.Q1_CLOSE")).toEqual(["rejected"]);
   });
 
@@ -114,7 +114,7 @@ describe("reducer: mando por equipo", () => {
     // Q2 no cierra con Q1 abierto.
     const state = run(withStation(manual(stationAt("stopped"))), select(switchCommand("Q2", "closed")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.selectionNotice).toContain("Q1 sin cerrar");
+    expect(state.ui.log[0]?.reason).toContain("Q1 sin cerrar");
     expect(kinds(state)).toEqual(["selection-rejected"]);
   });
 });
@@ -130,7 +130,7 @@ describe("reducer: escenario de inconsistent", () => {
     // Volver a automático se rechaza al seleccionar.
     state = run(state, select(modeCommand("automatic")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.selectionNotice).toContain("inconsistentes");
+    expect(state.ui.log[0]?.reason).toContain("inconsistentes");
 
     // Se normaliza abriendo Q2, y entonces sí se vuelve a automático.
     state = ticks(operate(state, switchCommand("Q2", "open")), 50); // Q2 tarda 4 s

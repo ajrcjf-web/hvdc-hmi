@@ -11,6 +11,7 @@ import {
   transitionCommand,
   type OperatorCommand,
 } from "./commands.ts";
+import { lastResponse } from "./commandView.ts";
 import {
   createHmiState,
   DEFAULT_SELECTION_TIMEOUT_SECONDS,
@@ -80,7 +81,6 @@ describe("hmiReducer: seleccionar", () => {
     expect(state.ui.selection).toBeNull();
     expect(state.ui.log[0]).toMatchObject({ kind: "selection-rejected", label: "Ir a coupled" });
     expect(state.ui.log[0]?.reason).toContain("Transición no permitida");
-    expect(state.ui.selectionNotice).toContain("Transición no permitida");
   });
 
   test("la verificación usa los enclavamientos de la estación (consigna sin convertidor)", () => {
@@ -111,13 +111,14 @@ describe("hmiReducer: seleccionar", () => {
     expect(state.ui.log[0]?.reason).toContain("selección activa");
   });
 
-  test("una selección válida borra el aviso del rechazo anterior", () => {
+  test("la respuesta más reciente reemplaza a la anterior: tras un rechazo, una selección válida", () => {
     const state = run(
       initial(),
       select(transitionCommand("coupled")),
       select(transitionCommand("decoupled")),
     );
-    expect(state.ui.selectionNotice).toBeNull();
+    expect(state.ui.log.map((entry) => entry.kind).slice(0, 2)).toEqual(["selected", "selection-rejected"]);
+    expect(lastResponse(state.ui.log)?.kind).toBe("selected");
   });
 });
 
@@ -127,7 +128,6 @@ describe("hmiReducer: seleccionar durante una maniobra", () => {
     const moving = run(initial(), select(transitionCommand("decoupled")), execute, tick);
     const state = run(moving, select(transitionCommand("stopped")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.selectionNotice).toContain("Q1 en maniobra (cierre)");
     expect(state.ui.log[0]).toMatchObject({ kind: "selection-rejected" });
     expect(state.ui.log[0]?.reason).toContain("Q1 en maniobra (cierre)");
   });

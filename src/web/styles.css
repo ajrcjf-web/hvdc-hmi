@@ -277,15 +277,6 @@ input {
 
 /* Aviso de rechazo: un recuadro con borde y fondo propios, separado de los botones. */
 .confirmation .invalid,
-.notice {
-  margin: 0.8rem 0 1.2rem;
-  padding: 0.6rem 0.8rem;
-  background: var(--surface-raised);
-  border: 2px solid var(--line);
-  border-radius: 4px;
-  color: var(--text-strong);
-  font-weight: bold;
-}
 
 .confirmation .buttons {
   margin-top: 1rem;
