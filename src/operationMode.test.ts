@@ -72,7 +72,32 @@ describe("requestMode: condiciones", () => {
     expectRejected(requestMode(station, "manual", testConfig), "rampa");
   });
 
-  test("se acepta en inconsistent: es la vía para normalizar", () => {
+  test("volver a automático exige uno de los cuatro estados válidos", () => {
+    for (const state of ["earthed", "stopped", "decoupled", "coupled"] as const) {
+      expect(requestMode(manual(stationAt(state)), "automatic", testConfig).ok).toBe(true);
+    }
+  });
+
+  test("volver a automático se rechaza en inconsistent", () => {
+    const inconsistent: Station = {
+      ...manual(stationAt("stopped")),
+      switchgear: { Q1: { kind: "open" }, Q2: { kind: "closed" }, QE: { kind: "open" } },
+    };
+    expectRejected(requestMode(inconsistent, "automatic", testConfig), "inconsistentes");
+  });
+
+  test("volver a automático se rechaza en transition", () => {
+    const moving: Station = {
+      ...manual(stationAt("decoupled")),
+      switchgear: {
+        ...stationAt("decoupled").switchgear,
+        Q2: { kind: "moving", to: "closed", remainingSeconds: 3 },
+      },
+    };
+    expectRejected(requestMode(moving, "automatic", testConfig), "Q2 en maniobra (cierre), faltan 3 s");
+  });
+
+  test("se acepta pasar a manual en inconsistent: es la vía para normalizar", () => {
     const inconsistent: Station = {
       ...stationAt("stopped"),
       switchgear: { Q1: { kind: "open" }, Q2: { kind: "closed" }, QE: { kind: "open" } },
@@ -203,10 +228,16 @@ describe("escenario de inconsistent", () => {
     sim = act(sim, (s) => requestTransition(s, "stopped", testConfig), 0.1);
     expectRejected(lastResult(sim), "solo se aceptan en modo automático");
 
+    // 3b. Volver a automático desde inconsistent se rechaza.
+    sim = act(sim, (s) => requestMode(s, "automatic", testConfig), 0.1);
+    expectRejected(lastResult(sim), "inconsistentes");
+    expect(sim.station.mode).toBe("manual");
+
     // 4. Se abre Q2: la estación vuelve a stopped y la alarma se normaliza.
     sim = act(sim, (s) => requestSwitchOrder(s, "Q2", "open", testConfig), 5);
     expect(deriveState(sim.station.switchgear)).toBe("stopped");
     expect(sim.alarms.life["ALARM.INCONSISTENT"]).toBe("returned-unacknowledged");
+    expect(signals(sim, "ALARM.INCONSISTENT")).toEqual(["active-unacknowledged", "returned-unacknowledged"]);
 
     // 5. En automático (ya consistente) vuelven a valer las órdenes de estado,
     //    y las de equipo se rechazan por el modo.

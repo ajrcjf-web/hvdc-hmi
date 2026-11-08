@@ -86,8 +86,9 @@ Las **provoca y despeja el instructor**, desde la ventana de simulación. No hay
 ## 6. Modo manual (issue #36)
 
 - El modo **automático/manual** es visible en pantalla. Cambiarlo usa *select-before-operate* (la interfaz llega en el PR siguiente; la lógica ya existe: `requestMode`).
-- El modo vive en `Station.mode` (`automatic` por defecto). `requestMode` se rechaza si ya está en ese modo, si hay una maniobra en curso o si hay una rampa de potencia o de tensión. No exige un estado concreto: desde `inconsistent` se puede pasar a manual.
+- El modo vive en `Station.mode` (`automatic` por defecto). Regla central: volver a automático exige uno de los cuatro estados válidos; se rechaza en `transition` y en `inconsistent`. Pasar a manual sí se acepta desde `inconsistent`. `requestMode` también se rechaza si ya está en ese modo, si hay una maniobra en curso o si hay una rampa de potencia o de tensión.
 - `requestTransition` (orden de estado) solo vale en **automático**; `requestSwitchOrder` (orden por equipo) solo en **manual**. Cada una rechaza con motivo si el modo no es el suyo, y después llama a la misma función interna. Las órdenes del convertidor y de potencia valen en los dos modos.
+- El cambio de modo y el mando por equipo son órdenes del operador (`OperatorCommand`) con señales propias: `CMD.MODE_AUTOMATIC`, `CMD.MODE_MANUAL` y `CMD.Q1_OPEN`, `CMD.Q1_CLOSE`, `CMD.Q2_OPEN`, `CMD.Q2_CLOSE`, `CMD.QE_OPEN`, `CMD.QE_CLOSE`.
 - Cada cambio de modo es un evento del SER (`STATION.MODE`, con el estado `automático` o `manual`).
 - En **manual** hay **mando por equipo** (abrir o cerrar Q1, Q2 y QE por separado), con estos enclavamientos:
   - Todo mando manual de equipos exige el **convertidor bloqueado** (y P = 0, sin rampas). Con el convertidor desbloqueado ninguna maniobra manual se acepta. Solo las protecciones abren Q1 con carga.

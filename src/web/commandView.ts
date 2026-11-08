@@ -33,6 +33,10 @@ function expectedOutcome(command: OperatorCommand, station: Station, config: Sta
       return "El convertidor se bloqueará y Udc bajará a 0 kV";
     case "powerOrder":
       return `P seguirá la consigna con una rampa de ${config.rampRateMWPerMin} MW/min`;
+    case "mode":
+      return `La estación pasará a modo ${command.to === "manual" ? "manual" : "automático"}`;
+    case "switch":
+      return `${command.id} ${command.to === "open" ? "se abrirá" : "se cerrará"}`;
   }
 }
 
