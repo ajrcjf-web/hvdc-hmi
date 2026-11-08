@@ -131,3 +131,12 @@ function stepSwitch(status: SwitchStatus, dtSeconds: number): SwitchStatus {
   }
   return { ...status, remainingSeconds };
 }
+
+// La aparamenta con cada equipo en maniobra en su posición de origen (la contraria a su
+// destino). Sirve para juzgar la estación sin dar por hecho que una maniobra terminará:
+// misma regla que "un equipo en maniobra no cuenta como abierto".
+export function atOrigin(switchgear: Switchgear): Switchgear {
+  const origin = (status: SwitchStatus): SwitchStatus =>
+    status.kind === "moving" ? { kind: status.to === "open" ? "closed" : "open" } : status;
+  return { Q1: origin(switchgear.Q1), Q2: origin(switchgear.Q2), QE: origin(switchgear.QE) };
+}
