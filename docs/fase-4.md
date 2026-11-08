@@ -110,17 +110,15 @@ Las **provoca y despeja el instructor**, desde la ventana de simulación. No hay
 - Ventanas de tiempo: **1 minuto, 10 minutos y 1 hora**.
 - Muestreo cada **1 s simulado** (no tiempo real).
 
-## 8. Línea de mensajes (issue #39)
+## 8. Panel lateral de eventos (issue #39)
 
-Barra fija abajo con los **últimos 3 eventos del SER**, del más reciente al más viejo, **visible en todas las ventanas**.
+Panel a la derecha, en vertical, con los **últimos eventos del SER** (del más reciente al más viejo, con scroll interno), **visible en todas las ventanas**. Reemplaza al aviso del panel de órdenes. (El issue pedía una línea de mensajes fija; el diseño pasó por una barra de abajo y terminó en este panel.)
 
-- Altura reservada para 3 filas de una línea, aunque haya menos eventos: nada se mueve al llegar un evento nuevo. Reemplaza al aviso del panel de órdenes.
-- Los textos salen de la tabla de señales (como el SER), sin duplicarlos, y la hora tiene el formato del SER, para buscar el evento en su ventana.
-- Cada fila ocupa una sola línea, con el orden de campos del SER (hora · descripción · estado); si no cabe se corta con puntos suspensivos y el texto completo queda como tooltip.
-- El fondo ocupa todo el ancho, pero las filas se alinean con la columna del contenido principal (siguen sus variables, no un ancho fijo), y el texto no es menor que el del registro.
-- Los rechazos conservan su jerarquía visual (negrita, ✗) y las alarmas su símbolo y el color de su prioridad.
-- Un clic en la barra abre la ventana del SER.
-- La página reserva abajo un margen igual a la altura de la barra, para no tapar las últimas filas. La barra no se imprime.
+- Cada evento ocupa dos líneas: la hora en formato SER arriba, en chico, y debajo descripción · estado (una línea; si no cabe se corta con puntos suspensivos y el texto completo queda como tooltip).
+- Los textos salen de la tabla de señales (como el SER), sin duplicarlos. Los rechazos conservan su jerarquía visual (negrita, ✗) y las alarmas su símbolo y el color de su prioridad.
+- Se puede plegar y desplegar con un botón del encabezado. Plegado queda una pestaña angosta en el borde derecho con el contador de eventos llegados desde que se plegó. La elección se recuerda entre sesiones; en pantallas angostas arranca plegado si nunca se eligió.
+- "Ver SER completo" abre la ventana del SER.
+- La llegada de un evento no mueve nada del contenido; abrir o cerrar el panel sí lo reacomoda (es una acción del operador). El panel no se imprime.
 
 ## Subfases
 
