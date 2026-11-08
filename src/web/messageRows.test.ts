@@ -34,7 +34,8 @@ describe("toMessageRows", () => {
     const ser = toSerRow(e);
     expect(row?.timestamp).toBe(ser.timestamp);
     expect(row?.timestamp).toBe(formatTimestamp(e.timestampMs));
-    expect(row?.text).toBe(`${ser.state} · ${describeSignal("Q1.POS")}`);
+    // Mismo orden que el SER: hora · descripción · estado.
+    expect(row?.text).toBe(`${describeSignal("Q1.POS")} · ${ser.state}`);
     expect(row?.tooltip).toBe(`${ser.timestamp} ${row?.text}`);
   });
 
@@ -43,9 +44,17 @@ describe("toMessageRows", () => {
       event(1, { code: "CMD.Q2_CLOSE", state: "rejected", detail: "Q1 sin cerrar" }),
     ]);
     expect(row?.rejected).toBe(true);
-    expect(row?.text).toContain("✗");
+    expect(row?.text.startsWith("✗ ")).toBe(true); // al principio: no se pierde si el texto se corta
+    expect(row?.text.match(/✗/g)).toHaveLength(1); // y no se repite en el estado
     expect(row?.text).toContain("Q1 sin cerrar");
+    expect(row?.text.endsWith(" · rechazada")).toBe(true);
     expect(row?.alarm).toBeNull();
+  });
+
+  test("el orden de los campos es el del SER: descripción, luego estado", () => {
+    const [row] = toMessageRows([event(1, { code: "ALARM.INCONSISTENT", state: "active-unacknowledged" })]);
+    const text = row?.text ?? "";
+    expect(text.indexOf("Alarma: estación inconsistente")).toBeLessThan(text.indexOf("activa sin reconocer"));
   });
 
   test("un evento de alarma lleva el símbolo de su prioridad", () => {

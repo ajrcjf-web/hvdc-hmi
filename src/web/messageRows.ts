@@ -5,7 +5,7 @@
 
 import { alarmPriorities, type AlarmPriority } from "../alarms.ts";
 import type { SerEvent } from "../events.ts";
-import type { SignalCode } from "../signals.ts";
+import { describeSignalState, type SignalCode } from "../signals.ts";
 import { priorityLabels } from "./alarmView.ts";
 import { toSerRow } from "./serView.ts";
 
@@ -35,10 +35,12 @@ export function toMessageRows(events: SerEvent[]): MessageRow[] {
   return events.slice(0, MESSAGE_ROWS).map((event): MessageRow => {
     const row = toSerRow(event);
     const alarm = alarmPriority(event.code);
-    // Primero el estado, que es lo que más importa de un vistazo (✗ rechazada, activa...);
-    // si el texto no cabe en la línea, lo que se corta es el final de la descripción.
-    const prefix = alarm === null ? "" : `${prioritySymbol(alarm)} `;
-    const text = `${prefix}${row.state} · ${row.description}`;
+    // Mismo orden que el SER: hora · descripción · estado. Si el texto no cabe en la línea
+    // se corta el final, así que el símbolo de la prioridad y el ✗ de un rechazo van al
+    // principio (antes de la descripción) y no se pierden. El ✗ no se repite en el estado.
+    const rejected = event.state === "rejected";
+    const prefix = alarm === null ? (rejected ? "✗ " : "") : `${prioritySymbol(alarm)} `;
+    const text = `${prefix}${row.description} · ${describeSignalState(event.state)}`;
     return {
       id: row.id,
       timestamp: row.timestamp,
