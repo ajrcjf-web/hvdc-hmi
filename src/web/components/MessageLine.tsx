@@ -3,7 +3,8 @@
 // Solo muestra: los textos los prepara toMessageRows.
 // La altura es fija (3 filas, aunque haya menos eventos): nada se mueve al llegar uno nuevo.
 // Cada fila ocupa una sola línea; si no cabe se corta con puntos suspensivos y el texto
-// completo queda como tooltip (title).
+// completo queda como tooltip (title). El fondo ocupa todo el ancho, pero las filas se
+// alinean con la columna del contenido principal (.message-inner).
 import { MESSAGE_ROWS, type MessageRow } from "../messageRows.ts";
 
 type Props = {
@@ -30,17 +31,19 @@ export function MessageLine({ rows, onOpen }: Props) {
       onClick={onOpen}
       aria-label="Últimos eventos del SER. Abrir la ventana de eventos"
     >
-      {slots.map((row, i) =>
-        row === null ? (
-          <span key={`empty-${i}`} className="message-row empty">
-            {i === 0 && rows.length === 0 ? "Aún no hay eventos." : " "}
-          </span>
-        ) : (
-          <span key={row.id} className={rowClass(row)} title={row.tooltip}>
-            <span className="time">{row.timestamp}</span> {row.text}
-          </span>
-        ),
-      )}
+      <span className="message-inner">
+        {slots.map((row, i) =>
+          row === null ? (
+            <span key={`empty-${i}`} className="message-row empty">
+              {i === 0 && rows.length === 0 ? "Aún no hay eventos." : " "}
+            </span>
+          ) : (
+            <span key={row.id} className={rowClass(row)} title={row.tooltip}>
+              <span className="time">{row.timestamp}</span> {row.text}
+            </span>
+          ),
+        )}
+      </span>
     </button>
   );
 }

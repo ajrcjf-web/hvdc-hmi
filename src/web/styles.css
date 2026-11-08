@@ -14,7 +14,9 @@
   --alarm-urgent: #e5484d; /* prioridad urgente (rojo); también el estado inconsistent, que genera una alarma urgente */
   --alarm-high: #f5a524; /* prioridad alta (ámbar) */
   --alarm-low: #f2e24b; /* prioridad baja (amarillo) */
-  --message-line-height: 4.5rem; /* altura fija de la barra de mensajes (3 filas de una línea) */
+  --content-max-width: 1100px; /* ancho de la columna del contenido; la barra de mensajes lo sigue */
+  --content-padding: 1rem; /* margen lateral de la columna del contenido */
+  --message-line-height: 5.2rem; /* altura fija de la barra de mensajes (3 filas de una línea) */
   --backdrop: rgba(0, 0, 0, 0.6); /* fondo detrás de la ventana */
 }
 
@@ -28,9 +30,9 @@ body {
 }
 
 main {
-  max-width: 1100px;
+  max-width: var(--content-max-width);
   margin: 0 auto;
-  padding: 1rem;
+  padding: var(--content-padding);
 }
 
 h1 {
@@ -541,17 +543,28 @@ input {
   border-radius: 0;
   color: var(--text-muted);
   font-family: ui-monospace, monospace;
-  font-size: 0.9rem;
-  line-height: 1.25rem;
+  font-size: 1rem; /* no menor que el registro de la overview (0.9rem) */
+  line-height: 1.5rem;
   text-align: left;
   cursor: pointer;
+}
+
+/* El fondo de la barra ocupa todo el ancho, pero las filas se alinean con la columna del
+   contenido principal (mismas variables que main): si esa columna cambia (#66), la barra
+   la acompaña. Como main es content-box, la caja suma el ancho y los dos márgenes. */
+.message-inner {
+  display: block;
+  box-sizing: border-box;
+  max-width: calc(var(--content-max-width) + 2 * var(--content-padding));
+  margin: 0 auto;
+  padding: 0 var(--content-padding);
 }
 
 .message-row {
   display: block;
   box-sizing: border-box;
-  height: 1.25rem;
-  padding: 0 1rem;
+  height: 1.5rem;
+  padding: 0 0.5rem;
   border-left: 4px solid transparent;
   white-space: nowrap;
   overflow: hidden;
