@@ -72,6 +72,8 @@ export type UiState = {
   selection: Selection | null; // como mucho una a la vez
   log: LogEntry[]; // la más reciente primero
   nextLogId: number;
+  eventsPanelOpen: boolean; // el panel lateral de eventos: desplegado o plegado
+  eventsFoldedAtId: number; // nextEventId al plegarlo: de ahí se cuentan los eventos nuevos
 };
 
 export type HmiState = {
@@ -85,6 +87,7 @@ export type HmiAction =
   | { type: "execute" }
   | { type: "cancel" }
   | { type: "navigate"; window: WindowId }
+  | { type: "toggle-events-panel" } // plegar o desplegar el panel (acción del operador, no orden)
   // Alarmas: reconocer no es una orden de mando (no hay selección ni enclavamientos).
   | { type: "acknowledge-alarm"; code: AlarmCode }
   | { type: "acknowledge-alarms"; codes: AlarmCode[] } // las que la ventana muestra
@@ -96,6 +99,7 @@ export function createHmiState(
   activeWindow: WindowId = DEFAULT_WINDOW,
   // Los tests lo fijan; en la web lo pasa App. Aquí solo se lee una vez, al crear el estado.
   startMs: number = Date.now(),
+  eventsPanelOpen = true, // visible por defecto; App lo decide con la preferencia guardada
 ): HmiState {
   return {
     simulation: createSimulationState(config, startMs),
@@ -105,6 +109,8 @@ export function createHmiState(
       selection: null,
       log: [],
       nextLogId: 0,
+      eventsPanelOpen,
+      eventsFoldedAtId: 0,
     },
   };
 }
@@ -174,6 +180,18 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
       return action.window === ui.activeWindow
         ? state
         : { simulation, ui: { ...ui, activeWindow: action.window } };
+
+    case "toggle-events-panel":
+      // Al plegar se anota cuántos eventos hay, para contar los nuevos desde ese momento.
+      // Al desplegar el contador vuelve a cero (con el panel abierto no se cuenta).
+      return {
+        simulation,
+        ui: {
+          ...ui,
+          eventsPanelOpen: !ui.eventsPanelOpen,
+          eventsFoldedAtId: simulation.nextEventId,
+        },
+      };
 
     case "acknowledge-alarm":
       return { simulation: acknowledgeAlarm(simulation, action.code), ui };

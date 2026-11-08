@@ -14,24 +14,33 @@
   --alarm-urgent: #e5484d; /* prioridad urgente (rojo); también el estado inconsistent, que genera una alarma urgente */
   --alarm-high: #f5a524; /* prioridad alta (ámbar) */
   --alarm-low: #f2e24b; /* prioridad baja (amarillo) */
-  --content-max-width: 1100px; /* ancho de la columna del contenido; la barra de mensajes lo sigue */
+  --content-max-width: 1100px; /* ancho de la columna del contenido (el #66 lo puede cambiar) */
   --content-padding: 1rem; /* margen lateral de la columna del contenido */
-  --message-line-height: 5.2rem; /* altura fija de la barra de mensajes (3 filas de una línea) */
+  --events-panel-width: 22rem; /* ancho del panel lateral de eventos desplegado */
+  --events-tab-width: 2.75rem; /* ancho de la pestaña del panel plegado */
   --backdrop: rgba(0, 0, 0, 0.6); /* fondo detrás de la ventana */
 }
 
 body {
   margin: 0;
-  /* Margen igual a la altura de la línea de mensajes: no tapa las últimas filas. */
-  padding-bottom: var(--message-line-height);
   font-family: system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
 }
 
-main {
-  max-width: var(--content-max-width);
-  margin: 0 auto;
+/* La página: el contenido y, a la derecha, el panel lateral de eventos. El contenido va
+   centrado en su columna, con el ancho máximo de siempre; el panel solo resta su ancho. */
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.app-shell > main {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(var(--content-max-width) + 2 * var(--content-padding));
+  justify-self: center;
   padding: var(--content-padding);
 }
 
@@ -449,11 +458,11 @@ input {
 /* Impresión (PDF): solo el SER, en blanco y negro, sin barra, botones ni filtros.
    Se usan los colores del navegador para papel (negro sobre blanco), sin colores sueltos. */
 @media print {
-  body {
-    padding-bottom: 0;
+  .app-shell {
+    display: block;
   }
 
-  .message-line,
+  .events-panel,
   .nav,
   .ser-actions,
   .ser-filters,
@@ -520,73 +529,125 @@ input {
   color: var(--text-muted);
 }
 
-/* Barra de mensajes: los últimos 3 eventos del SER, fija abajo, en todas las ventanas.
-   Altura reservada para 3 filas de una línea, aunque haya menos eventos, para que nada se
-   mueva. Es un botón: un clic abre la ventana del SER. Sin color (ISA-101), salvo las
-   alarmas, que conservan el color de su prioridad (además de su símbolo !!!, !!, !).
-   Un rechazo se distingue como en el registro: negrita, fondo más claro, barra a la
-   izquierda y el símbolo ✗. */
-.message-line {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: block;
+/* Panel lateral de eventos: a la derecha, a toda la altura de la ventana y pegado a ella
+   al hacer scroll, en todas las ventanas. Tamaño fijo: la llegada de un evento no mueve el
+   contenido. Sin color (ISA-101), salvo las alarmas, que conservan el color de su prioridad
+   (además de su símbolo !!!, !!, !). Un rechazo se distingue como en el registro: negrita,
+   fondo más claro, barra a la izquierda y el símbolo ✗. */
+.events-panel {
+  position: sticky;
+  top: 0;
   box-sizing: border-box;
-  width: 100%;
-  height: var(--message-line-height);
-  margin: 0;
-  padding: 0.35rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: var(--events-panel-width);
+  height: 100vh;
+  padding: var(--content-padding) 0.75rem;
   background: var(--surface);
+  border-left: 1px solid var(--line-dim);
+}
+
+.events-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.events-header h2 {
+  margin: 0;
+}
+
+/* Un botón con aspecto de enlace (los botones no invitan a abrir otra pestaña). */
+.link-button {
+  align-self: flex-start;
+  padding: 0;
   border: 0;
-  border-top: 1px solid var(--line-dim);
-  border-radius: 0;
-  color: var(--text-muted);
-  font-family: ui-monospace, monospace;
-  font-size: 1rem; /* no menor que el registro de la overview (0.9rem) */
-  line-height: 1.5rem;
-  text-align: left;
+  background: none;
+  color: var(--text);
+  text-decoration: underline;
   cursor: pointer;
 }
 
-/* El fondo de la barra ocupa todo el ancho, pero las filas se alinean con la columna del
-   contenido principal (mismas variables que main): si esa columna cambia (#66), la barra
-   la acompaña. Como main es content-box, la caja suma el ancho y los dos márgenes. */
-.message-inner {
-  display: block;
-  box-sizing: border-box;
-  max-width: calc(var(--content-max-width) + 2 * var(--content-padding));
-  margin: 0 auto;
-  padding: 0 var(--content-padding);
+.events-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  font-family: ui-monospace, monospace;
 }
 
-.message-row {
-  display: block;
-  box-sizing: border-box;
-  height: 1.5rem;
-  padding: 0 0.5rem;
+.event-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem 0.5rem;
   border-left: 4px solid transparent;
+  color: var(--text-muted);
+}
+
+.event-time {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.event-text {
+  font-size: 0.9rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.message-row.rejected {
+.event-item.rejected {
   background: var(--surface-raised);
   border-left-color: var(--line);
   color: var(--text-strong);
   font-weight: bold;
 }
 
-.message-row.message-alarm {
+.event-item.event-alarm {
   font-weight: bold;
 }
 
-.message-row.message-alarm-active {
+.event-item.event-alarm-active {
   color: var(--alarm-color);
   border-left-color: var(--alarm-color);
 }
 
-.message-row .time {
-  opacity: 0.8;
+/* Plegado: una pestaña angosta en el borde derecho, con el contador de eventos nuevos. */
+.events-panel.folded {
+  width: var(--events-tab-width);
+  padding: 0;
+}
+
+.events-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.75rem 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.events-tab-title {
+  writing-mode: vertical-rl;
+}
+
+.events-badge {
+  min-width: 1.6rem;
+  padding: 0.1rem 0.3rem;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-strong);
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-align: center;
 }
