@@ -21,6 +21,14 @@
   --backdrop: rgba(0, 0, 0, 0.6); /* fondo detrás de la ventana */
 }
 
+/* Reserva siempre el lugar de la barra de desplazamiento vertical. Sin esto, cuando el
+   contenido crece (por ejemplo, un registro con muchos rechazos) la barra aparece y todo
+   el contenido centrado se corre unos píxeles: un movimiento causado por la llegada de
+   eventos. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
