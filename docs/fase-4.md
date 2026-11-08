@@ -114,6 +114,11 @@ Las **provoca y despeja el instructor**, desde la ventana de simulación. No hay
 
 Línea fija con la última respuesta a una orden, **visible en todas las ventanas**.
 
+- Es una barra fija abajo, con altura reservada de dos líneas (haya mensaje o no): nada se mueve al aparecer o cambiar un mensaje. Reemplaza al aviso del panel de órdenes.
+- Muestra la entrada más reciente del registro de órdenes (sin "Ejecutar"), con la frase de `logText` y la hora en el formato del SER (fecha y hora con milisegundos), para buscarla en el SER.
+- El texto se ajusta en las dos líneas y recién después se corta con puntos suspensivos; el texto completo queda como tooltip.
+- La página reserva abajo un margen igual a la altura de la barra, para no tapar las últimas filas.
+
 ## Subfases
 
 Se implementan en este orden, cada una con su rama(s), PR(s) y milestone:
