@@ -42,5 +42,7 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
-  }
+  },
+  // .claude/ guarda los worktrees de las sesiones en paralelo: no es código de este árbol.
+  "exclude": ["node_modules", "dist", ".claude"]
 }
