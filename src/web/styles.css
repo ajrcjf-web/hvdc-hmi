@@ -633,6 +633,19 @@ input {
   font-weight: bold;
 }
 
+/* Un rechazo puede ocupar hasta tres líneas (la hora y el estado, y la descripción en dos):
+   sin el registro, el panel es el único lugar de la overview donde se ve el motivo. Las
+   demás filas siguen en dos líneas. Si aun así no cabe, se corta con puntos suspensivos y
+   el tooltip trae la fila completa. */
+.event-item.rejected .event-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .event-item.event-alarm {
   font-weight: bold;
 }
