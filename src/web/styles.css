@@ -16,7 +16,7 @@
   --alarm-low: #f2e24b; /* prioridad baja (amarillo) */
   --content-max-width: 1100px; /* ancho de la columna del contenido (el #66 lo puede cambiar) */
   --content-padding: 1rem; /* margen lateral de la columna del contenido */
-  --events-panel-width: 22rem; /* ancho del panel lateral de eventos desplegado */
+  --events-panel-width: 26rem; /* ancho del panel lateral de eventos desplegado: entran la hora y el estado más largo en una línea */
   --events-tab-width: 2.75rem; /* ancho de la pestaña del panel plegado */
   --backdrop: rgba(0, 0, 0, 0.6); /* fondo detrás de la ventana */
 }
@@ -596,12 +596,30 @@ input {
   color: var(--text-muted);
 }
 
+/* Línea 1: la hora a la izquierda y el estado a la derecha. El estado es lo más importante:
+   nunca se corta (si no entraran juntos, el estado baja a la línea siguiente). */
+.event-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  column-gap: 0.5rem;
+}
+
 .event-time {
   font-size: 0.75rem;
   opacity: 0.8;
+  white-space: nowrap;
 }
 
-.event-text {
+.event-state {
+  margin-left: auto;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Línea 2: la descripción, que sí se corta con puntos suspensivos (el tooltip la trae completa). */
+.event-description {
   font-size: 0.9rem;
   white-space: nowrap;
   overflow: hidden;

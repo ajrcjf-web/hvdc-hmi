@@ -2,9 +2,10 @@
 // siempre visible en todas las ventanas. Solo muestra: los textos y el contador los
 // preparan toEventRows y formatNewEventsCount.
 // Plegado queda una pestaña angosta en el borde derecho, con el contador de eventos nuevos.
-// Cada evento ocupa dos líneas: la hora arriba, en chico, y debajo descripción · estado,
-// en una línea (si no cabe se corta con puntos suspensivos y el texto completo queda como
-// tooltip). El panel tiene tamaño fijo: la llegada de un evento no mueve el contenido.
+// Cada evento ocupa dos líneas. Línea 1: la hora y, a la derecha, el estado, que es lo más
+// importante y no se corta. Línea 2: la descripción, que si no cabe se corta con puntos
+// suspensivos (el texto completo queda como tooltip). El panel tiene tamaño fijo: la
+// llegada de un evento no mueve el contenido.
 import { describeNewEvents, formatNewEventsCount, type EventRow } from "../eventRows.ts";
 
 type Props = {
@@ -74,8 +75,11 @@ export function EventsPanel({ open, rows, newCount, onToggle, onOpenSer }: Props
         ) : (
           rows.map((row) => (
             <li key={row.id} className={itemClass(row)} title={row.tooltip}>
-              <span className="event-time">{row.timestamp}</span>
-              <span className="event-text">{row.text}</span>
+              <span className="event-head">
+                <span className="event-time">{row.timestamp}</span>
+                <span className="event-state">{row.state}</span>
+              </span>
+              <span className="event-description">{row.description}</span>
             </li>
           ))
         )}
