@@ -123,7 +123,7 @@ Lógica de control sin interfaz.
 
 Diseño completo en [docs/fase-4.md](docs/fase-4.md). Se publica una sola versión, v0.4.0, al cerrar la fase completa.
 
-- [x] **4.1 Navegación y eventos:** barra de ventanas, tabla de señales y ventana SER (registro secuencial de eventos) con filtros por columna.
+- [x] **4.1 Navegación y eventos:** barra de ventanas, tabla de señales y ventana SER (registro secuencial de eventos) con filtros por columna y exportación a CSV y a PDF (#47).
 - [x] **4.2 Alarmas:** modelo con prioridades y ciclo de vida ISA-18.2, ventana de alarmas y reconocimiento.
 - [x] **4.3 Modo manual** (#36): modo automático/manual y mando por equipo con enclavamientos.
 - [ ] **4.4 Fallas y protecciones:** ventana de simulación del instructor, protecciones, discrepancia de equipo trabado y reset remoto.

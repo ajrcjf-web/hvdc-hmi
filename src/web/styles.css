@@ -439,6 +439,62 @@ input {
   color: var(--text-muted);
 }
 
+/* Exportar el SER: los botones y el encabezado que solo existe al imprimir. */
+.ser-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.print-header {
+  display: none;
+}
+
+/* Impresión (PDF): solo el SER, en blanco y negro, sin barra, botones ni filtros.
+   Se usan los colores del navegador para papel (negro sobre blanco), sin colores sueltos. */
+@media print {
+  .nav,
+  .ser-actions,
+  .ser-filters,
+  .screen-only,
+  dialog {
+    display: none !important;
+  }
+
+  body,
+  .panel {
+    background: white;
+    color: black;
+  }
+
+  .print-header {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .ser-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .ser th,
+  .ser td,
+  .ser tr.rejected td {
+    position: static;
+    background: white;
+    color: black;
+    border-bottom: 1px solid black;
+  }
+
+  .ser thead {
+    display: table-header-group; /* la cabecera se repite en cada página */
+  }
+
+  .ser tr {
+    break-inside: avoid;
+  }
+}
+
 /* Indicador del modo: se distingue por texto, símbolo y forma del borde, no por color.
    Automático: borde simple. Manual: borde doble y negrita. */
 .mode-indicator {

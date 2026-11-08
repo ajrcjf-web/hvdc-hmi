@@ -1,6 +1,7 @@
 // La aplicación: conecta el reloj, el estado, la barra de navegación, la ventana
 // activa y la ventana de confirmación. Todas las ventanas comparten este estado.
 import { useEffect, useReducer } from "react";
+import { timestampMs } from "../events.ts";
 import { defaultConfig } from "../station.ts";
 import { AlarmWindow } from "./components/AlarmWindow.tsx";
 import { ConfirmationDialog } from "./components/ConfirmationDialog.tsx";
@@ -58,7 +59,11 @@ export function App() {
       />
       {state.ui.activeWindow === "overview" && <OverviewWindow state={state} dispatch={dispatch} />}
       {state.ui.activeWindow === "events" && (
-        <SerWindow events={state.simulation.events} discarded={state.simulation.nextEventId - state.simulation.events.length} />
+        <SerWindow
+          events={state.simulation.events}
+          discarded={state.simulation.nextEventId - state.simulation.events.length}
+          nowMs={timestampMs(state.simulation.startMs, state.simulation.timeSeconds)}
+        />
       )}
       {state.ui.activeWindow === "alarms" && (
         <AlarmWindow
