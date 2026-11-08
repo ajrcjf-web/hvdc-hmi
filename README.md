@@ -125,7 +125,7 @@ Diseño completo en [docs/fase-4.md](docs/fase-4.md). Se publica una sola versi�
 
 - [x] **4.1 Navegación y eventos:** barra de ventanas, tabla de señales y ventana SER (registro secuencial de eventos) con filtros por columna y exportación a CSV y a PDF (#47).
 - [x] **4.2 Alarmas:** modelo con prioridades y ciclo de vida ISA-18.2, ventana de alarmas y reconocimiento.
-- [ ] **4.3 Modo manual** (#36): modo automático/manual y mando por equipo con enclavamientos.
+- [x] **4.3 Modo manual** (#36): modo automático/manual y mando por equipo con enclavamientos.
 - [ ] **4.4 Fallas y protecciones:** ventana de simulación del instructor, protecciones, discrepancia de equipo trabado y reset remoto.
 - [ ] **4.5 Línea de mensajes** (#39) **y tendencias** de P, Udc e Idc.
 

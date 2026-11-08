@@ -494,3 +494,27 @@ input {
     break-inside: avoid;
   }
 }
+
+/* Indicador del modo: se distingue por texto, símbolo y forma del borde, no por color.
+   Automático: borde simple. Manual: borde doble y negrita. */
+.mode-indicator {
+  display: inline-block;
+  margin: 0 0 0.75rem;
+  padding: 0.25rem 0.75rem;
+  color: var(--text-strong);
+  letter-spacing: 0.05em;
+}
+
+.mode-automatic {
+  border: 1px solid var(--line);
+}
+
+.mode-manual {
+  border: 4px double var(--line);
+  font-weight: bold;
+}
+
+.switch-name {
+  flex-basis: 100%;
+  color: var(--text-muted);
+}

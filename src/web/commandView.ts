@@ -1,9 +1,10 @@
 // Qué se muestra de una orden y de una entrada del registro. Funciones puras:
 // solo preparan textos y datos; los componentes los ponen en pantalla.
 
-import { formatValue } from "../labels.ts";
+import { formatSwitch, formatValue } from "../labels.ts";
 import { wholeSecondsLeft } from "../simulationTime.ts";
-import type { Station, StationConfig } from "../station.ts";
+import type { OperatingMode, Station, StationConfig } from "../station.ts";
+import type { SwitchId, SwitchTarget } from "../switchgear.ts";
 import { deriveState, type DerivedState } from "../stationState.ts";
 import { commandLabel, runCommand, type OperatorCommand } from "./commands.ts";
 import type { LogEntry } from "./hmiState.ts";
@@ -12,12 +13,15 @@ export type CommandView = {
   title: string;
   current: {
     state: DerivedState;
+    mode: OperatingMode;
     converter: Station["converter"];
     powerMW: number;
     powerOrderMW: number;
   };
   expected: string; // resultado esperado, en palabras
   powerOrder: { currentMW: number; newMW: number } | null; // solo para la consigna
+  switchOrder: { id: SwitchId; position: string; to: SwitchTarget } | null; // solo para el mando por equipo
+  modeChange: { from: OperatingMode; to: OperatingMode } | null; // solo para el cambio de modo
   // Verificación en vivo con la estación actual: si la orden dejó de ser válida,
   // trae el motivo. Es informativa: la lógica decide de verdad al ejecutar.
   check: { ok: true } | { ok: false; reason: string };
@@ -52,6 +56,7 @@ export function describeCommand(
     title: commandLabel(command),
     current: {
       state: deriveState(station.switchgear),
+      mode: station.mode,
       converter: station.converter,
       powerMW: station.powerMW,
       powerOrderMW: station.powerOrderMW,
@@ -61,6 +66,15 @@ export function describeCommand(
       command.kind === "powerOrder"
         ? { currentMW: station.powerOrderMW, newMW: command.orderMW }
         : null,
+    switchOrder:
+      command.kind === "switch"
+        ? {
+            id: command.id,
+            position: formatSwitch(station.switchgear[command.id]),
+            to: command.to,
+          }
+        : null,
+    modeChange: command.kind === "mode" ? { from: station.mode, to: command.to } : null,
     check: result.ok ? { ok: true } : { ok: false, reason: result.reason },
   };
 }

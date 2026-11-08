@@ -3,7 +3,9 @@ import { deblockedAt, stationAt, testConfig } from "../testSupport.ts";
 import {
   blockCommand,
   deblockCommand,
+  modeCommand,
   powerOrderCommand,
+  switchCommand,
   transitionCommand,
 } from "./commands.ts";
 import { describeCommand, formatPowerOrder, logText, remainingSeconds } from "./commandView.ts";
@@ -15,6 +17,7 @@ describe("describeCommand", () => {
     expect(view.title).toBe("Ir a decoupled");
     expect(view.current).toEqual({
       state: "stopped",
+      mode: "automatic",
       converter: "blocked",
       powerMW: 0,
       powerOrderMW: 0,
@@ -51,6 +54,44 @@ describe("describeCommand", () => {
     expect(describeCommand(command, { ...deblockedAt(), udcKV: 0 }, testConfig).check.ok).toBe(
       false,
     );
+  });
+});
+
+describe("describeCommand: modo y mando por equipo", () => {
+  const manual = { ...stationAt("stopped"), mode: "manual" as const };
+
+  test("cambio de modo: de qué modo a cuál", () => {
+    const view = describeCommand(modeCommand("manual"), stationAt("stopped"), testConfig);
+    expect(view.title).toBe("Pasar a manual");
+    expect(view.modeChange).toEqual({ from: "automatic", to: "manual" });
+    expect(view.expected).toBe("La estación pasará a modo manual");
+    expect(view.switchOrder).toBeNull();
+    expect(view.check).toEqual({ ok: true });
+  });
+
+  test("mando por equipo: equipo, posición actual y destino", () => {
+    const view = describeCommand(switchCommand("Q1", "closed"), manual, testConfig);
+    expect(view.title).toBe("Cerrar Q1");
+    expect(view.switchOrder).toEqual({ id: "Q1", position: "abierto", to: "closed" });
+    expect(view.expected).toBe("Q1 se cerrará");
+    expect(view.modeChange).toBeNull();
+    expect(view.check).toEqual({ ok: true });
+  });
+
+  test("las demás órdenes no traen datos de equipo ni de modo", () => {
+    const view = describeCommand(deblockCommand(), stationAt("coupled"), testConfig);
+    expect(view.switchOrder).toBeNull();
+    expect(view.modeChange).toBeNull();
+  });
+
+  test("el mando por equipo en automático trae el motivo del rechazo", () => {
+    const view = describeCommand(switchCommand("Q1", "closed"), stationAt("stopped"), testConfig);
+    expect(view.check).toMatchObject({ ok: false, reason: expect.stringContaining("modo manual") });
+  });
+
+  test("una orden de estado en manual trae el motivo del rechazo", () => {
+    const view = describeCommand(transitionCommand("decoupled"), manual, testConfig);
+    expect(view.check).toMatchObject({ ok: false, reason: expect.stringContaining("modo automático") });
   });
 });
 
