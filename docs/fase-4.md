@@ -118,7 +118,7 @@ Panel a la derecha, en vertical, con los **últimos eventos del SER** (del más 
 - Los textos salen de la tabla de señales (como el SER), sin duplicarlos. Los rechazos conservan su jerarquía visual (negrita, ✗) y las alarmas su símbolo y el color de su prioridad.
 - Se puede plegar y desplegar con un botón del encabezado. Plegado queda una pestaña angosta en el borde derecho con el contador de eventos llegados desde que se plegó. La elección se recuerda entre sesiones; en pantallas angostas arranca plegado si nunca se eligió.
 - "Ver SER completo" abre la ventana del SER.
-- La llegada de un evento no mueve nada del contenido; abrir o cerrar el panel sí lo reacomoda (es una acción del operador). El panel no se imprime.
+- La llegada de un evento no mueve nada del contenido; abrir o cerrar el panel sí lo reacomoda (es una acción del operador). Para que tampoco lo mueva la barra de desplazamiento del navegador al aparecer, la página reserva siempre su lugar (`scrollbar-gutter: stable`). El panel no se imprime.
 
 ## Subfases
 
