@@ -110,9 +110,15 @@ Las **provoca y despeja el instructor**, desde la ventana de simulación. No hay
 - Ventanas de tiempo: **1 minuto, 10 minutos y 1 hora**.
 - Muestreo cada **1 s simulado** (no tiempo real).
 
-## 8. Línea de mensajes (issue #39)
+## 8. Panel lateral de eventos (issue #39)
 
-Línea fija con la última respuesta a una orden, **visible en todas las ventanas**.
+Panel a la derecha, en vertical, con los **últimos eventos del SER** (del más reciente al más viejo, con scroll interno), **visible en todas las ventanas**. Reemplaza al aviso del panel de órdenes. (El issue pedía una línea de mensajes fija; el diseño pasó por una barra de abajo y terminó en este panel.)
+
+- Cada evento ocupa dos líneas. Línea 1: la hora en formato SER (en chico) y, a la derecha, el estado, que es lo más importante y no se corta. Línea 2: la descripción, con el símbolo al principio; si no cabe se corta con puntos suspensivos y el texto completo queda como tooltip. Las filas de rechazo crecen sin límite de líneas, para que el motivo se lea siempre completo: sin el registro, el panel es el único lugar de la overview donde aparece. Las demás filas siguen en dos líneas.
+- Los textos salen de la tabla de señales (como el SER), sin duplicarlos. Los rechazos conservan su jerarquía visual (negrita, ✗) y las alarmas su símbolo y el color de su prioridad.
+- Se puede plegar y desplegar con un botón del encabezado. Plegado queda una pestaña angosta en el borde derecho con el contador de eventos llegados desde que se plegó. La elección se recuerda entre sesiones; en pantallas angostas arranca plegado si nunca se eligió.
+- "Ver SER completo" abre la ventana del SER.
+- La llegada de un evento no mueve nada del contenido; abrir o cerrar el panel sí lo reacomoda (es una acción del operador). Para que tampoco lo mueva la barra de desplazamiento del navegador al aparecer, la página reserva siempre su lugar (`scrollbar-gutter: stable`). El panel no se imprime.
 
 ## Subfases
 
@@ -123,10 +129,10 @@ Se implementan en este orden, cada una con su rama(s), PR(s) y milestone:
 | 4.1 | Navegación y eventos: barra de ventanas, tabla de señales, ventana SER |
 | 4.2 | Alarmas: modelo, ventana, reconocimiento |
 | 4.3 | Modo manual (#36) |
-| 4.4 | Trabajo previo: línea de mensajes (#39) e indicador de foco (#62). Después, fallas y protecciones: ventana de simulación, protecciones, discrepancia, reset remoto |
+| 4.4 | Trabajo previo: panel de eventos (#39) e indicador de foco (#62). Después, fallas y protecciones: ventana de simulación, protecciones, discrepancia, reset remoto |
 | 4.5 | Tendencias |
 
-**Por qué la línea de mensajes (#39) pasó de la 4.5 a la 4.4:** el aviso de rechazo del panel de órdenes empuja los botones unos 40 px hacia abajo al aparecer, y suben al desaparecer. Un segundo clic apurado puede seleccionar otra orden, así que es un riesgo de operación, no una mejora estética. La 4.4 agrega muchos mensajes nuevos (fallas, protecciones), y el problema se agravaría; por eso se resuelve antes, como trabajo previo de la subfase. El indicador de foco (#62) va en el mismo bloque por la misma razón: en una pantalla de mando, el operador debe ver qué elemento recibirá la acción.
+**Por qué el panel de eventos (#39) pasó de la 4.5 a la 4.4:** el aviso de rechazo del panel de órdenes empuja los botones unos 40 px hacia abajo al aparecer, y suben al desaparecer. Un segundo clic apurado puede seleccionar otra orden, así que es un riesgo de operación, no una mejora estética. La 4.4 agrega muchos mensajes nuevos (fallas, protecciones), y el problema se agravaría; por eso se resuelve antes, como trabajo previo de la subfase. El indicador de foco (#62) va en el mismo bloque por la misma razón: en una pantalla de mando, el operador debe ver qué elemento recibirá la acción.
 
 Se publica **una sola versión, v0.4.0**, al cerrar la Fase 4 completa (no una por subfase).
 

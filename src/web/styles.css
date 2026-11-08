@@ -14,7 +14,19 @@
   --alarm-urgent: #e5484d; /* prioridad urgente (rojo); también el estado inconsistent, que genera una alarma urgente */
   --alarm-high: #f5a524; /* prioridad alta (ámbar) */
   --alarm-low: #f2e24b; /* prioridad baja (amarillo) */
+  --content-max-width: 1100px; /* ancho de la columna del contenido (el #66 lo puede cambiar) */
+  --content-padding: 1rem; /* margen lateral de la columna del contenido */
+  --events-panel-width: 26rem; /* ancho del panel lateral de eventos desplegado: entran la hora y el estado más largo en una línea */
+  --events-tab-width: 2.75rem; /* ancho de la pestaña del panel plegado */
   --backdrop: rgba(0, 0, 0, 0.6); /* fondo detrás de la ventana */
+}
+
+/* Reserva siempre el lugar de la barra de desplazamiento vertical. Sin esto, cuando el
+   contenido crece (por ejemplo, un registro con muchos rechazos) la barra aparece y todo
+   el contenido centrado se corre unos píxeles: un movimiento causado por la llegada de
+   eventos. */
+html {
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -24,10 +36,20 @@ body {
   color: var(--text);
 }
 
-main {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 1rem;
+/* La página: el contenido y, a la derecha, el panel lateral de eventos. El contenido va
+   centrado en su columna, con el ancho máximo de siempre; el panel solo resta su ancho. */
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.app-shell > main {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(var(--content-max-width) + 2 * var(--content-padding));
+  justify-self: center;
+  padding: var(--content-padding);
 }
 
 h1 {
@@ -274,15 +296,6 @@ input {
 
 /* Aviso de rechazo: un recuadro con borde y fondo propios, separado de los botones. */
 .confirmation .invalid,
-.notice {
-  margin: 0.8rem 0 1.2rem;
-  padding: 0.6rem 0.8rem;
-  background: var(--surface-raised);
-  border: 2px solid var(--line);
-  border-radius: 4px;
-  color: var(--text-strong);
-  font-weight: bold;
-}
 
 .confirmation .buttons {
   margin-top: 1rem;
@@ -453,6 +466,11 @@ input {
 /* Impresión (PDF): solo el SER, en blanco y negro, sin barra, botones ni filtros.
    Se usan los colores del navegador para papel (negro sobre blanco), sin colores sueltos. */
 @media print {
+  .app-shell {
+    display: block;
+  }
+
+  .events-panel,
   .nav,
   .ser-actions,
   .ser-filters,
@@ -517,4 +535,155 @@ input {
 .switch-name {
   flex-basis: 100%;
   color: var(--text-muted);
+}
+
+/* Panel lateral de eventos: a la derecha, a toda la altura de la ventana y pegado a ella
+   al hacer scroll, en todas las ventanas. Tamaño fijo: la llegada de un evento no mueve el
+   contenido. Sin color (ISA-101), salvo las alarmas, que conservan el color de su prioridad
+   (además de su símbolo !!!, !!, !). Un rechazo se distingue como en el registro: negrita,
+   fondo más claro, barra a la izquierda y el símbolo ✗. */
+.events-panel {
+  position: sticky;
+  top: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: var(--events-panel-width);
+  height: 100vh;
+  padding: var(--content-padding) 0.75rem;
+  background: var(--surface);
+  border-left: 1px solid var(--line-dim);
+}
+
+.events-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.events-header h2 {
+  margin: 0;
+}
+
+/* Un botón con aspecto de enlace (los botones no invitan a abrir otra pestaña). */
+.link-button {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.events-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  font-family: ui-monospace, monospace;
+}
+
+.event-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem 0.5rem;
+  border-left: 4px solid transparent;
+  color: var(--text-muted);
+}
+
+/* Línea 1: la hora a la izquierda y el estado a la derecha. El estado es lo más importante:
+   nunca se corta (si no entraran juntos, el estado baja a la línea siguiente). */
+.event-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  column-gap: 0.5rem;
+}
+
+.event-time {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.event-state {
+  margin-left: auto;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Línea 2: la descripción, que sí se corta con puntos suspensivos (el tooltip la trae completa). */
+.event-description {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-item.rejected {
+  background: var(--surface-raised);
+  border-left-color: var(--line);
+  color: var(--text-strong);
+  font-weight: bold;
+}
+
+/* Un rechazo crece sin límite de líneas: el motivo se lee siempre completo. Sin el registro,
+   el panel es el único lugar de la overview donde aparece. Las demás filas siguen en dos
+   líneas y se cortan con puntos suspensivos. */
+.event-item.rejected .event-description {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
+.event-item.event-alarm {
+  font-weight: bold;
+}
+
+.event-item.event-alarm-active {
+  color: var(--alarm-color);
+  border-left-color: var(--alarm-color);
+}
+
+/* Plegado: una pestaña angosta en el borde derecho, con el contador de eventos nuevos. */
+.events-panel.folded {
+  width: var(--events-tab-width);
+  padding: 0;
+}
+
+.events-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.75rem 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.events-tab-title {
+  writing-mode: vertical-rl;
+}
+
+.events-badge {
+  min-width: 1.6rem;
+  padding: 0.1rem 0.3rem;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-strong);
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-align: center;
 }

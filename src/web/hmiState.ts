@@ -70,9 +70,10 @@ export type UiState = {
   selectionTimeoutSeconds: number;
   activeWindow: WindowId; // la ventana que se ve; la simulación es la misma en todas
   selection: Selection | null; // como mucho una a la vez
-  selectionNotice: string | null; // motivo del último rechazo al seleccionar
   log: LogEntry[]; // la más reciente primero
   nextLogId: number;
+  eventsPanelOpen: boolean; // el panel lateral de eventos: desplegado o plegado
+  eventsFoldedAtId: number; // nextEventId al plegarlo: de ahí se cuentan los eventos nuevos
 };
 
 export type HmiState = {
@@ -86,6 +87,7 @@ export type HmiAction =
   | { type: "execute" }
   | { type: "cancel" }
   | { type: "navigate"; window: WindowId }
+  | { type: "toggle-events-panel" } // plegar o desplegar el panel (acción del operador, no orden)
   // Alarmas: reconocer no es una orden de mando (no hay selección ni enclavamientos).
   | { type: "acknowledge-alarm"; code: AlarmCode }
   | { type: "acknowledge-alarms"; codes: AlarmCode[] } // las que la ventana muestra
@@ -97,6 +99,7 @@ export function createHmiState(
   activeWindow: WindowId = DEFAULT_WINDOW,
   // Los tests lo fijan; en la web lo pasa App. Aquí solo se lee una vez, al crear el estado.
   startMs: number = Date.now(),
+  eventsPanelOpen = true, // visible por defecto; App lo decide con la preferencia guardada
 ): HmiState {
   return {
     simulation: createSimulationState(config, startMs),
@@ -104,9 +107,10 @@ export function createHmiState(
       selectionTimeoutSeconds,
       activeWindow,
       selection: null,
-      selectionNotice: null,
       log: [],
       nextLogId: 0,
+      eventsPanelOpen,
+      eventsFoldedAtId: 0,
     },
   };
 }
@@ -132,7 +136,6 @@ function selectCommand(state: HmiState, command: OperatorCommand): HmiState {
     ]),
     ui: {
       ...ui,
-      selectionNotice: `${label}: ${reason}`,
       ...withLog(ui, [
         { timeSeconds: simulation.timeSeconds, kind: "selection-rejected", label, reason },
       ]),
@@ -161,7 +164,6 @@ function selectCommand(state: HmiState, command: OperatorCommand): HmiState {
         selectedAtSeconds: simulation.timeSeconds,
         expiresAtSeconds: simulation.timeSeconds + ui.selectionTimeoutSeconds,
       },
-      selectionNotice: null,
       ...withLog(ui, [
         { timeSeconds: simulation.timeSeconds, kind: "selected", label, reason: null },
       ]),
@@ -178,6 +180,18 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
       return action.window === ui.activeWindow
         ? state
         : { simulation, ui: { ...ui, activeWindow: action.window } };
+
+    case "toggle-events-panel":
+      // Al plegar se anota cuántos eventos hay, para contar los nuevos desde ese momento.
+      // Al desplegar el contador vuelve a cero (con el panel abierto no se cuenta).
+      return {
+        simulation,
+        ui: {
+          ...ui,
+          eventsPanelOpen: !ui.eventsPanelOpen,
+          eventsFoldedAtId: simulation.nextEventId,
+        },
+      };
 
     case "acknowledge-alarm":
       return { simulation: acknowledgeAlarm(simulation, action.code), ui };
@@ -210,7 +224,6 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
         ui: {
           ...ui,
           selection: null,
-          selectionNotice: null,
           ...withLog(ui, [
             { timeSeconds: simulation.timeSeconds, kind: "execute-ordered", label, reason: null },
           ]),
@@ -229,7 +242,6 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
         ui: {
           ...ui,
           selection: null,
-          selectionNotice: null,
           ...withLog(ui, [
             {
               timeSeconds: simulation.timeSeconds,
