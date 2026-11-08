@@ -112,12 +112,14 @@ Las **provoca y despeja el instructor**, desde la ventana de simulación. No hay
 
 ## 8. Línea de mensajes (issue #39)
 
-Línea fija con la última respuesta a una orden, **visible en todas las ventanas**.
+Barra fija abajo con los **últimos 3 eventos del SER**, del más reciente al más viejo, **visible en todas las ventanas**.
 
-- Es una barra fija abajo, con altura reservada de dos líneas (haya mensaje o no): nada se mueve al aparecer o cambiar un mensaje. Reemplaza al aviso del panel de órdenes.
-- Muestra la entrada más reciente del registro de órdenes (sin "Ejecutar"), con la frase de `logText` y la hora en el formato del SER (fecha y hora con milisegundos), para buscarla en el SER.
-- El texto se ajusta en las dos líneas y recién después se corta con puntos suspensivos; el texto completo queda como tooltip.
-- La página reserva abajo un margen igual a la altura de la barra, para no tapar las últimas filas.
+- Altura reservada para 3 filas de una línea, aunque haya menos eventos: nada se mueve al llegar un evento nuevo. Reemplaza al aviso del panel de órdenes.
+- Los textos salen de la tabla de señales (como el SER), sin duplicarlos, y la hora tiene el formato del SER, para buscar el evento en su ventana.
+- Cada fila ocupa una sola línea; si no cabe se corta con puntos suspensivos y el texto completo queda como tooltip.
+- Los rechazos conservan su jerarquía visual (negrita, ✗) y las alarmas su símbolo y el color de su prioridad.
+- Un clic en la barra abre la ventana del SER.
+- La página reserva abajo un margen igual a la altura de la barra, para no tapar las últimas filas. La barra no se imprime.
 
 ## Subfases
 
