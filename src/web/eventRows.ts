@@ -68,3 +68,10 @@ export function formatNewEventsCount(count: number): string {
   if (count <= 0) return "";
   return count > MAX_SHOWN_NEW_EVENTS ? `${MAX_SHOWN_NEW_EVENTS}+` : String(count);
 }
+
+// La cantidad de eventos nuevos en palabras, para la etiqueta accesible de la pestaña:
+// "1 nuevo" en singular y "n nuevos" en plural (también con el tope: "99+ nuevos").
+export function describeNewEvents(count: number): string {
+  if (count <= 0) return "";
+  return `${formatNewEventsCount(count)} ${count === 1 ? "nuevo" : "nuevos"}`;
+}

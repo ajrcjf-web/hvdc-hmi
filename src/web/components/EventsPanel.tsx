@@ -5,7 +5,7 @@
 // Cada evento ocupa dos líneas: la hora arriba, en chico, y debajo descripción · estado,
 // en una línea (si no cabe se corta con puntos suspensivos y el texto completo queda como
 // tooltip). El panel tiene tamaño fijo: la llegada de un evento no mueve el contenido.
-import { formatNewEventsCount, type EventRow } from "../eventRows.ts";
+import { describeNewEvents, formatNewEventsCount, type EventRow } from "../eventRows.ts";
 
 type Props = {
   open: boolean;
@@ -36,7 +36,7 @@ export function EventsPanel({ open, rows, newCount, onToggle, onOpenSer }: Props
           aria-label={
             count === ""
               ? "Desplegar eventos recientes"
-              : `Desplegar eventos recientes: ${count} nuevos`
+              : `Desplegar eventos recientes: ${describeNewEvents(newCount)}`
           }
           onClick={onToggle}
         >

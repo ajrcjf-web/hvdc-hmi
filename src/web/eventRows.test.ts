@@ -3,6 +3,7 @@ import type { SerEvent } from "../events.ts";
 import { formatTimestamp } from "../labels.ts";
 import { describeSignal } from "../signals.ts";
 import {
+  describeNewEvents,
   formatNewEventsCount,
   newEventsCount,
   PANEL_EVENT_LIMIT,
@@ -105,6 +106,13 @@ describe("eventos nuevos de la pestaña", () => {
 
   test("nunca da un valor negativo", () => {
     expect(newEventsCount(false, 5, 10)).toBe(0);
+  });
+
+  test("la etiqueta accesible de la pestaña: singular para 1 y plural para el resto", () => {
+    expect(describeNewEvents(0)).toBe("");
+    expect(describeNewEvents(1)).toBe("1 nuevo");
+    expect(describeNewEvents(2)).toBe("2 nuevos");
+    expect(describeNewEvents(100)).toBe("99+ nuevos");
   });
 
   test("el texto del contador: vacío en 0 y tope 99+", () => {
