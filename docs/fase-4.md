@@ -85,7 +85,10 @@ Las **provoca y despeja el instructor**, desde la ventana de simulación. No hay
 
 ## 6. Modo manual (issue #36)
 
-- El modo **automático/manual** es visible en pantalla. Cambiarlo usa *select-before-operate*.
+- El modo **automático/manual** es visible en pantalla. Cambiarlo usa *select-before-operate* (la interfaz llega en el PR siguiente; la lógica ya existe: `requestMode`).
+- El modo vive en `Station.mode` (`automatic` por defecto). `requestMode` se rechaza si ya está en ese modo, si hay una maniobra en curso o si hay una rampa de potencia o de tensión. No exige un estado concreto: desde `inconsistent` se puede pasar a manual.
+- `requestTransition` (orden de estado) solo vale en **automático**; `requestSwitchOrder` (orden por equipo) solo en **manual**. Cada una rechaza con motivo si el modo no es el suyo, y después llama a la misma función interna. Las órdenes del convertidor y de potencia valen en los dos modos.
+- Cada cambio de modo es un evento del SER (`STATION.MODE`, con el estado `automático` o `manual`).
 - En **manual** hay **mando por equipo** (abrir o cerrar Q1, Q2 y QE por separado), con estos enclavamientos:
   - Todo mando manual de equipos exige el **convertidor bloqueado** (y P = 0, sin rampas). Con el convertidor desbloqueado ninguna maniobra manual se acepta. Solo las protecciones abren Q1 con carga.
   - QE solo se cierra con Q1 y Q2 abiertos.
@@ -93,6 +96,7 @@ Las **provoca y despeja el instructor**, desde la ventana de simulación. No hay
   - Q2 solo se cierra con QE abierto y Q1 cerrado.
   - Q1 solo se cierra con Q2 y QE abiertos.
   - Abrir no tiene más enclavamientos que los de la estación. Se permite abrir Q1 con Q2 cerrado, por flexibilidad en emergencias, aunque lleva a `inconsistent`; la salida de `inconsistent` es abrir Q2.
+  - **Por qué abrir no se enclava:** en las subestaciones, la apertura de un interruptor no se enclava, porque lleva a una condición más segura (sin tensión y sin corriente). Lo peligroso es cerrar, no abrir; por eso los enclavamientos se concentran en el cierre.
 - Estos enclavamientos garantizan el cierre **aguas abajo**: primero Q1, después Q2.
 - Los enclavamientos se mueven a **una función de mando por equipo** en la lógica. `requestTransition` también la usa, de modo que viven en **un solo lugar**.
 - Tras un disparo de Q1 (la estación queda `inconsistent`), el operador normaliza en manual abriendo Q2.
