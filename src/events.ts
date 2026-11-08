@@ -57,7 +57,7 @@ export function commandStepEvent(
 // Compara la estación antes y después, y devuelve lo que cambió: la posición de
 // cada equipo, el estado de la estación y el bloqueo del convertidor. Si no cambió
 // nada, no hay eventos. Cuando varias cosas cambian a la vez, salen en este orden:
-// equipos (Q1, Q2, QE), estado de la estación y convertidor.
+// equipos (Q1, Q2, QE), estado de la estación, convertidor y modo.
 export function detectPlantEvents(
   before: Station,
   after: Station,
@@ -79,6 +79,10 @@ export function detectPlantEvents(
 
   if (before.converter !== after.converter) {
     events.push({ code: "CONVERTER.BLOCK", state: after.converter, timeSeconds });
+  }
+
+  if (before.mode !== after.mode) {
+    events.push({ code: "STATION.MODE", state: after.mode, timeSeconds });
   }
 
   return events;

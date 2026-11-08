@@ -9,6 +9,7 @@ export const signalDescriptions = {
   "QE.POS": "QE (puesta a tierra): posición",
   "STATION.STATE": "Estación: estado",
   "CONVERTER.BLOCK": "Convertidor: bloqueo",
+  "STATION.MODE": "Estación: modo de operación",
   "CMD.TO_EARTHED": "Orden: ir a earthed",
   "CMD.TO_STOPPED": "Orden: ir a stopped",
   "CMD.TO_DECOUPLED": "Orden: ir a decoupled",
@@ -40,6 +41,9 @@ export const signalStateLabels = {
   // convertidor
   blocked: "bloqueado",
   deblocked: "desbloqueado",
+  // modo de operación
+  automatic: "automático",
+  manual: "manual",
   // paso de una orden
   selected: "seleccionada",
   executed: "ejecutada",

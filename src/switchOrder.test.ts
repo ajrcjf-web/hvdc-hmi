@@ -7,8 +7,11 @@ import { deriveState } from "./stationState.ts";
 import { stepSwitchgear, type SwitchId, type SwitchStatus, type SwitchTarget } from "./switchgear.ts";
 import { deblockedAt, stationAt, testConfig } from "./testSupport.ts";
 
+// La orden por equipo solo vale en modo manual: estos tests pasan la estación a manual
+// (los de modo están en operationMode.test.ts). Se ordena sobre la estación recibida.
+const manual = (station: Station): Station => ({ ...station, mode: "manual" });
 const order = (station: Station, id: SwitchId, to: SwitchTarget) =>
-  requestSwitchOrder(station, id, to, testConfig);
+  requestSwitchOrder(manual(station), id, to, testConfig);
 
 // Una estación con convertidor bloqueado, P = 0 y los equipos en las posiciones dadas.
 function withSwitches(q1: SwitchStatus, q2: SwitchStatus, qe: SwitchStatus): Station {
