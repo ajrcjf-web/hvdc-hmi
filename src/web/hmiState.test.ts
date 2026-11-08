@@ -11,7 +11,6 @@ import {
   transitionCommand,
   type OperatorCommand,
 } from "./commands.ts";
-import { lastResponse } from "./commandView.ts";
 import {
   createHmiState,
   DEFAULT_SELECTION_TIMEOUT_SECONDS,
@@ -118,7 +117,6 @@ describe("hmiReducer: seleccionar", () => {
       select(transitionCommand("decoupled")),
     );
     expect(state.ui.log.map((entry) => entry.kind).slice(0, 2)).toEqual(["selected", "selection-rejected"]);
-    expect(lastResponse(state.ui.log)?.kind).toBe("selected");
   });
 });
 

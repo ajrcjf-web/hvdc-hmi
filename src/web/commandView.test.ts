@@ -8,16 +8,7 @@ import {
   switchCommand,
   transitionCommand,
 } from "./commands.ts";
-import { timestampMs } from "../events.ts";
-import { formatTimestamp } from "../labels.ts";
-import {
-  describeCommand,
-  formatPowerOrder,
-  lastResponse,
-  logText,
-  remainingSeconds,
-  toMessageLine,
-} from "./commandView.ts";
+import { describeCommand, formatPowerOrder, logText, remainingSeconds } from "./commandView.ts";
 import type { LogEntry } from "./hmiState.ts";
 
 describe("describeCommand", () => {
@@ -155,50 +146,5 @@ describe("formatPowerOrder", () => {
   test("formatea la consigna", () => {
     expect(formatPowerOrder(300)).toBe("300 MW");
     expect(formatPowerOrder(Number.NaN)).toBe("no válido");
-  });
-});
-
-describe("lastResponse y toMessageLine", () => {
-  // El registro viene con la entrada más reciente primero.
-  const entry = (id: number, kind: LogEntry["kind"], reason: string | null = null): LogEntry => ({
-    id,
-    timeSeconds: id / 10,
-    kind,
-    label: "Cerrar Q1",
-    reason,
-  });
-
-  test("sin entradas no hay respuesta ni mensaje", () => {
-    expect(lastResponse([])).toBeNull();
-    expect(toMessageLine([], 0)).toBeNull();
-  });
-
-  test("devuelve la entrada más reciente", () => {
-    const log = [entry(3, "done"), entry(2, "execute-ordered"), entry(1, "selected")];
-    expect(lastResponse(log)?.id).toBe(3);
-  });
-
-  test("salta 'ejecutar', que es el clic del operador y no una respuesta", () => {
-    const log = [entry(2, "execute-ordered"), entry(1, "selected")];
-    expect(lastResponse(log)?.id).toBe(1);
-    expect(lastResponse([entry(1, "execute-ordered")])).toBeNull();
-  });
-
-  test("la frase es la del registro y la hora tiene el formato del SER", () => {
-    const startMs = Date.UTC(2026, 10, 5, 14, 3, 7, 0);
-    const log = [entry(23, "failed", "Q1 sin cerrar")]; // 2.3 s simulados
-    const line = toMessageLine(log, startMs);
-    expect(line).toEqual({
-      timestamp: formatTimestamp(timestampMs(startMs, 2.3)),
-      text: logText(log[0]!),
-      rejected: true,
-    });
-    expect(line?.text).toContain("Q1 sin cerrar"); // el motivo, al final de la frase
-    expect(line?.timestamp).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}$/);
-  });
-
-  test("solo los rechazos se marcan como rechazados", () => {
-    expect(toMessageLine([entry(1, "done")], 0)?.rejected).toBe(false);
-    expect(toMessageLine([entry(1, "selection-rejected", "motivo")], 0)?.rejected).toBe(true);
   });
 });

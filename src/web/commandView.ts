@@ -1,8 +1,7 @@
 // Qué se muestra de una orden y de una entrada del registro. Funciones puras:
 // solo preparan textos y datos; los componentes los ponen en pantalla.
 
-import { timestampMs } from "../events.ts";
-import { formatSwitch, formatTimestamp, formatValue } from "../labels.ts";
+import { formatSwitch, formatValue } from "../labels.ts";
 import { wholeSecondsLeft } from "../simulationTime.ts";
 import type { OperatingMode, Station, StationConfig } from "../station.ts";
 import type { SwitchId, SwitchTarget } from "../switchgear.ts";
@@ -107,29 +106,6 @@ export function logText(entry: LogEntry): string {
     case "failed":
       return `✗ ${entry.label} → rechazada: ${reason}`;
   }
-}
-
-// La última respuesta del sistema a una orden del operador: la entrada más reciente del
-// registro (que viene con la más reciente primero). "Ejecutar" no cuenta: es el clic del
-// operador, y 100 ms después llega "ejecutada" o "rechazada"; mostrarlo haría parpadear
-// la línea de mensajes.
-export function lastResponse(log: LogEntry[]): LogEntry | null {
-  return log.find((entry) => entry.kind !== "execute-ordered") ?? null;
-}
-
-// Lo que muestra la línea de mensajes. La hora tiene el mismo formato que el SER y sale de
-// las mismas funciones (timestampMs y formatTimestamp), para buscar el mensaje en el SER.
-// La frase sale de logText: es la misma que la del registro, no se escribe otra.
-export type MessageLine = { timestamp: string; text: string; rejected: boolean };
-
-export function toMessageLine(log: LogEntry[], startMs: number): MessageLine | null {
-  const entry = lastResponse(log);
-  if (entry === null) return null;
-  return {
-    timestamp: formatTimestamp(timestampMs(startMs, entry.timeSeconds)),
-    text: logText(entry),
-    rejected: entry.reason !== null,
-  };
 }
 
 export function formatPowerOrder(valueMW: number): string {
