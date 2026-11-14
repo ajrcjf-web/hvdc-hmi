@@ -107,6 +107,12 @@ h3 {
   padding: 1rem;
 }
 
+/* Los textos corridos (avisos, ventanas pendientes) no pasan de unos 70 caracteres por
+   línea, por legibilidad, aunque la ventana sea ancha. */
+.panel > p {
+  max-width: 70ch;
+}
+
 .values {
   display: grid;
   grid-template-columns: max-content 1fr;
@@ -418,9 +424,11 @@ input {
   border-bottom-color: var(--alarm-color);
 }
 
-/* Alarmas de prueba del instructor. */
+/* Alarmas de prueba del instructor. Con el ancho nuevo, la lista no se estira más de lo que
+   se lee bien. */
 .test-alarms {
   list-style: none;
+  max-width: 60rem;
   margin: 0;
   padding: 0;
 }
