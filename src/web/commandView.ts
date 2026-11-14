@@ -1,4 +1,4 @@
-// Qué se muestra de una orden y de una entrada del registro. Funciones puras:
+// Qué se muestra de una orden en la ventana de confirmación. Funciones puras:
 // solo preparan textos y datos; los componentes los ponen en pantalla.
 
 import { formatSwitch, formatValue } from "../labels.ts";
@@ -7,7 +7,6 @@ import type { OperatingMode, Station, StationConfig } from "../station.ts";
 import type { SwitchId, SwitchTarget } from "../switchgear.ts";
 import { deriveState, type DerivedState } from "../stationState.ts";
 import { commandLabel, runCommand, type OperatorCommand } from "./commands.ts";
-import type { LogEntry } from "./hmiState.ts";
 
 export type CommandView = {
   title: string;
@@ -84,28 +83,6 @@ export function describeCommand(
 // el error de redondeo del tiempo acumulado.
 export function remainingSeconds(expiresAtSeconds: number, timeSeconds: number): number {
   return wholeSecondsLeft(expiresAtSeconds - timeSeconds);
-}
-
-// El texto de una entrada del registro. Cada tipo lleva su símbolo,
-// para distinguirlo sin depender del color.
-export function logText(entry: LogEntry): string {
-  const reason = entry.reason ?? "";
-  switch (entry.kind) {
-    case "selected":
-      return `→ Seleccionada: ${entry.label}`;
-    case "selection-rejected":
-      return `✗ ${entry.label} → no se pudo seleccionar: ${reason}`;
-    case "execute-ordered":
-      return `▶ Ejecutar: ${entry.label}`;
-    case "cancelled":
-      return `⊘ Cancelada: ${entry.label}`;
-    case "expired":
-      return `⏱ Expiró sin confirmar: ${entry.label}`;
-    case "done":
-      return `✓ ${entry.label}`;
-    case "failed":
-      return `✗ ${entry.label} → rechazada: ${reason}`;
-  }
 }
 
 export function formatPowerOrder(valueMW: number): string {

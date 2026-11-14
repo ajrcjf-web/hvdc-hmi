@@ -30,33 +30,7 @@ import { DEFAULT_WINDOW, type WindowId } from "./windows.ts";
 
 export const TICK_MS = 100; // cada cuánto late el reloj (tiempo real)
 export const DT_SECONDS = 0.1; // tiempo simulado por latido: velocidad 1× (tiempo real)
-export const MAX_LOG_ENTRIES = 20;
 export const DEFAULT_SELECTION_TIMEOUT_SECONDS = 15;
-
-// Qué pasó con una orden:
-//   selected            se abrió la selección
-//   selection-rejected  no se pudo seleccionar (con motivo)
-//   execute-ordered     el operador confirmó
-//   cancelled           el operador canceló
-//   expired             pasó el tiempo sin confirmar
-//   done                runCycle ejecutó la orden
-//   failed              runCycle rechazó la orden confirmada (con motivo)
-export type LogKind =
-  | "selected"
-  | "selection-rejected"
-  | "execute-ordered"
-  | "cancelled"
-  | "expired"
-  | "done"
-  | "failed";
-
-export type LogEntry = {
-  id: number; // identifica la entrada (React lo necesita para pintar la lista)
-  timeSeconds: number;
-  kind: LogKind;
-  label: string;
-  reason: string | null; // solo en los rechazos
-};
 
 // La orden elegida que espera confirmación.
 export type Selection = {
@@ -70,8 +44,6 @@ export type UiState = {
   selectionTimeoutSeconds: number;
   activeWindow: WindowId; // la ventana que se ve; la simulación es la misma en todas
   selection: Selection | null; // como mucho una a la vez
-  log: LogEntry[]; // la más reciente primero
-  nextLogId: number;
   eventsPanelOpen: boolean; // el panel lateral de eventos: desplegado o plegado
   eventsFoldedAtId: number; // nextEventId al plegarlo: de ahí se cuentan los eventos nuevos
 };
@@ -107,39 +79,21 @@ export function createHmiState(
       selectionTimeoutSeconds,
       activeWindow,
       selection: null,
-      log: [],
-      nextLogId: 0,
       eventsPanelOpen,
       eventsFoldedAtId: 0,
     },
   };
 }
 
-type LogDraft = Omit<LogEntry, "id">;
-
-// Agrega entradas al registro (en orden cronológico; en la lista queda la más reciente primero).
-function withLog(ui: UiState, drafts: LogDraft[]): Pick<UiState, "log" | "nextLogId"> {
-  const entries = drafts.map((draft, i) => ({ ...draft, id: ui.nextLogId + i }));
-  return {
-    log: [...entries.reverse(), ...ui.log].slice(0, MAX_LOG_ENTRIES),
-    nextLogId: ui.nextLogId + drafts.length,
-  };
-}
-
 function selectCommand(state: HmiState, command: OperatorCommand): HmiState {
   const { simulation, ui } = state;
-  const label = commandLabel(command);
 
+  // El rechazo deja su evento en el SER, con el motivo; la interfaz no cambia.
   const reject = (reason: string): HmiState => ({
     simulation: appendEvents(simulation, [
       commandStepEvent(commandSignal(command), "rejected", simulation.timeSeconds, reason),
     ]),
-    ui: {
-      ...ui,
-      ...withLog(ui, [
-        { timeSeconds: simulation.timeSeconds, kind: "selection-rejected", label, reason },
-      ]),
-    },
+    ui,
   });
 
   if (ui.selection !== null) {
@@ -164,9 +118,6 @@ function selectCommand(state: HmiState, command: OperatorCommand): HmiState {
         selectedAtSeconds: simulation.timeSeconds,
         expiresAtSeconds: simulation.timeSeconds + ui.selectionTimeoutSeconds,
       },
-      ...withLog(ui, [
-        { timeSeconds: simulation.timeSeconds, kind: "selected", label, reason: null },
-      ]),
     },
   };
 }
@@ -212,22 +163,16 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
       // La orden no se ejecuta aquí: queda programada para el instante actual y
       // la ejecuta runCycle en el próximo latido, con el orden de pasos de siempre.
       const { command } = ui.selection;
-      const label = commandLabel(command);
       const scheduled: ScheduledCommand = {
         atSeconds: simulation.timeSeconds,
-        label,
+        label: commandLabel(command),
         signal: commandSignal(command),
         run: (station) => runCommand(command, station, simulation.config),
       };
       return {
         simulation: schedule(simulation, scheduled),
-        ui: {
-          ...ui,
-          selection: null,
-          ...withLog(ui, [
-            { timeSeconds: simulation.timeSeconds, kind: "execute-ordered", label, reason: null },
-          ]),
-        },
+        // "Ejecutar" no es un evento: 100 ms después aparece como ejecutada o rechazada.
+        ui: { ...ui, selection: null },
       };
     }
 
@@ -239,47 +184,18 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
         simulation: appendEvents(simulation, [
           commandStepEvent(commandSignal(ui.selection.command), "cancelled", simulation.timeSeconds),
         ]),
-        ui: {
-          ...ui,
-          selection: null,
-          ...withLog(ui, [
-            {
-              timeSeconds: simulation.timeSeconds,
-              kind: "cancelled",
-              label: commandLabel(ui.selection.command),
-              reason: null,
-            },
-          ]),
-        },
+        ui: { ...ui, selection: null },
       };
     }
 
     case "tick": {
       const cycle = advance(simulation, DT_SECONDS);
 
-      const drafts: LogDraft[] = [];
-      for (const event of cycle.events) {
-        if (event.kind === "command") {
-          drafts.push({
-            timeSeconds: simulation.timeSeconds,
-            kind: event.result.ok ? "done" : "failed",
-            label: event.label,
-            reason: event.result.ok ? null : event.result.reason,
-          });
-        }
-      }
-
       // La selección expira según el tiempo simulado. Se compara con hasReached (no con
       // === ni con >=) porque el tiempo acumulado tiene error de redondeo.
       let nextSimulation = cycle.state;
       let selection = ui.selection;
       if (selection !== null && hasReached(nextSimulation.timeSeconds, selection.expiresAtSeconds)) {
-        drafts.push({
-          timeSeconds: nextSimulation.timeSeconds,
-          kind: "expired",
-          label: commandLabel(selection.command),
-          reason: null,
-        });
         const expired: SignalEvent = commandStepEvent(
           commandSignal(selection.command),
           "expired",
@@ -291,7 +207,7 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
 
       return {
         simulation: nextSimulation,
-        ui: { ...ui, selection, ...withLog(ui, drafts) },
+        ui: { ...ui, selection },
       };
     }
   }

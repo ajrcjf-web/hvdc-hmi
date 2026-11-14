@@ -8,8 +8,7 @@ import {
   switchCommand,
   transitionCommand,
 } from "./commands.ts";
-import { describeCommand, formatPowerOrder, logText, remainingSeconds } from "./commandView.ts";
-import type { LogEntry } from "./hmiState.ts";
+import { describeCommand, formatPowerOrder, remainingSeconds } from "./commandView.ts";
 
 describe("describeCommand", () => {
   test("transición: título, estado actual y resultado esperado", () => {
@@ -114,31 +113,6 @@ describe("remainingSeconds", () => {
   test("nunca baja de 0", () => {
     expect(remainingSeconds(15, 15)).toBe(0);
     expect(remainingSeconds(15, 16)).toBe(0);
-  });
-});
-
-describe("logText", () => {
-  const entry = (kind: LogEntry["kind"], reason: string | null = null): LogEntry => ({
-    id: 0,
-    timeSeconds: 0,
-    kind,
-    label: "Ir a coupled",
-    reason,
-  });
-
-  test("cada tipo lleva su símbolo", () => {
-    expect(logText(entry("selected"))).toBe("→ Seleccionada: Ir a coupled");
-    expect(logText(entry("execute-ordered"))).toBe("▶ Ejecutar: Ir a coupled");
-    expect(logText(entry("cancelled"))).toBe("⊘ Cancelada: Ir a coupled");
-    expect(logText(entry("expired"))).toBe("⏱ Expiró sin confirmar: Ir a coupled");
-    expect(logText(entry("done"))).toBe("✓ Ir a coupled");
-  });
-
-  test("los rechazos incluyen el motivo", () => {
-    expect(logText(entry("selection-rejected", "P debe ser 0"))).toContain(
-      "no se pudo seleccionar: P debe ser 0",
-    );
-    expect(logText(entry("failed", "P debe ser 0"))).toContain("rechazada: P debe ser 0");
   });
 });
 
