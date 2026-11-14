@@ -18,7 +18,7 @@ import {
   TICK_MS,
 } from "./hmiState.ts";
 import { summarizeAlarms } from "./alarmView.ts";
-import { newEventsCount, toEventRows } from "./eventRows.ts";
+import { summarizeNewEvents, toEventRows } from "./eventRows.ts";
 import {
   initialPanelOpen,
   NARROW_SCREEN_QUERY,
@@ -119,8 +119,9 @@ export function App() {
       <EventsPanel
         open={state.ui.eventsPanelOpen}
         rows={toEventRows(state.simulation.events)}
-        newCount={newEventsCount(
+        summary={summarizeNewEvents(
           state.ui.eventsPanelOpen,
+          state.simulation.events,
           state.simulation.nextEventId,
           state.ui.eventsFoldedAtId,
         )}

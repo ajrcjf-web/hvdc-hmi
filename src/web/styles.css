@@ -98,10 +98,6 @@ h3 {
   gap: 1rem;
 }
 
-.layout > :last-child {
-  grid-column: 1 / -1;
-}
-
 .panel {
   background: var(--surface);
   border-radius: 6px;
@@ -150,31 +146,6 @@ input {
   width: 6rem;
 }
 
-.log {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  font-family: ui-monospace, monospace;
-  font-size: 0.9rem;
-}
-
-/* Jerarquía sin color: las entradas rutinarias van en gris secundario; un rechazo
-   va en el texto de máximo brillo, en negrita, con fondo más claro y una barra a la
-   izquierda (además del símbolo ✗ que trae su texto). */
-.log li {
-  padding: 0.15rem 0.5rem;
-  border-left: 3px solid transparent;
-  color: var(--text-muted);
-}
-
-.log .rejected {
-  color: var(--text-strong);
-  font-weight: bold;
-  background: var(--surface-raised);
-  border-left-color: var(--line);
-}
-
-.log .time,
 .empty {
   color: var(--text-muted);
 }
@@ -675,6 +646,20 @@ input {
 
 .events-tab-title {
   writing-mode: vertical-rl;
+}
+
+/* Las marcas de la pestaña: ✗ (un rechazo) en negrita y sin color; el símbolo de una
+   alarma, con el color de su prioridad (el único color permitido). */
+.events-mark {
+  font-weight: bold;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+.events-mark.alarm-urgent,
+.events-mark.alarm-high,
+.events-mark.alarm-low {
+  color: var(--alarm-color);
 }
 
 .events-badge {

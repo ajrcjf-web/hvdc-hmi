@@ -1,7 +1,7 @@
-// La ventana overview: el unifilar, los valores, las órdenes y el registro.
+// La ventana overview: el unifilar, los valores y las órdenes. Los eventos (y las respuestas
+// a las órdenes) se ven en el panel lateral, que está en todas las ventanas.
 import type { Dispatch } from "react";
 import type { HmiAction, HmiState } from "../hmiState.ts";
-import { CommandLog } from "./CommandLog.tsx";
 import { ModeIndicator } from "./ModeIndicator.tsx";
 import { CommandPanel } from "./CommandPanel.tsx";
 import { SingleLineDiagram } from "./SingleLineDiagram.tsx";
@@ -24,7 +24,6 @@ export function OverviewWindow({ state, dispatch }: Props) {
           mode={state.simulation.station.mode}
           onCommand={(command) => dispatch({ type: "select", command })}
         />
-        <CommandLog entries={state.ui.log} />
       </div>
     </>
   );
