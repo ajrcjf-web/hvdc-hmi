@@ -7,6 +7,7 @@ import type { Dispatch } from "react";
 import { alarmPriorities, testAlarmCodes, type AlarmState } from "../../alarms.ts";
 import { describeSignal } from "../../signals.ts";
 import { priorityLabels } from "../alarmView.ts";
+import { guardedProps } from "../guardedButton.ts";
 import type { HmiAction } from "../hmiState.ts";
 
 type Props = {
@@ -33,15 +34,17 @@ export function FaultsWindow({ alarms, dispatch }: Props) {
               <span className="test-alarm-state">{active ? "Condición presente" : "Condición despejada"}</span>
               <button
                 type="button"
-                disabled={active}
-                onClick={() => dispatch({ type: "set-test-alarm", code, active: true })}
+                {...guardedProps(active, () =>
+                  dispatch({ type: "set-test-alarm", code, active: true }),
+                )}
               >
                 Provocar condición
               </button>
               <button
                 type="button"
-                disabled={!active}
-                onClick={() => dispatch({ type: "set-test-alarm", code, active: false })}
+                {...guardedProps(!active, () =>
+                  dispatch({ type: "set-test-alarm", code, active: false }),
+                )}
               >
                 Despejar condición
               </button>
