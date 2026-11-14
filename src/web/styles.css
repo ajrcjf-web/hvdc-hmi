@@ -93,9 +93,11 @@ h3 {
   border-bottom-color: var(--line);
 }
 
+/* Estado y órdenes, uno al lado del otro. Cada panel mide al menos 22rem: si no caben dos,
+   se apilan solos (sin saltos de media query y sin scroll horizontal). */
 .layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
   gap: 1rem;
 }
 
@@ -152,9 +154,13 @@ input {
 }
 
 /* Unifilar: sobrio. Sin color para lo normal; el rojo solo para "inconsistent". */
+/* El unifilar es un SVG de proporción fija: ocupa todo el ancho, pero su altura no pasa del
+   45 % del alto de la ventana (si no, en una ventana ancha empujaría el estado y las órdenes
+   fuera de la pantalla). Al limitarse la altura, el dibujo queda centrado y sin deformarse. */
 .diagram {
   width: 100%;
   height: auto;
+  max-height: 45vh;
   background: var(--bg);
   border: 2px solid transparent;
   border-radius: 4px;
