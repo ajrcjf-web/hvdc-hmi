@@ -281,3 +281,8 @@ export function layoutDiagram(width: number, fontPx: number, textWidth: TextWidt
     symbols,
   };
 }
+
+// Una estimación del ancho de un texto, para cuando el navegador no puede medirlo.
+export function estimateTextWidth(fontPx: number): TextWidth {
+  return (text, bold) => text.length * fontPx * (bold ? 0.66 : 0.6);
+}

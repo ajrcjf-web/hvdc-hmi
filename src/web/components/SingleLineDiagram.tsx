@@ -1,19 +1,21 @@
 // Unifilar de la estación en SVG. Solo muestra: no recibe clics ni da órdenes.
-// Qué se dibuja lo decide describeDiagram; aquí solo se pone en el papel.
-import { converterLabels, formatValue } from "../../labels.ts";
+// Qué se dibuja lo decide describeDiagram; dónde va cada cosa, layoutDiagram.
+//
+// El dibujo es en píxeles reales (1 unidad = 1 píxel): al ensanchar la ventana solo crecen
+// las distancias entre los equipos y el largo de las líneas. Las letras, el grosor de las
+// líneas y los símbolos mantienen su tamaño. Si el lugar es más angosto que el mínimo que
+// necesitan las etiquetas para no tocarse, el dibujo completo se achica de forma pareja.
+import { useMemo, useRef } from "react";
+import { converterLabels } from "../../labels.ts";
 import type { Station } from "../../station.ts";
-import { describeDiagram, type Energization } from "../diagram.ts";
+import { describeDiagram, formatReadings, type Energization } from "../diagram.ts";
+import { layoutDiagram } from "../diagramLayout.ts";
+import { useElementWidth, useTextMetrics } from "../diagramMetrics.ts";
 import { SwitchSymbol } from "./SwitchSymbol.tsx";
 
 type Props = {
   station: Station;
 };
-
-const MAIN_Y = 110; // altura de la línea principal
-const Q1_X = 170;
-const Q2_X = 610;
-const QE_X = 550; // la derivación a tierra sale entre el convertidor y Q2
-const CONVERTER = { x: 410, y: 70, width: 100, height: 80 };
 
 function Wire({ x1, y1, x2, y2, energized }: {
   x1: number;
@@ -28,96 +30,179 @@ function Wire({ x1, y1, x2, y2, energized }: {
 
 export function SingleLineDiagram({ station }: Props) {
   const model = describeDiagram(station);
-  const { switches, segments, readings } = model;
+  const { switches, segments } = model;
   const blocked = model.converter === "blocked";
+  const readings = formatReadings(model.readings);
+
+  const frameRef = useRef<HTMLDivElement>(null);
+  const available = useElementWidth(frameRef);
+  const { fontPx, textWidth } = useTextMetrics();
+  const layout = useMemo(
+    () => layoutDiagram(available, fontPx, textWidth),
+    [available, fontPx, textWidth],
+  );
+  const { labels, converter, qe } = layout;
+  const mainY = layout.mainY;
 
   const description =
     `Estado ${model.state}. ` +
     `Q1 ${switches.Q1.position}, Q2 ${switches.Q2.position}, QE ${switches.QE.position}. ` +
     `Convertidor ${converterLabels[model.converter]}.`;
 
+  // Un texto del dibujo, en el lugar que le reservó el layout.
+  const at = (id: keyof typeof labels) => ({
+    x: labels[id].x,
+    y: labels[id].y,
+    textAnchor: labels[id].anchor,
+  });
+
   return (
     <section className="panel">
       <h2>Unifilar</h2>
-      <svg
-        className={model.abnormal ? "diagram diagram-abnormal" : "diagram"}
-        viewBox="0 0 940 280"
-        role="img"
-        aria-labelledby="diagram-title diagram-desc"
+      <div
+        ref={frameRef}
+        className={model.abnormal ? "diagram-frame diagram-abnormal" : "diagram-frame"}
       >
-        <title id="diagram-title">Unifilar de la estación HVDC</title>
-        <desc id="diagram-desc">{description}</desc>
+        <svg
+          className="diagram"
+          viewBox={`0 0 ${layout.width} ${layout.height}`}
+          role="img"
+          aria-labelledby="diagram-title diagram-desc"
+        >
+          <title id="diagram-title">Unifilar de la estación HVDC</title>
+          <desc id="diagram-desc">{description}</desc>
 
-        {model.abnormal && (
-          <text className="abnormal-text" x={470} y={24} textAnchor="middle">
-            ESTADO INCONSISTENTE
+          {model.abnormal && (
+            <text className="abnormal-text" {...at("abnormal")}>
+              ESTADO INCONSISTENTE
+            </text>
+          )}
+
+          {/* Cables, debajo de los símbolos */}
+          <Wire
+            x1={layout.redAc.cx + 22}
+            y1={mainY}
+            x2={layout.q1.cx - 20}
+            y2={mainY}
+            energized={segments.acGrid}
+          />
+          <Wire
+            x1={layout.q1.cx + 20}
+            y1={mainY}
+            x2={converter.x}
+            y2={mainY}
+            energized={segments.acStation}
+          />
+          <Wire
+            x1={converter.x + converter.width}
+            y1={mainY}
+            x2={layout.q2.cx - 20}
+            y2={mainY}
+            energized={segments.dcStation}
+          />
+          <Wire
+            x1={layout.q2.cx + 20}
+            y1={mainY}
+            x2={layout.line.endX}
+            y2={mainY}
+            energized={segments.dcLine}
+          />
+          <Wire x1={qe.cx} y1={mainY} x2={qe.cx} y2={qe.cy - 20} energized={segments.dcStation} />
+          <Wire x1={qe.cx} y1={qe.cy + 20} x2={qe.cx} y2={layout.groundY} energized="dead" />
+
+          {/* Red AC */}
+          <circle className="symbol" cx={layout.redAc.cx} cy={mainY} r={22} />
+          <text className="symbol-text" x={layout.redAc.cx} y={mainY + 6} textAnchor="middle">
+            ~
           </text>
-        )}
+          <text className="label-name" {...at("redAc")}>
+            Red AC
+          </text>
 
-        {/* Cables, debajo de los símbolos */}
-        <Wire x1={72} y1={MAIN_Y} x2={Q1_X - 20} y2={MAIN_Y} energized={segments.acGrid} />
-        <Wire x1={Q1_X + 20} y1={MAIN_Y} x2={CONVERTER.x} y2={MAIN_Y} energized={segments.acStation} />
-        <Wire
-          x1={CONVERTER.x + CONVERTER.width}
-          y1={MAIN_Y}
-          x2={Q2_X - 20}
-          y2={MAIN_Y}
-          energized={segments.dcStation}
-        />
-        <Wire x1={Q2_X + 20} y1={MAIN_Y} x2={900} y2={MAIN_Y} energized={segments.dcLine} />
-        <Wire x1={QE_X} y1={MAIN_Y} x2={QE_X} y2={170} energized={segments.dcStation} />
-        <Wire x1={QE_X} y1={210} x2={QE_X} y2={242} energized="dead" />
+          {/* Transformador: dos círculos que se solapan */}
+          <circle className="symbol filled" cx={layout.transformer.cx - 12} cy={mainY} r={22} />
+          <circle className="symbol filled" cx={layout.transformer.cx + 12} cy={mainY} r={22} />
+          <text className="label-name" {...at("transformer")}>
+            Transformador
+          </text>
 
-        {/* Red AC */}
-        <circle className="symbol" cx={50} cy={MAIN_Y} r={22} />
-        <text className="symbol-text" x={50} y={MAIN_Y + 6} textAnchor="middle">~</text>
-        <text className="label-name" x={50} y={MAIN_Y - 36} textAnchor="middle">Red AC</text>
+          {/* Convertidor: bloqueado = solo contorno, desbloqueado = relleno */}
+          <rect
+            className={blocked ? "symbol converter-blocked" : "symbol converter-deblocked"}
+            x={converter.x}
+            y={converter.y}
+            width={converter.width}
+            height={converter.height}
+          />
+          <line
+            className="converter-line"
+            x1={converter.x}
+            y1={converter.y + converter.height}
+            x2={converter.x + converter.width}
+            y2={converter.y}
+          />
+          <text className="converter-text" x={converter.x + 18} y={converter.y + 26}>~</text>
+          <text
+            className="converter-text"
+            x={converter.x + converter.width - 28}
+            y={converter.y + 66}
+          >
+            =
+          </text>
+          {/* El nombre va encima de la caja y el estado debajo: ningún texto toca el dibujo. */}
+          <text className="label-name" {...at("converterName")}>
+            Convertidor
+          </text>
+          <text className="label-name" {...at("converterState")}>
+            {converterLabels[model.converter].toUpperCase()}
+          </text>
 
-        {/* Transformador: dos círculos que se solapan */}
-        <circle className="symbol filled" cx={288} cy={MAIN_Y} r={22} />
-        <circle className="symbol filled" cx={312} cy={MAIN_Y} r={22} />
-        <text className="label-name" x={300} y={MAIN_Y - 36} textAnchor="middle">Transformador</text>
+          {/* Equipos de maniobra */}
+          <SwitchSymbol
+            name="Q1"
+            view={switches.Q1}
+            cx={layout.q1.cx}
+            cy={mainY}
+            nameLabel={labels.q1Name}
+            positionLabel={labels.q1Position}
+            breaker
+          />
+          <SwitchSymbol
+            name="Q2"
+            view={switches.Q2}
+            cx={layout.q2.cx}
+            cy={mainY}
+            nameLabel={labels.q2Name}
+            positionLabel={labels.q2Position}
+          />
+          <SwitchSymbol
+            name="QE"
+            view={switches.QE}
+            cx={qe.cx}
+            cy={qe.cy}
+            nameLabel={labels.qeName}
+            positionLabel={labels.qePosition}
+            vertical
+          />
 
-        {/* Convertidor: bloqueado = solo contorno, desbloqueado = relleno */}
-        <rect
-          className={blocked ? "symbol converter-blocked" : "symbol converter-deblocked"}
-          {...CONVERTER}
-        />
-        <line
-          className="converter-line"
-          x1={CONVERTER.x}
-          y1={CONVERTER.y + CONVERTER.height}
-          x2={CONVERTER.x + CONVERTER.width}
-          y2={CONVERTER.y}
-        />
-        <text className="converter-text" x={CONVERTER.x + 18} y={CONVERTER.y + 26}>~</text>
-        <text className="converter-text" x={CONVERTER.x + CONVERTER.width - 28} y={CONVERTER.y + 66}>=</text>
-        {/* El nombre va encima de la caja y el estado debajo: ningún texto toca el dibujo. */}
-        <text className="label-name" x={460} y={CONVERTER.y - 12} textAnchor="middle">Convertidor</text>
-        <text className="label-name" x={460} y={CONVERTER.y + CONVERTER.height + 22} textAnchor="middle">
-          {converterLabels[model.converter].toUpperCase()}
-        </text>
+          {/* Símbolo de tierra: siempre dibujado; la posición se ve en la cuchilla de QE */}
+          <line className="ground" x1={qe.cx - 14} y1={layout.groundY} x2={qe.cx + 14} y2={layout.groundY} />
+          <line className="ground" x1={qe.cx - 9} y1={layout.groundY + 6} x2={qe.cx + 9} y2={layout.groundY + 6} />
+          <line className="ground" x1={qe.cx - 4} y1={layout.groundY + 12} x2={qe.cx + 4} y2={layout.groundY + 12} />
 
-        {/* Equipos de maniobra */}
-        <SwitchSymbol name="Q1" view={switches.Q1} cx={Q1_X} cy={MAIN_Y} breaker />
-        <SwitchSymbol name="Q2" view={switches.Q2} cx={Q2_X} cy={MAIN_Y} />
-        <SwitchSymbol name="QE" view={switches.QE} cx={QE_X} cy={190} vertical />
+          {/* Línea DC */}
+          <text className="label-name" {...at("lineDc")}>
+            Línea DC
+          </text>
 
-        {/* Símbolo de tierra: siempre dibujado; la posición se ve en la cuchilla de QE */}
-        <line className="ground" x1={QE_X - 14} y1={242} x2={QE_X + 14} y2={242} />
-        <line className="ground" x1={QE_X - 9} y1={248} x2={QE_X + 9} y2={248} />
-        <line className="ground" x1={QE_X - 4} y1={254} x2={QE_X + 4} y2={254} />
-
-        {/* Línea DC */}
-        <text className="label-name" x={800} y={MAIN_Y - 16} textAnchor="middle">Línea DC</text>
-
-        {/* Valores junto al convertidor */}
-        <g className="readings">
-          <text x={CONVERTER.x} y={206}>P = {formatValue(readings.powerMW, 0)} MW</text>
-          <text x={CONVERTER.x} y={226}>Udc = {formatValue(readings.udcKV, 0)} kV</text>
-          <text x={CONVERTER.x} y={246}>Idc = {formatValue(readings.idcKA, 2)} kA</text>
-        </g>
-      </svg>
+          {/* Valores junto al convertidor */}
+          <g className="readings">
+            <text {...at("readingPower")}>{readings.power}</text>
+            <text {...at("readingUdc")}>{readings.udc}</text>
+            <text {...at("readingIdc")}>{readings.idc}</text>
+          </g>
+        </svg>
+      </div>
     </section>
   );
 }

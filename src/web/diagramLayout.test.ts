@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { formatReadings } from "./diagram.ts";
 import {
   CONVERTER_SIZE,
+  estimateTextWidth,
   layoutDiagram,
   MAIN_Y,
   type Box,
@@ -205,5 +206,28 @@ describe("layoutDiagram: no depende del estado de la estación", () => {
   test("el estado del convertidor reserva el lugar del texto más ancho", () => {
     const { labels } = layoutAt(1500);
     expect(labels.converterState.box.width).toBeGreaterThanOrEqual("DESBLOQUEADO".length * 10);
+  });
+});
+
+describe("estimateTextWidth", () => {
+  test("crece con el largo del texto y con el tamaño de la letra; la negrita es más ancha", () => {
+    const at16 = estimateTextWidth(16);
+    expect(at16("abcdef", false)).toBeGreaterThan(at16("abc", false));
+    expect(estimateTextWidth(20)("abc", false)).toBeGreaterThan(at16("abc", false));
+    expect(at16("abc", true)).toBeGreaterThan(at16("abc", false));
+  });
+
+  test("el layout con la estimación no se solapa a ningún ancho", () => {
+    const textWidth = estimateTextWidth(FONT_PX);
+    const layout = layoutDiagram(0, FONT_PX, textWidth);
+    for (const width of [layout.minWidth, 1500, 2400]) {
+      const current = layoutDiagram(width, FONT_PX, textWidth);
+      const labels = Object.entries(current.labels);
+      for (const [idA, a] of labels) {
+        for (const [idB, b] of labels) {
+          if (idA < idB) expect(intersects(a.box, b.box, 2), `${idA} con ${idB}`).toBe(false);
+        }
+      }
+    }
   });
 });
