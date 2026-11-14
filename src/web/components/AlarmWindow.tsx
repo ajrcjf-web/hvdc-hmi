@@ -6,6 +6,7 @@
 import { useState, type Dispatch } from "react";
 import type { AlarmState } from "../../alarms.ts";
 import { toAlarmRows, type AlarmRow } from "../alarmView.ts";
+import { guardedProps } from "../guardedButton.ts";
 import type { HmiAction } from "../hmiState.ts";
 import { filterRows } from "../listFilter.ts";
 
@@ -46,10 +47,9 @@ export function AlarmWindow({ alarms, startMs, dispatch }: Props) {
       <div className="buttons">
         <button
           type="button"
-          disabled={toAcknowledge === 0}
-          onClick={() =>
-            dispatch({ type: "acknowledge-alarms", codes: visible.map((row) => row.code) })
-          }
+          {...guardedProps(toAcknowledge === 0, () =>
+            dispatch({ type: "acknowledge-alarms", codes: visible.map((row) => row.code) }),
+          )}
         >
           Reconocer todas las visibles ({toAcknowledge})
         </button>
@@ -93,8 +93,9 @@ export function AlarmWindow({ alarms, startMs, dispatch }: Props) {
                 <td>
                   <button
                     type="button"
-                    disabled={!row.unacknowledged}
-                    onClick={() => dispatch({ type: "acknowledge-alarm", code: row.code })}
+                    {...guardedProps(!row.unacknowledged, () =>
+                      dispatch({ type: "acknowledge-alarm", code: row.code }),
+                    )}
                   >
                     Reconocer
                   </button>

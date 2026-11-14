@@ -131,6 +131,14 @@ El contenido usa todo el ancho que deja el panel de eventos, con un tope de 2400
 - **Pantallas angostas:** sin scroll horizontal; el panel de eventos arranca plegado hasta 900 px.
 - Es un primer paso que no condiciona la tarea de ISA-101 de la Fase 6 (jerarquía de pantallas y navegación): solo usa el ancho disponible.
 
+## 10. Indicador de foco (issue #62)
+
+Todo elemento interactivo muestra el foco con el teclado.
+
+- **Anillo:** 3 px sólido, blanco (el texto de máximo brillo), separado 3 px del elemento; sin color (ISA-101) y con más de 7:1 de contraste contra los fondos. Hacia afuera, porque los botones y las cajas de texto tienen fondo claro por defecto; hacia adentro solo donde uno hacia afuera se cortaría (pestaña plegada, listas con scroll), siempre en elementos con fondo oscuro propio.
+- **Ventana de confirmación:** el foco inicial está en Cancelar; una línea dice "Con Enter: Cancelar" o "Con Enter: Ejecutar" según el botón enfocado; al cerrarse (ejecutar, cancelar, Escape o expiración) el foco vuelve al botón que la abrió.
+- **El foco no se pierde:** al plegar o desplegar el panel de eventos, y en los botones que se apagan al usarlos, que usan `aria-disabled` (siguen enfocables) y ignoran el clic, Enter y la barra espaciadora.
+
 ## Subfases
 
 Se implementan en este orden, cada una con su rama(s), PR(s) y milestone:

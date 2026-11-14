@@ -7,6 +7,7 @@
 // importante y no se corta. Línea 2: la descripción, que si no cabe se corta con puntos
 // suspensivos (el texto completo queda como tooltip). El panel tiene tamaño fijo: la
 // llegada de un evento no mueve el contenido.
+import { useEffect, useRef } from "react";
 import {
   describeNewEventsSummary,
   formatNewEventsCount,
@@ -32,12 +33,24 @@ function itemClass(row: EventRow): string {
 }
 
 export function EventsPanel({ open, rows, summary, onToggle, onOpenSer }: Props) {
+  // Plegado y desplegado se dibujan con botones distintos: el que se acaba de usar desaparece.
+  // Para que el foco no se pierda, después de cambiar pasa al botón que quedó.
+  const tabRef = useRef<HTMLButtonElement>(null);
+  const foldRef = useRef<HTMLButtonElement>(null);
+  const previousOpen = useRef(open);
+  useEffect(() => {
+    if (previousOpen.current === open) return; // la primera vez no se mueve el foco
+    previousOpen.current = open;
+    (open ? foldRef : tabRef).current?.focus();
+  }, [open]);
+
   if (!open) {
     const count = formatNewEventsCount(summary.count);
     const description = describeNewEventsSummary(summary);
     return (
       <aside id="events-panel" className="events-panel folded" aria-label="Eventos recientes">
         <button
+          ref={tabRef}
           type="button"
           className="events-tab"
           aria-expanded={false}
@@ -76,6 +89,7 @@ export function EventsPanel({ open, rows, summary, onToggle, onOpenSer }: Props)
       <header className="events-header">
         <h2>Eventos</h2>
         <button
+          ref={foldRef}
           type="button"
           aria-expanded={true}
           aria-controls="events-panel"

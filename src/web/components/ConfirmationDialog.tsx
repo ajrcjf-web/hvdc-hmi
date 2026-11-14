@@ -2,11 +2,33 @@
 // Se verifica la orden en vivo en cada redibujo: si la estación cambió y la orden
 // ya no vale, se muestra el motivo. El botón Ejecutar sigue activo: la lógica de
 // control decide al ejecutar.
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { converterLabels, formatValue, modeLabels } from "../../labels.ts";
 import type { Station, StationConfig } from "../../station.ts";
-import { describeCommand, formatPowerOrder, remainingSeconds } from "../commandView.ts";
+import {
+  describeCommand,
+  enterHint,
+  formatPowerOrder,
+  remainingSeconds,
+  type ConfirmationButton,
+} from "../commandView.ts";
+import { focusTarget } from "../focus.ts";
 import type { Selection } from "../hmiState.ts";
+
+// Al cerrarse la ventana, el foco vuelve al botón que la abrió. Si ese botón ya no está (por
+// ejemplo, la orden cambió el modo y el botón fue reemplazado) o no puede recibir el foco, va
+// al título de la ventana activa: nunca queda en el vacío.
+function restoreFocus(opener: HTMLElement | null): void {
+  const heading = document.querySelector<HTMLElement>("main h1");
+  const target = focusTarget(opener, heading);
+  if (target === null) return;
+  if (target === heading) target.setAttribute("tabindex", "-1"); // enfocable solo por programa
+  target.focus();
+  if (document.activeElement !== target && heading !== null) {
+    heading.setAttribute("tabindex", "-1");
+    heading.focus();
+  }
+}
 
 type Props = {
   selection: Selection;
@@ -28,16 +50,26 @@ export function ConfirmationDialog({
   // useRef guarda una referencia al elemento <dialog> real del navegador.
   const dialogRef = useRef<HTMLDialogElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  // Qué botón tiene el foco: Enter activa ese. Empieza en Cancelar.
+  const [focused, setFocused] = useState<ConfirmationButton | null>("cancel");
 
-  // Al aparecer, se abre como ventana modal: bloquea el resto de la página y
-  // el navegador se encarga del foco. La limpieza la cierra al desaparecer.
+  // Al aparecer, se abre como ventana modal: bloquea el resto de la página. La limpieza la
+  // cierra al desaparecer (se ejecute, se cancele, Escape o expire) y devuelve el foco al
+  // botón que la abrió.
   useEffect(() => {
     const dialog = dialogRef.current;
     if (dialog === null) return;
+    // El elemento enfocado antes de abrir es el botón que abrió la ventana (en algunos
+    // navegadores un clic no enfoca el botón: entonces es el body, y no cuenta).
+    const active = document.activeElement;
+    const opener = active instanceof HTMLElement && active !== document.body ? active : null;
     if (!dialog.open) dialog.showModal();
     // Cancelar tiene el foco inicial: un Enter sin querer no ejecuta la orden.
     cancelRef.current?.focus();
-    return () => dialog.close();
+    return () => {
+      dialog.close();
+      restoreFocus(opener);
+    };
   }, []);
 
   const view = describeCommand(selection.command, station, config);
@@ -106,11 +138,14 @@ export function ConfirmationDialog({
       )}
 
       <div className="buttons">
-        <button onClick={onExecute}>Ejecutar</button>
-        <button ref={cancelRef} onClick={onCancel}>
+        <button onClick={onExecute} onFocus={() => setFocused("execute")}>
+          Ejecutar
+        </button>
+        <button ref={cancelRef} onClick={onCancel} onFocus={() => setFocused("cancel")}>
           Cancelar
         </button>
       </div>
+      <p className="enter-hint">{enterHint(focused)}</p>
     </dialog>
   );
 }

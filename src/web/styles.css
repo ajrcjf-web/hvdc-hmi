@@ -293,6 +293,7 @@ input {
 /* Ventana SER: una tabla en grises. El rechazo se distingue como en el registro
    (negrita, fondo más claro, barra a la izquierda y el símbolo ✗ de su texto). */
 .ser-scroll {
+  background: var(--surface);
   /* Usa casi todo el alto de la ventana (menos la barra, el título y los botones), con un
      mínimo para ventanas bajas. */
   max-height: max(20rem, calc(100vh - 15rem));
@@ -583,6 +584,7 @@ input {
 }
 
 .events-list {
+  background: var(--surface);
   flex: 1;
   min-height: 0;
   margin: 0;
@@ -663,6 +665,7 @@ input {
 }
 
 .events-tab {
+  background: var(--surface);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -672,7 +675,6 @@ input {
   padding: 0.75rem 0;
   border: 0;
   border-radius: 0;
-  background: none;
   color: var(--text);
   cursor: pointer;
 }
@@ -704,4 +706,42 @@ input {
   font-size: 0.8rem;
   font-weight: bold;
   text-align: center;
+}
+
+/* Indicador de foco (#62). Un anillo de 3 px, blanco (el texto de máximo brillo), separado
+   3 px del elemento: se ve con el teclado y se distingue por forma, sin color (ISA-101). Va
+   hacia afuera, sobre el fondo oscuro de la página: así se ve también en los botones y cajas
+   de texto, que tienen el fondo claro por defecto del navegador. Tiene un contraste de más
+   de 7:1 contra los tres fondos (lo comprueba focusStyle.test.ts). Nunca se quita el
+   contorno de foco (outline: none) sin poner otro. */
+:focus-visible {
+  outline: 3px solid var(--text-strong);
+  outline-offset: 3px;
+}
+
+/* Hacia adentro, donde un anillo hacia afuera se cortaría (la pestaña toca el borde de la
+   ventana; las listas con scroll recortan lo que sale). Solo en elementos con fondo oscuro
+   propio (se declara arriba): un anillo blanco dentro de un fondo claro no se vería. */
+.events-tab:focus-visible,
+.events-list:focus-visible,
+.ser-scroll:focus-visible {
+  outline-offset: -5px;
+}
+
+/* Las cajas de filtro de las planillas están pegadas a sus celdas: el anillo, más cerca. */
+.ser-filters input:focus-visible {
+  outline-offset: 1px;
+}
+
+/* Un botón apagado con aria-disabled sigue pudiendo recibir el foco (ver guardedButton.ts). */
+button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Ventana de confirmación: qué hace Enter, dicho con texto (además del anillo de foco). */
+.enter-hint {
+  margin: 0.75rem 0 0;
+  color: var(--text-strong);
+  font-weight: bold;
 }
