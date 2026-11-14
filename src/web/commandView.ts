@@ -85,6 +85,22 @@ export function remainingSeconds(expiresAtSeconds: number, timeSeconds: number):
   return wholeSecondsLeft(expiresAtSeconds - timeSeconds);
 }
 
+// Los dos botones de la ventana de confirmación.
+export type ConfirmationButton = "execute" | "cancel";
+
+// Qué hace Enter, dicho con texto (además del anillo de foco): activa el botón que tiene el
+// foco. Así se distingue si Enter va a ejecutar o a cancelar sin depender solo del anillo.
+export function enterHint(focused: ConfirmationButton | null): string {
+  switch (focused) {
+    case "execute":
+      return "Con Enter: Ejecutar";
+    case "cancel":
+      return "Con Enter: Cancelar";
+    case null:
+      return "";
+  }
+}
+
 export function formatPowerOrder(valueMW: number): string {
   return Number.isFinite(valueMW) ? `${formatValue(valueMW, 0)} MW` : "no válido";
 }

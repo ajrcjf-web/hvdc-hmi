@@ -8,7 +8,7 @@ import {
   switchCommand,
   transitionCommand,
 } from "./commands.ts";
-import { describeCommand, formatPowerOrder, remainingSeconds } from "./commandView.ts";
+import { describeCommand, enterHint, formatPowerOrder, remainingSeconds } from "./commandView.ts";
 
 describe("describeCommand", () => {
   test("transición: título, estado actual y resultado esperado", () => {
@@ -120,5 +120,16 @@ describe("formatPowerOrder", () => {
   test("formatea la consigna", () => {
     expect(formatPowerOrder(300)).toBe("300 MW");
     expect(formatPowerOrder(Number.NaN)).toBe("no válido");
+  });
+});
+
+describe("enterHint", () => {
+  test("dice qué hace Enter según el botón con el foco", () => {
+    expect(enterHint("cancel")).toBe("Con Enter: Cancelar");
+    expect(enterHint("execute")).toBe("Con Enter: Ejecutar");
+  });
+
+  test("sin botón enfocado no dice nada", () => {
+    expect(enterHint(null)).toBe("");
   });
 });
