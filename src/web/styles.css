@@ -282,7 +282,9 @@ input {
 /* Ventana SER: una tabla en grises. El rechazo se distingue como en el registro
    (negrita, fondo más claro, barra a la izquierda y el símbolo ✗ de su texto). */
 .ser-scroll {
-  max-height: 60vh;
+  /* Usa casi todo el alto de la ventana (menos la barra, el título y los botones), con un
+     mínimo para ventanas bajas. */
+  max-height: max(20rem, calc(100vh - 15rem));
   overflow: auto;
 }
 
@@ -324,6 +326,17 @@ input {
 
 .ser .ser-time {
   font-family: ui-monospace, monospace;
+  white-space: nowrap;
+}
+
+/* La descripción es la columna que más texto lleva: recibe todo el ancho que sobra. La hora
+   y el estado van en una sola línea y no se cortan. */
+.ser .ser-description {
+  width: 100%;
+}
+
+.ser .ser-state,
+.ser .alarm-state {
   white-space: nowrap;
 }
 
