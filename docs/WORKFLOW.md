@@ -134,3 +134,22 @@ Si Windows no deja borrar la carpeta ("Permission denied" o "von einem anderen P
 3. Verificar qué es con `Get-Process -Id <id>` y detenerlo con `Stop-Process -Id <id>`.
 
 Las sesiones del agente pueden dejar procesos huérfanos que mantienen la carpeta abierta.
+
+## Problemas conocidos del entorno (Windows)
+
+### Todos los tests fallan con `Cannot read properties of undefined (reading 'config')`
+
+**Síntoma:** `npm test` falla en todos los archivos con ese error, incluso en
+`main` sin cambios.
+
+**Causa:** la terminal o la sesión está en `c:\dev\hvdc-hmi` (con la letra de
+unidad en minúscula). Windows no distingue mayúsculas en las rutas, pero Node
+compara los textos tal cual: algunos módulos se cargan como `c:\...` y otros
+como `C:\...`, y Vitest termina cargado dos veces.
+
+**Solución:** trabajar desde `C:\dev\hvdc-hmi`, con la `C` en mayúscula:
+
+    cd C:\dev\hvdc-hmi
+    npm test
+
+No es un problema del proyecto: no hay que cambiar código ni configuración.
