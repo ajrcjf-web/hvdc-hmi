@@ -160,13 +160,12 @@ input {
 }
 
 /* Unifilar: sobrio. Sin color para lo normal; el rojo solo para "inconsistent". */
-/* El unifilar es un SVG de proporción fija: ocupa todo el ancho, pero su altura no pasa del
-   45 % del alto de la ventana (si no, en una ventana ancha empujaría el estado y las órdenes
-   fuera de la pantalla). Al limitarse la altura, el dibujo queda centrado y sin deformarse. */
-.diagram {
-  width: 100%;
-  height: auto;
-  max-height: 45vh;
+/* El unifilar se dibuja en píxeles reales (1 unidad del dibujo = 1 píxel): al ensanchar la
+   ventana solo crecen las distancias entre los equipos y el largo de las líneas; las letras
+   (1rem, como los textos del panel de estado), el grosor de las líneas y los símbolos no
+   cambian. La altura es fija, así que no hace falta limitarla. El marco lleva el borde (rojo
+   en inconsistent) y es lo que se mide para saber cuánto ancho hay. */
+.diagram-frame {
   background: var(--bg);
   border: 2px solid transparent;
   border-radius: 4px;
@@ -176,10 +175,16 @@ input {
   border-color: var(--alarm-urgent);
 }
 
+.diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .abnormal-text {
   fill: var(--alarm-urgent);
   font-weight: bold;
-  font-size: 18px;
+  font-size: 1rem;
 }
 
 .diagram .wire {
@@ -249,18 +254,18 @@ input {
 
 .diagram .label-name {
   fill: var(--text);
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: bold;
 }
 
 .diagram .label-detail {
   fill: var(--text-muted);
-  font-size: 13px;
+  font-size: 1rem;
 }
 
 .diagram .readings text {
   fill: var(--text);
-  font-size: 15px;
+  font-size: 1rem;
   font-variant-numeric: tabular-nums;
 }
 
