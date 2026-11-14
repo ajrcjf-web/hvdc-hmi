@@ -3,15 +3,19 @@
 //   cerrado    → cuchilla recta, de terminal a terminal
 //   abierto    → cuchilla levantada, en ángulo
 //   en maniobra → cuchilla discontinua, a medio camino
-// Además lleva siempre un texto con la posición.
+// Además lleva siempre un texto con la posición. Dónde va cada texto lo decide
+// layoutDiagram (así ninguna etiqueta toca el dibujo): aquí solo se pone en el papel.
 import { positionLabels } from "../../labels.ts";
 import type { SwitchView } from "../diagram.ts";
+import type { Label } from "../diagramLayout.ts";
 
 type Props = {
   name: string; // "Q1", "Q2", "QE"
   view: SwitchView;
   cx: number;
   cy: number;
+  nameLabel: Label; // dónde va el nombre
+  positionLabel: Label; // dónde va la posición escrita
   vertical?: boolean; // el equipo está en una derivación vertical
   breaker?: boolean; // interruptor (con cuadro) en vez de seccionador
 };
@@ -29,14 +33,18 @@ function bladeEnd(position: SwitchView["position"]): { x: number; y: number } {
   }
 }
 
-export function SwitchSymbol({ name, view, cx, cy, vertical = false, breaker = false }: Props) {
+export function SwitchSymbol({
+  name,
+  view,
+  cx,
+  cy,
+  nameLabel,
+  positionLabel,
+  vertical = false,
+  breaker = false,
+}: Props) {
   const end = bladeEnd(view.position);
   const rotation = vertical ? 90 : 0;
-  // Texto junto al equipo: encima si es horizontal, a la derecha si es vertical.
-  const textX = vertical ? cx + 34 : cx;
-  const nameY = vertical ? cy - 2 : cy - 40;
-  const positionY = vertical ? cy + 14 : cy + 40;
-  const anchor = vertical ? "start" : "middle";
 
   return (
     <g className={`switch switch-${view.position}`}>
@@ -52,10 +60,15 @@ export function SwitchSymbol({ name, view, cx, cy, vertical = false, breaker = f
           y2={end.y}
         />
       </g>
-      <text className="label-name" x={textX} y={nameY} textAnchor={anchor}>
+      <text className="label-name" x={nameLabel.x} y={nameLabel.y} textAnchor={nameLabel.anchor}>
         {name}
       </text>
-      <text className="label-detail" x={textX} y={positionY} textAnchor={anchor}>
+      <text
+        className="label-detail"
+        x={positionLabel.x}
+        y={positionLabel.y}
+        textAnchor={positionLabel.anchor}
+      >
         {positionLabels[view.position]}
       </text>
     </g>

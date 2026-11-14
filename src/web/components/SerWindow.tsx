@@ -117,8 +117,8 @@ export function SerWindow({ events, discarded, nowMs }: Props) {
             {visible.map((row) => (
               <tr key={row.id} className={row.state.startsWith("✗") ? "rejected" : undefined}>
                 <td className="ser-time">{row.timestamp}</td>
-                <td>{row.description}</td>
-                <td>{row.state}</td>
+                <td className="ser-description">{row.description}</td>
+                <td className="ser-state">{row.state}</td>
               </tr>
             ))}
           </tbody>

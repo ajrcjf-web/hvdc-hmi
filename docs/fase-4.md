@@ -121,6 +121,16 @@ Panel a la derecha, en vertical, con los **últimos eventos del SER** (del más 
 - "Ver SER completo" abre la ventana del SER.
 - La llegada de un evento no mueve nada del contenido; abrir o cerrar el panel sí lo reacomoda (es una acción del operador). Para que tampoco lo mueva la barra de desplazamiento del navegador al aparecer, la página reserva siempre su lugar (`scrollbar-gutter: stable`). El panel no se imprime.
 
+## 9. Ancho de la pantalla (issue #66)
+
+El contenido usa todo el ancho que deja el panel de eventos, con un tope de 2400 px solo para pantallas ultraanchas.
+
+- **Overview:** el unifilar a todo el ancho de la columna y, debajo, estado y órdenes en dos columnas que se apilan solas cuando no caben (mínimo 22rem cada una). El registro de órdenes ya no existe (#68), por eso son dos columnas y no tres.
+- **El unifilar crece en distancias, no en letras:** se dibuja en píxeles reales; al ensanchar la ventana se separan los equipos y se alargan las líneas, pero las letras (1rem, como el panel de estado), el grosor de las líneas y los símbolos no cambian. Ninguna etiqueta se solapa a ningún ancho: `layoutDiagram` (función pura con tests) reserva el lugar de cada etiqueta con su texto más ancho. Por debajo del ancho mínimo, el dibujo completo se achica de forma pareja.
+- **Planillas (SER y alarmas):** la descripción usa el ancho que sobra; la hora y el estado no se cortan.
+- **Pantallas angostas:** sin scroll horizontal; el panel de eventos arranca plegado hasta 900 px.
+- Es un primer paso que no condiciona la tarea de ISA-101 de la Fase 6 (jerarquía de pantallas y navegación): solo usa el ancho disponible.
+
 ## Subfases
 
 Se implementan en este orden, cada una con su rama(s), PR(s) y milestone:

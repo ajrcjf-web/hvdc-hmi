@@ -14,7 +14,7 @@
   --alarm-urgent: #e5484d; /* prioridad urgente (rojo); también el estado inconsistent, que genera una alarma urgente */
   --alarm-high: #f5a524; /* prioridad alta (ámbar) */
   --alarm-low: #f2e24b; /* prioridad baja (amarillo) */
-  --content-max-width: 1100px; /* ancho de la columna del contenido (el #66 lo puede cambiar) */
+  --content-max-width: 2400px; /* tope del contenido, solo para pantallas ultraanchas (centrado más allá); incluye los márgenes */
   --content-padding: 1rem; /* margen lateral de la columna del contenido */
   --events-panel-width: 26rem; /* ancho del panel lateral de eventos desplegado: entran la hora y el estado más largo en una línea */
   --events-tab-width: 2.75rem; /* ancho de la pestaña del panel plegado */
@@ -36,8 +36,9 @@ body {
   color: var(--text);
 }
 
-/* La página: el contenido y, a la derecha, el panel lateral de eventos. El contenido va
-   centrado en su columna, con el ancho máximo de siempre; el panel solo resta su ancho. */
+/* La página: el contenido y, a la derecha, el panel lateral de eventos. El contenido usa todo
+   el ancho de su columna (la que deja el panel) hasta un tope para pantallas ultraanchas,
+   donde queda centrado; el panel solo resta su ancho. */
 .app-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -47,7 +48,7 @@ body {
 .app-shell > main {
   box-sizing: border-box;
   width: 100%;
-  max-width: calc(var(--content-max-width) + 2 * var(--content-padding));
+  max-width: var(--content-max-width);
   justify-self: center;
   padding: var(--content-padding);
 }
@@ -92,9 +93,11 @@ h3 {
   border-bottom-color: var(--line);
 }
 
+/* Estado y órdenes, uno al lado del otro. Cada panel mide al menos 22rem: si no caben dos,
+   se apilan solos (sin saltos de media query y sin scroll horizontal). */
 .layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
   gap: 1rem;
 }
 
@@ -102,6 +105,12 @@ h3 {
   background: var(--surface);
   border-radius: 6px;
   padding: 1rem;
+}
+
+/* Los textos corridos (avisos, ventanas pendientes) no pasan de unos 70 caracteres por
+   línea, por legibilidad, aunque la ventana sea ancha. */
+.panel > p {
+  max-width: 70ch;
 }
 
 .values {
@@ -151,9 +160,12 @@ input {
 }
 
 /* Unifilar: sobrio. Sin color para lo normal; el rojo solo para "inconsistent". */
-.diagram {
-  width: 100%;
-  height: auto;
+/* El unifilar se dibuja en píxeles reales (1 unidad del dibujo = 1 píxel): al ensanchar la
+   ventana solo crecen las distancias entre los equipos y el largo de las líneas; las letras
+   (1rem, como los textos del panel de estado), el grosor de las líneas y los símbolos no
+   cambian. La altura es fija, así que no hace falta limitarla. El marco lleva el borde (rojo
+   en inconsistent) y es lo que se mide para saber cuánto ancho hay. */
+.diagram-frame {
   background: var(--bg);
   border: 2px solid transparent;
   border-radius: 4px;
@@ -163,10 +175,16 @@ input {
   border-color: var(--alarm-urgent);
 }
 
+.diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .abnormal-text {
   fill: var(--alarm-urgent);
   font-weight: bold;
-  font-size: 18px;
+  font-size: 1rem;
 }
 
 .diagram .wire {
@@ -236,18 +254,18 @@ input {
 
 .diagram .label-name {
   fill: var(--text);
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: bold;
 }
 
 .diagram .label-detail {
   fill: var(--text-muted);
-  font-size: 13px;
+  font-size: 1rem;
 }
 
 .diagram .readings text {
   fill: var(--text);
-  font-size: 15px;
+  font-size: 1rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -275,7 +293,9 @@ input {
 /* Ventana SER: una tabla en grises. El rechazo se distingue como en el registro
    (negrita, fondo más claro, barra a la izquierda y el símbolo ✗ de su texto). */
 .ser-scroll {
-  max-height: 60vh;
+  /* Usa casi todo el alto de la ventana (menos la barra, el título y los botones), con un
+     mínimo para ventanas bajas. */
+  max-height: max(20rem, calc(100vh - 15rem));
   overflow: auto;
 }
 
@@ -317,6 +337,17 @@ input {
 
 .ser .ser-time {
   font-family: ui-monospace, monospace;
+  white-space: nowrap;
+}
+
+/* La descripción es la columna que más texto lleva: recibe todo el ancho que sobra. La hora
+   y el estado van en una sola línea y no se cortan. */
+.ser .ser-description {
+  width: 100%;
+}
+
+.ser .ser-state,
+.ser .alarm-state {
   white-space: nowrap;
 }
 
@@ -398,9 +429,11 @@ input {
   border-bottom-color: var(--alarm-color);
 }
 
-/* Alarmas de prueba del instructor. */
+/* Alarmas de prueba del instructor. Con el ancho nuevo, la lista no se estira más de lo que
+   se lee bien. */
 .test-alarms {
   list-style: none;
+  max-width: 60rem;
   margin: 0;
   padding: 0;
 }

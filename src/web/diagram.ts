@@ -4,6 +4,7 @@
 import type { ConverterState, Station } from "../station.ts";
 import { deriveState, type DerivedState } from "../stationState.ts";
 import type { SwitchId, SwitchStatus, SwitchTarget } from "../switchgear.ts";
+import { formatValue } from "../labels.ts";
 import { measure } from "../measurements.ts";
 
 export type SwitchPosition = SwitchStatus["kind"]; // "open" | "closed" | "moving"
@@ -64,5 +65,19 @@ export function describeDiagram(station: Station): DiagramModel {
     },
     abnormal: state === "inconsistent",
     readings: { powerMW: station.powerMW, udcKV, idcKA },
+  };
+}
+
+// Los textos de las lecturas junto al convertidor. Una sola función los formatea: la usa el
+// dibujo con los valores reales y el layout con el peor caso para reservar el lugar.
+export function formatReadings(readings: { powerMW: number; udcKV: number; idcKA: number }): {
+  power: string;
+  udc: string;
+  idc: string;
+} {
+  return {
+    power: `P = ${formatValue(readings.powerMW, 0)} MW`,
+    udc: `Udc = ${formatValue(readings.udcKV, 0)} kV`,
+    idc: `Idc = ${formatValue(readings.idcKA, 2)} kA`,
   };
 }

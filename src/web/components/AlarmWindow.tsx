@@ -88,7 +88,7 @@ export function AlarmWindow({ alarms, startMs, dispatch }: Props) {
               >
                 <td className="ser-time">{row.timestamp}</td>
                 <td className="alarm-priority">{row.priority}</td>
-                <td>{row.description}</td>
+                <td className="ser-description">{row.description}</td>
                 <td className="alarm-state">{row.state}</td>
                 <td>
                   <button
