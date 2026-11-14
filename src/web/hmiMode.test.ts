@@ -30,7 +30,9 @@ const operate = (state: HmiState, command: OperatorCommand) =>
 // El SER guarda el evento más reciente primero; aquí se leen en orden cronológico.
 const eventsOf = (state: HmiState, code: string) =>
   [...state.simulation.events].reverse().filter((event) => event.code === code).map((event) => event.state);
-const kinds = (state: HmiState) => state.ui.log.map((entry) => entry.kind);
+// El motivo (detail) del evento más reciente de una señal.
+const detailOf = (state: HmiState, code: string) =>
+  state.simulation.events.find((event) => event.code === code)?.detail;
 
 describe("reducer: cambio de modo", () => {
   test("seleccionar abre la selección y no cambia el modo", () => {
@@ -40,11 +42,9 @@ describe("reducer: cambio de modo", () => {
     expect(eventsOf(state, "CMD.MODE_MANUAL")).toEqual(["selected"]);
   });
 
-  test("ejecutar cambia el modo en el siguiente latido y queda en el registro y el SER", () => {
+  test("ejecutar cambia el modo en el siguiente latido y queda en el SER", () => {
     const state = operate(withStation(stationAt("stopped")), modeCommand("manual"));
     expect(state.simulation.station.mode).toBe("manual");
-    expect(kinds(state)).toEqual(["done", "execute-ordered", "selected"]);
-    expect(state.ui.log[2]).toMatchObject({ label: "Pasar a manual" });
     expect(eventsOf(state, "CMD.MODE_MANUAL")).toEqual(["selected", "executed"]);
     expect(eventsOf(state, "STATION.MODE")).toEqual(["manual"]);
   });
@@ -52,7 +52,7 @@ describe("reducer: cambio de modo", () => {
   test("cancelar deja el modo como estaba", () => {
     const state = run(withStation(stationAt("stopped")), select(modeCommand("manual")), cancel, tick);
     expect(state.simulation.station.mode).toBe("automatic");
-    expect(kinds(state)).toContain("cancelled");
+    expect(eventsOf(state, "CMD.MODE_MANUAL")).toEqual(["selected", "cancelled"]);
     expect(eventsOf(state, "STATION.MODE")).toEqual([]);
   });
 
@@ -60,14 +60,14 @@ describe("reducer: cambio de modo", () => {
     const state = ticks(run(withStation(stationAt("stopped")), select(modeCommand("manual"))), 160);
     expect(state.ui.selection).toBeNull();
     expect(state.simulation.station.mode).toBe("automatic");
-    expect(kinds(state)).toContain("expired");
+    expect(eventsOf(state, "CMD.MODE_MANUAL")).toEqual(["selected", "expired"]);
   });
 
   test("pedir el modo en que ya está se rechaza al seleccionar, con motivo", () => {
     const state = run(withStation(stationAt("stopped")), select(modeCommand("automatic")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.log[0]?.reason).toContain("ya está en modo automático");
-    expect(kinds(state)).toEqual(["selection-rejected"]);
+    expect(detailOf(state, "CMD.MODE_AUTOMATIC")).toContain("ya está en modo automático");
+    expect(eventsOf(state, "CMD.MODE_AUTOMATIC")).toEqual(["rejected"]);
   });
 });
 
@@ -75,14 +75,14 @@ describe("reducer: rechazos por modo (la lógica decide, no la interfaz)", () =>
   test("una orden de estado en manual se rechaza al seleccionar", () => {
     const state = run(withStation(manual(stationAt("stopped"))), select(transitionCommand("decoupled")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.log[0]?.reason).toContain("solo se aceptan en modo automático");
+    expect(detailOf(state, "CMD.TO_DECOUPLED")).toContain("solo se aceptan en modo automático");
     expect(eventsOf(state, "CMD.TO_DECOUPLED")).toEqual(["rejected"]);
   });
 
   test("una orden por equipo en automático se rechaza al seleccionar", () => {
     const state = run(withStation(stationAt("stopped")), select(switchCommand("Q1", "closed")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.log[0]?.reason).toContain("solo se aceptan en modo manual");
+    expect(detailOf(state, "CMD.Q1_CLOSE")).toContain("solo se aceptan en modo manual");
     expect(eventsOf(state, "CMD.Q1_CLOSE")).toEqual(["rejected"]);
   });
 
@@ -92,8 +92,7 @@ describe("reducer: rechazos por modo (la lógica decide, no la interfaz)", () =>
     state = { ...state, simulation: { ...state.simulation, station: manual(state.simulation.station) } };
     state = run(state, execute, tick);
     expect(deriveState(state.simulation.station.switchgear)).toBe("stopped");
-    expect(kinds(state)[0]).toBe("failed");
-    expect(state.ui.log[0]?.reason).toContain("modo automático");
+    expect(detailOf(state, "CMD.TO_DECOUPLED")).toContain("modo automático");
     expect(eventsOf(state, "CMD.TO_DECOUPLED")).toEqual(["selected", "rejected"]);
   });
 });
@@ -114,8 +113,8 @@ describe("reducer: mando por equipo", () => {
     // Q2 no cierra con Q1 abierto.
     const state = run(withStation(manual(stationAt("stopped"))), select(switchCommand("Q2", "closed")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.log[0]?.reason).toContain("Q1 sin cerrar");
-    expect(kinds(state)).toEqual(["selection-rejected"]);
+    expect(detailOf(state, "CMD.Q2_CLOSE")).toContain("Q1 sin cerrar");
+    expect(eventsOf(state, "CMD.Q2_CLOSE")).toEqual(["rejected"]);
   });
 });
 
@@ -130,7 +129,7 @@ describe("reducer: escenario de inconsistent", () => {
     // Volver a automático se rechaza al seleccionar.
     state = run(state, select(modeCommand("automatic")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.log[0]?.reason).toContain("inconsistentes");
+    expect(detailOf(state, "CMD.MODE_AUTOMATIC")).toContain("inconsistentes");
 
     // Se normaliza abriendo Q2, y entonces sí se vuelve a automático.
     state = ticks(operate(state, switchCommand("Q2", "open")), 50); // Q2 tarda 4 s

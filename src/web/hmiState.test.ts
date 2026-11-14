@@ -16,7 +16,6 @@ import {
   DEFAULT_SELECTION_TIMEOUT_SECONDS,
   DT_SECONDS,
   hmiReducer,
-  MAX_LOG_ENTRIES,
   type HmiAction,
   type HmiState,
 } from "./hmiState.ts";
@@ -42,7 +41,15 @@ const withStation = (station: Station): HmiState => {
   return { ...state, simulation: { ...state.simulation, station } };
 };
 
-const kinds = (state: HmiState) => state.ui.log.map((entry) => entry.kind);
+// Los estados de una señal de orden, en orden cronológico (el SER guarda el más reciente primero).
+const cmdStates = (state: HmiState, code: string) =>
+  [...state.simulation.events]
+    .reverse()
+    .filter((event) => event.code === code)
+    .map((event) => event.state);
+// El motivo (detail) del rechazo más reciente de una señal.
+const rejectionOf = (state: HmiState, code: string) =>
+  state.simulation.events.find((event) => event.code === code && event.state === "rejected")?.detail;
 
 describe("hmiReducer: reloj", () => {
   test("un latido avanza el tiempo dt", () => {
@@ -62,9 +69,7 @@ describe("hmiReducer: seleccionar", () => {
       selectedAtSeconds: 0,
       expiresAtSeconds: DEFAULT_SELECTION_TIMEOUT_SECONDS,
     });
-    expect(state.ui.log).toEqual([
-      { id: 0, timeSeconds: 0, kind: "selected", label: "Ir a decoupled", reason: null },
-    ]);
+    expect(cmdStates(state, "CMD.TO_DECOUPLED")).toEqual(["selected"]);
   });
 
   test("seleccionar no cambia la estación ni deja órdenes pendientes", () => {
@@ -78,20 +83,22 @@ describe("hmiReducer: seleccionar", () => {
   test("una orden que sería rechazada no abre la selección y explica por qué", () => {
     const state = run(initial(), select(transitionCommand("coupled")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.log[0]).toMatchObject({ kind: "selection-rejected", label: "Ir a coupled" });
-    expect(state.ui.log[0]?.reason).toContain("Transición no permitida");
+    expect(cmdStates(state, "CMD.TO_COUPLED")).toEqual(["rejected"]);
+    expect(rejectionOf(state, "CMD.TO_COUPLED")).toContain("Transición no permitida");
   });
 
   test("la verificación usa los enclavamientos de la estación (consigna sin convertidor)", () => {
     const state = run(initial(), select(powerOrderCommand(300)));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.log[0]?.reason).toContain("coupled");
+    expect(rejectionOf(state, "CMD.POWER_ORDER")).toContain("coupled");
   });
 
   test("una consigna que no es un número no se puede seleccionar", () => {
     const state = run(withStation(deblockedAt()), select(powerOrderCommand(Number.NaN)));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.log[0]?.label).toBe("Consigna (valor no válido)");
+    expect(cmdStates(state, "CMD.POWER_ORDER")).toEqual(["rejected"]);
+    // Un valor que no es número no se guarda como dato del evento.
+    expect(state.simulation.events[0]?.valueMW).toBeUndefined();
   });
 
   test("una consigna válida se puede seleccionar", () => {
@@ -106,8 +113,9 @@ describe("hmiReducer: seleccionar", () => {
       select(transitionCommand("earthed")),
     );
     expect(state.ui.selection?.command).toEqual({ kind: "transition", to: "decoupled" });
-    expect(kinds(state)).toEqual(["selection-rejected", "selected"]);
-    expect(state.ui.log[0]?.reason).toContain("selección activa");
+    expect(cmdStates(state, "CMD.TO_DECOUPLED")).toEqual(["selected"]);
+    expect(cmdStates(state, "CMD.TO_EARTHED")).toEqual(["rejected"]);
+    expect(rejectionOf(state, "CMD.TO_EARTHED")).toContain("selección activa");
   });
 
   test("la respuesta más reciente reemplaza a la anterior: tras un rechazo, una selección válida", () => {
@@ -116,7 +124,11 @@ describe("hmiReducer: seleccionar", () => {
       select(transitionCommand("coupled")),
       select(transitionCommand("decoupled")),
     );
-    expect(state.ui.log.map((entry) => entry.kind).slice(0, 2)).toEqual(["selected", "selection-rejected"]);
+    // El SER guarda el más reciente primero.
+    expect(state.simulation.events.map((event) => event.state).slice(0, 2)).toEqual([
+      "selected",
+      "rejected",
+    ]);
   });
 });
 
@@ -126,8 +138,8 @@ describe("hmiReducer: seleccionar durante una maniobra", () => {
     const moving = run(initial(), select(transitionCommand("decoupled")), execute, tick);
     const state = run(moving, select(transitionCommand("stopped")));
     expect(state.ui.selection).toBeNull();
-    expect(state.ui.log[0]).toMatchObject({ kind: "selection-rejected" });
-    expect(state.ui.log[0]?.reason).toContain("Q1 en maniobra (cierre)");
+    expect(cmdStates(state, "CMD.TO_STOPPED")).toEqual(["rejected"]);
+    expect(rejectionOf(state, "CMD.TO_STOPPED")).toContain("Q1 en maniobra (cierre)");
   });
 });
 
@@ -137,20 +149,21 @@ describe("hmiReducer: ejecutar", () => {
     expect(state.ui.selection).toBeNull();
     expect(state.simulation.pending).toHaveLength(1);
     expect(deriveState(state.simulation.station.switchgear)).toBe("stopped");
-    expect(kinds(state)).toEqual(["execute-ordered", "selected"]);
+    // "Ejecutar" no es un evento: la orden aparece como ejecutada en el latido siguiente.
+    expect(cmdStates(state, "CMD.TO_DECOUPLED")).toEqual(["selected"]);
   });
 
   test("el latido siguiente la ejecuta y la registra", () => {
     const state = run(initial(), select(transitionCommand("decoupled")), execute, tick);
     expect(state.simulation.pending).toEqual([]);
     expect(deriveState(state.simulation.station.switchgear)).toBe("transition");
-    expect(kinds(state)).toEqual(["done", "execute-ordered", "selected"]);
+    expect(cmdStates(state, "CMD.TO_DECOUPLED")).toEqual(["selected", "executed"]);
   });
 
   test("también se ejecuta con el tiempo ya con redondeo decimal", () => {
     // Después de 3 latidos el tiempo es 0.30000000000000004, no 0.3.
     const state = run(ticks(initial(), 3), select(transitionCommand("decoupled")), execute, tick);
-    expect(kinds(state)[0]).toBe("done");
+    expect(cmdStates(state, "CMD.TO_DECOUPLED")).toEqual(["selected", "executed"]);
   });
 
   test("una orden confirmada puede rechazarse al ejecutar si la estación cambió", () => {
@@ -164,8 +177,8 @@ describe("hmiReducer: ejecutar", () => {
     };
     const state = run(changed, execute, tick);
 
-    expect(kinds(state)).toEqual(["failed", "execute-ordered", "selected"]);
-    expect(state.ui.log[0]?.reason).toContain("Udc");
+    expect(cmdStates(state, "CMD.POWER_ORDER")).toEqual(["selected", "rejected"]);
+    expect(rejectionOf(state, "CMD.POWER_ORDER")).toContain("Udc");
     expect(state.simulation.station.powerOrderMW).toBe(0);
   });
 
@@ -179,7 +192,7 @@ describe("hmiReducer: cancelar", () => {
   test("cierra la selección, la registra y no ejecuta nada", () => {
     const state = run(initial(), select(transitionCommand("decoupled")), cancel, tick);
     expect(state.ui.selection).toBeNull();
-    expect(kinds(state)).toEqual(["cancelled", "selected"]);
+    expect(cmdStates(state, "CMD.TO_DECOUPLED")).toEqual(["selected", "cancelled"]);
     expect(deriveState(state.simulation.station.switchgear)).toBe("stopped");
   });
 
@@ -212,13 +225,15 @@ describe("hmiReducer: expiración (tiempo simulado)", () => {
     expect(ticks(selected, 150).ui.selection).toBeNull();
   });
 
-  test("expira al cumplirse el plazo y queda registrada con su hora", () => {
-    const state = ticks(run(initial(), select(transitionCommand("decoupled"))), 160);
+  test("expira al cumplirse el plazo y queda en el SER con su hora", () => {
+    const START_MS = 1_000_000;
+    const fresh = createHmiState(testConfig, DEFAULT_SELECTION_TIMEOUT_SECONDS, "overview", START_MS);
+    const state = ticks(run(fresh, select(transitionCommand("decoupled"))), 160);
     expect(state.ui.selection).toBeNull();
-    const expired = state.ui.log.find((entry) => entry.kind === "expired");
-    expect(expired?.label).toBe("Ir a decoupled");
-    // El tiempo acumulado tiene redondeo (14.99999999999996): se compara con tolerancia.
-    expect(expired?.timeSeconds).toBeCloseTo(DEFAULT_SELECTION_TIMEOUT_SECONDS, 6);
+    const expired = state.simulation.events.find((event) => event.state === "expired");
+    expect(expired?.code).toBe("CMD.TO_DECOUPLED");
+    // El tiempo acumulado tiene redondeo (14.99999999999996): la marca se redondea al milisegundo.
+    expect(expired?.timestampMs).toBe(START_MS + DEFAULT_SELECTION_TIMEOUT_SECONDS * 1000);
   });
 
   test("al expirar no se ejecuta la orden", () => {
@@ -248,8 +263,8 @@ describe("hmiReducer: expiración (tiempo simulado)", () => {
   });
 });
 
-describe("hmiReducer: registro", () => {
-  test("cada paso queda en su orden, con la más reciente primero", () => {
+describe("hmiReducer: orden de los eventos de las órdenes", () => {
+  test("cada paso queda en su orden, con el más reciente primero", () => {
     const state = run(
       withStation(deblockedAt()),
       select(blockCommand()),
@@ -257,17 +272,12 @@ describe("hmiReducer: registro", () => {
       select(deblockCommand()),
     );
     // Desbloquear con el convertidor ya desbloqueado se rechaza al seleccionar.
-    expect(kinds(state)).toEqual(["selection-rejected", "cancelled", "selected"]);
-    expect(state.ui.log.map((entry) => entry.id)).toEqual([2, 1, 0]);
-  });
-
-  test("guarda solo las últimas entradas", () => {
-    let state = initial();
-    for (let i = 0; i < MAX_LOG_ENTRIES + 5; i++) {
-      state = run(state, select(blockCommand()));
-    }
-    expect(state.ui.log).toHaveLength(MAX_LOG_ENTRIES);
-    expect(state.ui.log[0]?.id).toBe(MAX_LOG_ENTRIES + 4);
+    expect(state.simulation.events.map((event) => `${event.code} ${event.state}`)).toEqual([
+      "CMD.DEBLOCK rejected",
+      "CMD.BLOCK cancelled",
+      "CMD.BLOCK selected",
+    ]);
+    expect(state.simulation.events.map((event) => event.id)).toEqual([2, 1, 0]);
   });
 });
 
@@ -318,7 +328,7 @@ describe("hmiReducer: navegar entre ventanas", () => {
       { type: "navigate", window: "faults" },
       tick,
     );
-    expect(kinds(state)).toContain("done");
+    expect(cmdStates(state, "CMD.TO_DECOUPLED")).toContain("executed");
     expect(state.simulation.station.switchgear.Q1.kind).toBe("moving");
   });
 
@@ -328,7 +338,7 @@ describe("hmiReducer: navegar entre ventanas", () => {
       160,
     );
     expect(state.ui.selection).toBeNull();
-    expect(kinds(state)).toContain("expired");
+    expect(cmdStates(state, "CMD.TO_DECOUPLED")).toContain("expired");
   });
 });
 
@@ -360,7 +370,7 @@ describe("hmiReducer: eventos del SER", () => {
     const state = run(fresh(), select(transitionCommand("coupled"))); // no es vecino
     expect(state.simulation.events).toHaveLength(1);
     expect(state.simulation.events[0]).toMatchObject({ code: "CMD.TO_COUPLED", state: "rejected" });
-    expect(state.simulation.events[0]?.detail).toBe(state.ui.log[0]?.reason);
+    expect(state.simulation.events[0]?.detail).toContain("Transición no permitida");
   });
 
   test("cancelar deja el evento 'cancelada'", () => {
@@ -528,7 +538,7 @@ describe("hmiReducer: alarmas", () => {
     expect(life(state, "ALARM.INCONSISTENT")).toBe("active-unacknowledged");
   });
 
-  test("reconocer y activar no son órdenes: no tocan la estación, la selección ni el registro", () => {
+  test("reconocer y activar no son órdenes: no tocan la estación, la selección ni la interfaz", () => {
     const selected = run(fresh(), select(transitionCommand("decoupled")));
     const after = run(
       selected,
@@ -538,7 +548,7 @@ describe("hmiReducer: alarmas", () => {
       { type: "acknowledge-alarms", codes: ["ALARM.TEST_URGENT"] },
     );
     expect(after.ui.selection).toEqual(selected.ui.selection); // se pueden reconocer con una selección abierta
-    expect(after.ui.log).toEqual(selected.ui.log);
+    expect(after.ui).toEqual(selected.ui);
     expect(after.simulation.station).toEqual(selected.simulation.station);
     expect(after.simulation.pending).toEqual([]);
   });
