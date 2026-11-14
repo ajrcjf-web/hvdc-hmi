@@ -1,17 +1,24 @@
 // El panel lateral de eventos: los últimos eventos del SER, del más reciente al más viejo,
-// siempre visible en todas las ventanas. Solo muestra: los textos y el contador los
-// preparan toEventRows y formatNewEventsCount.
-// Plegado queda una pestaña angosta en el borde derecho, con el contador de eventos nuevos.
+// siempre visible en todas las ventanas. Solo muestra: los textos y las marcas de la
+// pestaña los preparan toEventRows y summarizeNewEvents.
+// Plegado queda una pestaña angosta en el borde derecho, con el contador de eventos nuevos y,
+// para que no se pierda el aviso, una marca si llegó un rechazo (✗) o una alarma (!!!, !!, !).
 // Cada evento ocupa dos líneas. Línea 1: la hora y, a la derecha, el estado, que es lo más
 // importante y no se corta. Línea 2: la descripción, que si no cabe se corta con puntos
 // suspensivos (el texto completo queda como tooltip). El panel tiene tamaño fijo: la
 // llegada de un evento no mueve el contenido.
-import { describeNewEvents, formatNewEventsCount, type EventRow } from "../eventRows.ts";
+import {
+  describeNewEventsSummary,
+  formatNewEventsCount,
+  prioritySymbol,
+  type EventRow,
+  type NewEventsSummary,
+} from "../eventRows.ts";
 
 type Props = {
   open: boolean;
   rows: EventRow[];
-  newCount: number; // eventos llegados desde que se plegó
+  summary: NewEventsSummary; // lo que llegó desde que se plegó
   onToggle: () => void; // plegar o desplegar
   onOpenSer: () => void; // abre la ventana del SER
 };
@@ -24,9 +31,10 @@ function itemClass(row: EventRow): string {
   return classes.join(" ");
 }
 
-export function EventsPanel({ open, rows, newCount, onToggle, onOpenSer }: Props) {
+export function EventsPanel({ open, rows, summary, onToggle, onOpenSer }: Props) {
   if (!open) {
-    const count = formatNewEventsCount(newCount);
+    const count = formatNewEventsCount(summary.count);
+    const description = describeNewEventsSummary(summary);
     return (
       <aside id="events-panel" className="events-panel folded" aria-label="Eventos recientes">
         <button
@@ -35,9 +43,9 @@ export function EventsPanel({ open, rows, newCount, onToggle, onOpenSer }: Props
           aria-expanded={false}
           aria-controls="events-panel"
           aria-label={
-            count === ""
+            description === ""
               ? "Desplegar eventos recientes"
-              : `Desplegar eventos recientes: ${describeNewEvents(newCount)}`
+              : `Desplegar eventos recientes: ${description}`
           }
           onClick={onToggle}
         >
@@ -46,6 +54,16 @@ export function EventsPanel({ open, rows, newCount, onToggle, onOpenSer }: Props
           {count !== "" && (
             <span className="events-badge" aria-hidden="true">
               {count}
+            </span>
+          )}
+          {summary.rejected && (
+            <span className="events-mark" aria-hidden="true">
+              ✗
+            </span>
+          )}
+          {summary.alarm !== null && (
+            <span className={`events-mark alarm-${summary.alarm}`} aria-hidden="true">
+              {prioritySymbol(summary.alarm)}
             </span>
           )}
         </button>

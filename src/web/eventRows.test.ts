@@ -4,9 +4,11 @@ import { formatTimestamp } from "../labels.ts";
 import { describeSignal } from "../signals.ts";
 import {
   describeNewEvents,
+  describeNewEventsSummary,
   formatNewEventsCount,
   newEventsCount,
   PANEL_EVENT_LIMIT,
+  summarizeNewEvents,
   toEventRows,
 } from "./eventRows.ts";
 import { toSerRow } from "./serView.ts";
@@ -121,5 +123,102 @@ describe("eventos nuevos de la pestaña", () => {
     expect(formatNewEventsCount(1)).toBe("1");
     expect(formatNewEventsCount(99)).toBe("99");
     expect(formatNewEventsCount(100)).toBe("99+");
+  });
+});
+
+describe("summarizeNewEvents: lo que marca la pestaña plegada", () => {
+  // El SER guarda el más reciente primero; `foldedAtId` es el nextEventId al plegar.
+  const alarmEvent = (id: number, code: SerEvent["code"], state: SerEvent["state"]) =>
+    event(id, { code, state });
+
+  test("con el panel abierto no marca nada", () => {
+    const events = [event(5, { state: "rejected" }), event(4)];
+    expect(summarizeNewEvents(true, events, 6, 0)).toEqual({ count: 0, rejected: false, alarm: null });
+  });
+
+  test("sin eventos nuevos no marca nada", () => {
+    const events = [event(2, { state: "rejected" }), event(1)];
+    expect(summarizeNewEvents(false, events, 3, 3)).toEqual({ count: 0, rejected: false, alarm: null });
+  });
+
+  test("solo eventos normales: cuenta, pero sin marcas", () => {
+    const events = [event(4), event(3), event(2, { state: "rejected" }), event(1)];
+    // Se plegó con 3 eventos (ids 0, 1, 2): solo los ids 3 y 4 son nuevos.
+    expect(summarizeNewEvents(false, events, 5, 3)).toEqual({ count: 2, rejected: false, alarm: null });
+  });
+
+  test("un rechazo nuevo marca ✗", () => {
+    const events = [event(4, { code: "CMD.Q2_CLOSE", state: "rejected" }), event(3)];
+    expect(summarizeNewEvents(false, events, 5, 3)).toEqual({ count: 2, rejected: true, alarm: null });
+  });
+
+  test("un rechazo anterior al plegado no cuenta", () => {
+    const events = [event(3), event(2, { state: "rejected" })];
+    expect(summarizeNewEvents(false, events, 4, 3)).toMatchObject({ count: 1, rejected: false });
+  });
+
+  test("una alarma que aparece marca la prioridad", () => {
+    const events = [alarmEvent(3, "ALARM.INCONSISTENT", "active-unacknowledged")];
+    expect(summarizeNewEvents(false, events, 4, 3)).toMatchObject({ alarm: "urgent" });
+    expect(
+      summarizeNewEvents(false, [alarmEvent(3, "ALARM.TEST_LOW", "active-unacknowledged")], 4, 3),
+    ).toMatchObject({ alarm: "low" });
+  });
+
+  test("con varias alarmas marca la prioridad más alta", () => {
+    const events = [
+      alarmEvent(5, "ALARM.TEST_LOW", "active-unacknowledged"),
+      alarmEvent(4, "ALARM.TEST_HIGH", "active-unacknowledged"),
+      alarmEvent(3, "ALARM.TEST_LOW", "active-unacknowledged"),
+    ];
+    expect(summarizeNewEvents(false, events, 6, 3)).toMatchObject({ alarm: "high" });
+  });
+
+  test("normalizar o reconocer una alarma no cuenta como alarma nueva", () => {
+    const events = [
+      alarmEvent(5, "ALARM.INCONSISTENT", "normal"),
+      alarmEvent(4, "ALARM.INCONSISTENT", "active-acknowledged"),
+      alarmEvent(3, "ALARM.INCONSISTENT", "returned-unacknowledged"),
+    ];
+    expect(summarizeNewEvents(false, events, 6, 3)).toMatchObject({ count: 3, alarm: null });
+  });
+
+  test("rechazo y alarma a la vez: marca las dos", () => {
+    const events = [
+      alarmEvent(4, "ALARM.TEST_URGENT", "active-unacknowledged"),
+      event(3, { code: "CMD.Q1_CLOSE", state: "rejected" }),
+    ];
+    expect(summarizeNewEvents(false, events, 5, 3)).toEqual({ count: 2, rejected: true, alarm: "urgent" });
+  });
+
+  test("si hay más eventos nuevos de los que guarda el SER, la cantidad sigue contando todos", () => {
+    const events = [event(1999)]; // el SER ya descartó los más viejos
+    expect(summarizeNewEvents(false, events, 2000, 0).count).toBe(2000);
+  });
+});
+
+describe("describeNewEventsSummary: la etiqueta accesible de la pestaña", () => {
+  test("sin eventos nuevos queda vacía", () => {
+    expect(describeNewEventsSummary({ count: 0, rejected: false, alarm: null })).toBe("");
+  });
+
+  test("solo la cantidad", () => {
+    expect(describeNewEventsSummary({ count: 1, rejected: false, alarm: null })).toBe("1 nuevo");
+    expect(describeNewEventsSummary({ count: 3, rejected: false, alarm: null })).toBe("3 nuevos");
+  });
+
+  test("con rechazo y con alarma, dicho con palabras", () => {
+    expect(describeNewEventsSummary({ count: 3, rejected: true, alarm: null })).toBe(
+      "3 nuevos, con rechazo",
+    );
+    expect(describeNewEventsSummary({ count: 2, rejected: false, alarm: "urgent" })).toBe(
+      "2 nuevos, con alarma urgente",
+    );
+    expect(describeNewEventsSummary({ count: 5, rejected: true, alarm: "high" })).toBe(
+      "5 nuevos, con rechazo, con alarma alta",
+    );
+    expect(describeNewEventsSummary({ count: 5, rejected: false, alarm: "low" })).toBe(
+      "5 nuevos, con alarma baja",
+    );
   });
 });

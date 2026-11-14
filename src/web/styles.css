@@ -648,6 +648,20 @@ input {
   writing-mode: vertical-rl;
 }
 
+/* Las marcas de la pestaña: ✗ (un rechazo) en negrita y sin color; el símbolo de una
+   alarma, con el color de su prioridad (el único color permitido). */
+.events-mark {
+  font-weight: bold;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+.events-mark.alarm-urgent,
+.events-mark.alarm-high,
+.events-mark.alarm-low {
+  color: var(--alarm-color);
+}
+
 .events-badge {
   min-width: 1.6rem;
   padding: 0.1rem 0.3rem;

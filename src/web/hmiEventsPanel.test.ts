@@ -2,7 +2,7 @@
 import { describe, expect, test } from "vitest";
 import { testConfig } from "../testSupport.ts";
 import { transitionCommand } from "./commands.ts";
-import { newEventsCount } from "./eventRows.ts";
+import { newEventsCount, summarizeNewEvents } from "./eventRows.ts";
 import { createHmiState, hmiReducer, type HmiAction, type HmiState } from "./hmiState.ts";
 
 const toggle: HmiAction = { type: "toggle-events-panel" };
@@ -64,5 +64,47 @@ describe("reducer: panel de eventos", () => {
   test("navegar entre ventanas no cambia el panel", () => {
     const state = run(initial(), toggle, { type: "navigate", window: "events" });
     expect(state.ui.eventsPanelOpen).toBe(false);
+  });
+});
+
+describe("reducer: marcas de la pestaña plegada", () => {
+  const summary = (state: HmiState) =>
+    summarizeNewEvents(
+      state.ui.eventsPanelOpen,
+      state.simulation.events,
+      state.simulation.nextEventId,
+      state.ui.eventsFoldedAtId,
+    );
+
+  test("un rechazo con el panel plegado marca ✗", () => {
+    const state = run(initial(), toggle, rejectedSelect);
+    expect(summary(state)).toEqual({ count: 1, rejected: true, alarm: null });
+  });
+
+  test("una alarma con el panel plegado marca su prioridad", () => {
+    const state = run(
+      initial(),
+      toggle,
+      { type: "set-test-alarm", code: "ALARM.TEST_HIGH", active: true },
+      { type: "tick" },
+    );
+    expect(summary(state)).toMatchObject({ rejected: false, alarm: "high" });
+  });
+
+  test("un rechazo anterior al plegado no marca", () => {
+    const state = run(initial(), rejectedSelect, toggle);
+    expect(summary(state)).toEqual({ count: 0, rejected: false, alarm: null });
+  });
+
+  test("al desplegar las marcas desaparecen", () => {
+    const folded = run(
+      initial(),
+      toggle,
+      rejectedSelect,
+      { type: "set-test-alarm", code: "ALARM.TEST_URGENT", active: true },
+      { type: "tick" },
+    );
+    expect(summary(folded)).toMatchObject({ rejected: true, alarm: "urgent" });
+    expect(summary(run(folded, toggle))).toEqual({ count: 0, rejected: false, alarm: null });
   });
 });

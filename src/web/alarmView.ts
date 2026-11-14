@@ -22,7 +22,7 @@ export const priorityLabels: Record<AlarmPriority, string> = {
 };
 
 // De la más importante a la menos: define el orden de la lista y la "más alta".
-const priorityRank: Record<AlarmPriority, number> = { urgent: 0, high: 1, low: 2 };
+export const priorityRank: Record<AlarmPriority, number> = { urgent: 0, high: 1, low: 2 };
 
 // Lo no reconocido lleva este símbolo además de parpadear: sin movimiento (o con la
 // intermitencia desactivada) se distingue igual.

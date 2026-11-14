@@ -6,7 +6,7 @@
 import { alarmPriorities, type AlarmPriority } from "../alarms.ts";
 import type { SerEvent } from "../events.ts";
 import { describeSignalState, type SignalCode } from "../signals.ts";
-import { priorityLabels } from "./alarmView.ts";
+import { priorityLabels, priorityRank } from "./alarmView.ts";
 import { toSerRow } from "./serView.ts";
 
 // Cuántos eventos dibuja el panel. El SER guarda hasta 1000; dibujarlos todos en cada
@@ -25,7 +25,7 @@ export type EventRow = {
 };
 
 // El símbolo de la prioridad, sin la palabra ("!!! Urgente" → "!!!").
-function prioritySymbol(priority: AlarmPriority): string {
+export function prioritySymbol(priority: AlarmPriority): string {
   return priorityLabels[priority].split(" ")[0] ?? "";
 }
 
@@ -79,4 +79,50 @@ export function formatNewEventsCount(count: number): string {
 export function describeNewEvents(count: number): string {
   if (count <= 0) return "";
   return `${formatNewEventsCount(count)} ${count === 1 ? "nuevo" : "nuevos"}`;
+}
+
+// Lo que marca la pestaña del panel plegado: cuántos eventos llegaron desde que se plegó y,
+// para que no se pierda el aviso, si entre ellos hay un rechazo o una alarma.
+export type NewEventsSummary = {
+  count: number;
+  rejected: boolean; // llegó una orden rechazada (se marca con ✗)
+  alarm: AlarmPriority | null; // la prioridad más alta de las alarmas que aparecieron
+};
+
+// `events` viene con el más reciente primero, así que los nuevos (id >= foldedAtId) están
+// al principio y se puede parar en el primero que ya estaba al plegar. Solo cuenta como
+// alarma la que aparece ("activa sin reconocer"): reconocerla o normalizarla no es nuevo.
+export function summarizeNewEvents(
+  open: boolean,
+  events: SerEvent[],
+  nextEventId: number,
+  foldedAtId: number,
+): NewEventsSummary {
+  const count = newEventsCount(open, nextEventId, foldedAtId);
+  let rejected = false;
+  let alarm: AlarmPriority | null = null;
+  if (count > 0) {
+    for (const event of events) {
+      if (event.id < foldedAtId) break;
+      if (event.state === "rejected") rejected = true;
+      const priority = alarmPriority(event.code);
+      if (priority !== null && event.state === "active-unacknowledged") {
+        if (alarm === null || priorityRank[priority] < priorityRank[alarm]) alarm = priority;
+      }
+    }
+  }
+  return { count, rejected, alarm };
+}
+
+// La etiqueta accesible de la pestaña, con palabras: "3 nuevos, con rechazo, con alarma urgente".
+export function describeNewEventsSummary(summary: NewEventsSummary): string {
+  const base = describeNewEvents(summary.count);
+  if (base === "") return "";
+  const parts = [base];
+  if (summary.rejected) parts.push("con rechazo");
+  if (summary.alarm !== null) {
+    const word = priorityLabels[summary.alarm].split(" ")[1]?.toLowerCase() ?? "";
+    parts.push(`con alarma ${word}`);
+  }
+  return parts.join(", ");
 }
