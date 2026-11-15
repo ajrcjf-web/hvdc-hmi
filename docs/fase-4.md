@@ -80,8 +80,8 @@ El convertidor es **VSC**: ante una falla AC aporta una corriente de falla **lim
 ### Qué hace el 86 al actuar una protección
 - **Bloquea el convertidor al instante**: P, consigna y Udc pasan a 0 sin rampa (a diferencia del bloqueo del operador, que exige P = 0 y deja bajar Udc con su rampa).
 - **Dispara Q1** en **1,5 ciclos de la red** (30 ms a 50 Hz): abre con carga y sin pasar por los enclavamientos del operador (que siguen exigiendo el convertidor bloqueado). El tiempo se expresa en ciclos y la frecuencia de la red es un dato de la configuración. El disparo tiene prioridad sobre una maniobra de Q1 en curso; Q2 y QE no se ven afectados. Con dt = 100 ms el disparo termina en el mismo ciclo.
-- **Impide cerrar Q1 y desbloquear el convertidor** mientras esté enclavado.
-- Las protecciones disparadas generan una **alarma urgente** (una por función), que dura hasta el reset del 86, y el SER registra **qué función actuó**.
+- **Impide cerrar Q1** mientras esté enclavado. No necesita una regla para desbloquear el convertidor: con Q1 abierto la estación no está en coupled, y desbloquear ya se rechaza por eso.
+- Genera **dos tipos de alarma urgente**: "Protección X actuó" (una por función), activa mientras la falla siga presente y normalizada cuando el instructor la despeja; y "Relé 86 enclavado", activa hasta el reset del 86. Así el operador ve en la lista de alarmas cuándo se despejó la falla, que es la señal de que puede resetear. El SER registra **qué función actuó**.
 - **Orden causal en el SER** dentro del mismo ciclo: arranques, disparos de las protecciones, 86 enclavado, convertidor bloqueado, Q1 abierto, estado de la estación y alarmas.
 
 ### Medida y zonas
