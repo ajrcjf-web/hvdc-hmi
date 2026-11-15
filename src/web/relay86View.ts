@@ -5,7 +5,7 @@ import type { SerEvent } from "../events.ts";
 import { formatTimestamp } from "../labels.ts";
 import { relay86Causes } from "../protections.ts";
 import { describeSignal } from "../signals.ts";
-import type { Station } from "../station.ts";
+import type { Station, StationConfig } from "../station.ts";
 
 // Las dos etiquetas del indicador. Se dibujan las dos (la inactiva invisible) para reservar el
 // ancho de la más larga con la fuente real.
@@ -24,14 +24,14 @@ export type Relay86View = {
   causes: { name: string; present: boolean; text: string }[];
 };
 
-export function describeRelay86(station: Station): Relay86View {
+export function describeRelay86(station: Station, config: StationConfig): Relay86View {
   const locked = station.relay86.locked;
   return {
     locked,
     label: relay86Labels[locked ? "locked" : "normal"].label,
     symbol: relay86Labels[locked ? "locked" : "normal"].symbol,
     accessibleLabel: `Relé de bloqueo 86: ${locked ? "enclavado" : "normal"}`,
-    causes: relay86Causes(station).map((cause) => ({
+    causes: relay86Causes(station, config).map((cause) => ({
       name: cause.name,
       present: cause.present,
       text: `${cause.name}: falla ${cause.present ? "presente" : "despejada"}`,

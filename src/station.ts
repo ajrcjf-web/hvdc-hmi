@@ -243,11 +243,11 @@ export function requestDeblock(station: Station): CommandResult {
 // si el 86 no está enclavado o si la causa de alguna protección que actuó sigue presente:
 // el instructor todavía no despejó la falla. Al aceptarse, el 86 se libera; las protecciones
 // vuelven a poder actuar.
-export function requestRelayReset(station: Station): CommandResult {
+export function requestRelayReset(station: Station, config: StationConfig): CommandResult {
   if (!station.relay86.locked) {
     return reject("El relé 86 no está enclavado");
   }
-  const present = relay86Causes(station).filter((cause) => cause.present);
+  const present = relay86Causes(station, config).filter((cause) => cause.present);
   if (present.length > 0) {
     const names = present.map((cause) => cause.name).join("; ");
     return reject(`No se puede resetear el 86: la causa sigue presente (${names})`);

@@ -112,7 +112,7 @@ export function runCycle(
     events.push({ kind: "signal", event });
   }
 
-  const evaluated = evaluateAlarms(alarms, next, nextTimeSeconds);
+  const evaluated = evaluateAlarms(alarms, next, nextTimeSeconds, config);
   for (const event of evaluated.events) {
     events.push({ kind: "signal", event });
   }

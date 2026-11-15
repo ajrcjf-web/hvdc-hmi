@@ -8,7 +8,7 @@ import {
   type TestAlarmCode,
 } from "../alarms.ts";
 import { formatTimestamp } from "../labels.ts";
-import { stationAt } from "../testSupport.ts";
+import { stationAt, testConfig } from "../testSupport.ts";
 import { filterRows } from "./listFilter.ts";
 import {
   describeAlarmSummary,
@@ -24,7 +24,7 @@ const station = stationAt("stopped");
 function activate(...codes: TestAlarmCode[]): AlarmState {
   let alarms = createAlarmState();
   codes.forEach((code, i) => {
-    alarms = evaluateAlarms(setTestAlarm(alarms, code, true), station, i + 1).alarms;
+    alarms = evaluateAlarms(setTestAlarm(alarms, code, true), station, i + 1, testConfig).alarms;
   });
   return alarms;
 }
@@ -56,16 +56,16 @@ describe("toAlarmRows", () => {
 
   test("la hora es la de la aparición: normalizar no la cambia y reactivar la renueva", () => {
     let alarms = activate("ALARM.TEST_LOW"); // aparece en t = 1
-    alarms = evaluateAlarms(setTestAlarm(alarms, "ALARM.TEST_LOW", false), station, 3).alarms;
+    alarms = evaluateAlarms(setTestAlarm(alarms, "ALARM.TEST_LOW", false), station, 3, testConfig).alarms;
     expect(toAlarmRows(alarms, START)[0]?.timestamp).toBe(formatTimestamp(START + 1000));
 
-    alarms = evaluateAlarms(setTestAlarm(alarms, "ALARM.TEST_LOW", true), station, 8).alarms;
+    alarms = evaluateAlarms(setTestAlarm(alarms, "ALARM.TEST_LOW", true), station, 8, testConfig).alarms;
     expect(toAlarmRows(alarms, START)[0]?.timestamp).toBe(formatTimestamp(START + 8000));
   });
 
   test("una normalizada sin reconocer sigue visible; reconocida, desaparece", () => {
     let alarms = activate("ALARM.TEST_LOW");
-    alarms = evaluateAlarms(setTestAlarm(alarms, "ALARM.TEST_LOW", false), station, 3).alarms;
+    alarms = evaluateAlarms(setTestAlarm(alarms, "ALARM.TEST_LOW", false), station, 3, testConfig).alarms;
     expect(toAlarmRows(alarms, START)[0]?.state).toBe(
       `${UNACKNOWLEDGED_SYMBOL} normalizada sin reconocer`,
     );
@@ -89,7 +89,7 @@ describe("toAlarmRows", () => {
       switchgear: { ...station.switchgear, QE: { kind: "closed" as const }, Q2: { kind: "closed" as const } },
     };
     let alarms = activate("ALARM.TEST_URGENT");
-    alarms = evaluateAlarms(alarms, inconsistent, 2).alarms;
+    alarms = evaluateAlarms(alarms, inconsistent, 2, testConfig).alarms;
     expect(toAlarmRows(alarms, START).map((r) => r.code)).toEqual([
       "ALARM.INCONSISTENT",
       "ALARM.TEST_URGENT",
@@ -141,7 +141,7 @@ describe("summarizeAlarms", () => {
   test("la prioridad más alta es la de las alarmas visibles, no la de las normalizadas", () => {
     let alarms = activate("ALARM.TEST_URGENT", "ALARM.TEST_LOW");
     alarms = acknowledge(alarms, "ALARM.TEST_URGENT", 5).alarms;
-    alarms = evaluateAlarms(setTestAlarm(alarms, "ALARM.TEST_URGENT", false), station, 6).alarms;
+    alarms = evaluateAlarms(setTestAlarm(alarms, "ALARM.TEST_URGENT", false), station, 6, testConfig).alarms;
     expect(summarizeAlarms(alarms)).toMatchObject({ count: 1, highest: "low" });
   });
 

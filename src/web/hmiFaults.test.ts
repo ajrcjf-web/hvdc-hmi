@@ -1,6 +1,6 @@
 // Provocar y despejar fallas desde la ventana del instructor, a través del reducer.
 import { describe, expect, test } from "vitest";
-import type { FaultKind } from "../protections.ts";
+type FaultKind = "transformer" | "converter"; // las fallas sin dato
 import type { Station } from "../station.ts";
 import { deblockedAt, stationAt, testConfig } from "../testSupport.ts";
 import { describeCommand } from "./commandView.ts";
@@ -13,7 +13,10 @@ const run = (state: HmiState, ...actions: HmiAction[]) => actions.reduce(hmiRedu
 const ticks = (state: HmiState, count: number) =>
   run(state, ...Array.from({ length: count }, () => tick));
 const provoke = (kind: FaultKind): HmiAction => ({ type: "set-fault", fault: { kind } });
-const clear = (kind: FaultKind): HmiAction => ({ type: "clear-fault", kind });
+const clear = (kind: FaultKind | "acLine" | "acUndervoltage"): HmiAction => ({
+  type: "clear-fault",
+  kind,
+});
 
 const withStation = (station: Station): HmiState => {
   const state = createHmiState(testConfig);
@@ -36,8 +39,8 @@ describe("reducer: fallas del instructor", () => {
 
   test("las dos fallas se provocan y se despejan por separado", () => {
     const state = run(withStation(stationAt("stopped")), provoke("transformer"), provoke("converter"));
-    expect(state.simulation.station.faults).toEqual({ transformer: true, converter: true });
-    expect(run(state, clear("transformer")).simulation.station.faults).toEqual({
+    expect(state.simulation.station.faults).toMatchObject({ transformer: true, converter: true });
+    expect(run(state, clear("transformer")).simulation.station.faults).toMatchObject({
       transformer: false,
       converter: true,
     });
@@ -85,26 +88,71 @@ describe("reducer: fallas del instructor", () => {
   });
 });
 
+describe("reducer: fallas con dato (ubicación y tensión residual)", () => {
+  const line = (locationPercent: number): HmiAction => ({
+    type: "set-fault",
+    fault: { kind: "acLine", locationPercent },
+  });
+  const voltage = (residualPercent: number): HmiAction => ({
+    type: "set-fault",
+    fault: { kind: "acUndervoltage", residualPercent },
+  });
+
+  test("la falla de línea AC guarda su ubicación y la subtensión, su tensión residual", () => {
+    const state = run(withStation(stationAt("stopped")), line(90), voltage(65));
+    expect(state.simulation.station.faults).toMatchObject({
+      acLine: { locationPercent: 90 },
+      acUndervoltage: { residualPercent: 65 },
+    });
+  });
+
+  test("un valor fuera de rango no provoca la falla", () => {
+    const initial = withStation(stationAt("stopped"));
+    expect(run(initial, line(200)).simulation.station.faults.acLine).toBeNull();
+    expect(run(initial, voltage(-5)).simulation.station.faults.acUndervoltage).toBeNull();
+    expect(run(initial, line(Number.NaN)).simulation.station.faults.acLine).toBeNull();
+  });
+
+  test("despejar vuelve a dejarla sin falla", () => {
+    const state = run(withStation(stationAt("stopped")), line(50), clear("acLine"));
+    expect(state.simulation.station.faults.acLine).toBeNull();
+  });
+
+  test("falla franca al 50 % desde coupled: actúan la 21 (zona 1) y la 27 (escalón 2) en el primer latido", () => {
+    const state = run(withStation(deblockedAt(300)), line(50), tick);
+    expect(state.simulation.station.relay86.operated).toEqual(["distanceZone1", "acUndervoltageStage2"]);
+    expect(codes(state)).toContain("PROT.DISTANCE_Z1");
+    expect(state.simulation.alarms.life["ALARM.PROT_DISTANCE"]).toBe("active-unacknowledged");
+    expect(state.simulation.alarms.life["ALARM.PROT_UNDERVOLTAGE"]).toBe("active-unacknowledged");
+  });
+
+  test("al 130 % la 21 no la ve y la 27 sí: solo la alarma de subtensión", () => {
+    const state = run(withStation(deblockedAt(300)), line(130), tick);
+    expect(state.simulation.alarms.life["ALARM.PROT_DISTANCE"]).toBe("normal");
+    expect(state.simulation.alarms.life["ALARM.PROT_UNDERVOLTAGE"]).toBe("active-unacknowledged");
+  });
+});
+
 describe("lo que ve la overview después de una falla", () => {
   test("el indicador del 86 y la última protección siguen al disparo y al reset", () => {
     let state = withStation(deblockedAt(300));
-    expect(describeRelay86(state.simulation.station).locked).toBe(false);
+    expect(describeRelay86(state.simulation.station, testConfig).locked).toBe(false);
     expect(lastProtection(state.simulation.events)).toBeNull();
 
     state = run(state, provoke("converter"), tick);
-    expect(describeRelay86(state.simulation.station)).toMatchObject({ locked: true, label: "RELÉ 86 ENCLAVADO" });
+    expect(describeRelay86(state.simulation.station, testConfig)).toMatchObject({ locked: true, label: "RELÉ 86 ENCLAVADO" });
     expect(lastProtection(state.simulation.events)?.name).toBe("Protección del convertidor");
-    expect(describeRelay86(state.simulation.station).causes[0]?.present).toBe(true);
+    expect(describeRelay86(state.simulation.station, testConfig).causes[0]?.present).toBe(true);
 
     // Despejada la falla, el indicador sigue enclavado y la causa figura despejada.
     state = run(state, clear("converter"), tick);
-    expect(describeRelay86(state.simulation.station).locked).toBe(true);
-    expect(describeRelay86(state.simulation.station).causes[0]?.present).toBe(false);
+    expect(describeRelay86(state.simulation.station, testConfig).locked).toBe(true);
+    expect(describeRelay86(state.simulation.station, testConfig).causes[0]?.present).toBe(false);
 
     // Tras el reset el indicador vuelve a normal; la última protección queda como dato histórico.
     state = run(state, { type: "select", command: reset86Command() }, { type: "execute" }, tick);
-    expect(describeRelay86(state.simulation.station).locked).toBe(false);
-    expect(describeRelay86(state.simulation.station).causes).toEqual([]);
+    expect(describeRelay86(state.simulation.station, testConfig).locked).toBe(false);
+    expect(describeRelay86(state.simulation.station, testConfig).causes).toEqual([]);
     expect(lastProtection(state.simulation.events)?.name).toBe("Protección del convertidor");
   });
 });

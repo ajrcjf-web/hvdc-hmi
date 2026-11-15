@@ -3,6 +3,7 @@
 import type { Dispatch } from "react";
 import type { HmiAction, HmiState } from "../hmiState.ts";
 import { reset86Command } from "../commands.ts";
+import { measureAcVoltagePercent } from "../../measurements.ts";
 import { describeRelay86, lastProtection } from "../relay86View.ts";
 import { ModeIndicator } from "./ModeIndicator.tsx";
 import { Relay86Indicator } from "./Relay86Indicator.tsx";
@@ -16,7 +17,7 @@ type Props = {
 };
 
 export function OverviewWindow({ state, dispatch }: Props) {
-  const relay = describeRelay86(state.simulation.station);
+  const relay = describeRelay86(state.simulation.station, state.simulation.config);
   return (
     <>
       <h1>HMI HVDC — Overview</h1>
@@ -37,6 +38,7 @@ export function OverviewWindow({ state, dispatch }: Props) {
           timeSeconds={state.simulation.timeSeconds}
           relay={relay}
           lastProtection={lastProtection(state.simulation.events)}
+          acVoltagePercent={measureAcVoltagePercent(state.simulation.station, state.simulation.config)}
         />
         <CommandPanel
           mode={state.simulation.station.mode}

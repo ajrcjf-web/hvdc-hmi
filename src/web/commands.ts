@@ -79,7 +79,7 @@ export function runCommand(
     case "switch":
       return requestSwitchOrder(station, command.id, command.to, config);
     case "reset86":
-      return requestRelayReset(station);
+      return requestRelayReset(station, config);
   }
 }
 

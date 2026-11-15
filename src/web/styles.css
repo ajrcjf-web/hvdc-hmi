@@ -468,11 +468,24 @@ input {
 }
 
 .test-alarm-state {
-  min-width: 6rem;
+  /* Ancho fijo: "Falla despejada" y "Falla presente" (o "Condición presente") no deben mover lo
+     que tienen al lado (el campo de ubicación, los botones) al cambiar. */
+  min-width: 9.5rem;
   color: var(--text-muted);
 }
 
 /* La nota de una falla (qué protección la ve) ocupa su propia línea bajo los botones. */
+.fault-parameter {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-muted);
+}
+
+.fault-parameter input {
+  width: 5rem;
+}
+
 .fault-note {
   flex: 1 0 100%;
   margin: 0;

@@ -3,7 +3,7 @@ import type { SerEvent } from "../events.ts";
 import { formatTimestamp } from "../labels.ts";
 import { noFaults } from "../protections.ts";
 import type { Station } from "../station.ts";
-import { stationAt } from "../testSupport.ts";
+import { stationAt, testConfig } from "../testSupport.ts";
 import { describeRelay86, lastProtection } from "./relay86View.ts";
 
 const locked = (faults: Partial<ReturnType<typeof noFaults>>): Station => ({
@@ -14,7 +14,7 @@ const locked = (faults: Partial<ReturnType<typeof noFaults>>): Station => ({
 
 describe("describeRelay86", () => {
   test("normal: texto y símbolo propios, sin causas", () => {
-    expect(describeRelay86(stationAt("stopped"))).toEqual({
+    expect(describeRelay86(stationAt("stopped"), testConfig)).toEqual({
       locked: false,
       label: "RELÉ 86 NORMAL",
       symbol: "[□]",
@@ -24,8 +24,8 @@ describe("describeRelay86", () => {
   });
 
   test("enclavado: texto y símbolo distintos (no depende del color)", () => {
-    const normal = describeRelay86(stationAt("stopped"));
-    const view = describeRelay86(locked({}));
+    const normal = describeRelay86(stationAt("stopped"), testConfig);
+    const view = describeRelay86(locked({}), testConfig);
     expect(view.locked).toBe(true);
     expect(view.label).toBe("RELÉ 86 ENCLAVADO");
     expect(view.label).not.toBe(normal.label);
@@ -34,7 +34,7 @@ describe("describeRelay86", () => {
   });
 
   test("cada causa dice si su falla sigue presente o ya se despejó", () => {
-    const view = describeRelay86(locked({ converter: true }));
+    const view = describeRelay86(locked({ converter: true }), testConfig);
     expect(view.causes).toEqual([
       {
         name: "Protección diferencial del transformador (87T)",

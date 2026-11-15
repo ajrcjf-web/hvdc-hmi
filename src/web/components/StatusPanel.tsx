@@ -10,9 +10,10 @@ type Props = {
   timeSeconds: number;
   relay: Relay86View;
   lastProtection: LastProtection | null;
+  acVoltagePercent: number; // la tensión de la red en TP1, en % de Un
 };
 
-export function StatusPanel({ station, timeSeconds, relay, lastProtection }: Props) {
+export function StatusPanel({ station, timeSeconds, relay, lastProtection, acVoltagePercent }: Props) {
   const { Q1, Q2, QE } = station.switchgear;
   const state = deriveState(station.switchgear);
   const { udcKV, idcKA } = measure(station);
@@ -58,6 +59,8 @@ export function StatusPanel({ station, timeSeconds, relay, lastProtection }: Pro
         <dd>{formatValue(udcKV, 0)} kV</dd>
         <dt>Idc</dt>
         <dd>{formatValue(idcKA, 2)} kA</dd>
+        <dt>Tensión AC (TP1)</dt>
+        <dd>{formatValue(acVoltagePercent, 0)} % de Un</dd>
       </dl>
     </section>
   );
