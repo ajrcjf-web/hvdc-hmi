@@ -114,7 +114,14 @@ async function box(locator) {
   // --- Reset con la falla presente (rechazado), despejar, reset.
   await page.locator(".indicators button").click();
   await wait(300);
-  const rechazo = (await page.locator("aside").innerText()).split("\n").filter((l) => l.includes("causa sigue presente"))[0] ?? "(no encontrado)";
+  // Con el panel de eventos plegado (ventanas angostas) solo hay una pestaña: se lee su etiqueta
+  // accesible (cuenta los eventos nuevos y avisa si hubo un rechazo) sin desplegarla, para no
+  // mover el diseño.
+  const foldedTab = page.locator("aside button.events-tab");
+  const rechazo =
+    (await foldedTab.count()) > 0
+      ? `(panel plegado) ${await foldedTab.getAttribute("aria-label")}`
+      : ((await page.locator("aside").innerText()).split("\n").filter((l) => l.includes("causa sigue presente"))[0] ?? "(no encontrado)");
   await nav("Simulación de fallas");
   await clearBtn.click();
   await wait(300);
