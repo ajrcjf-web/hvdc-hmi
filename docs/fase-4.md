@@ -7,7 +7,8 @@ Este documento recoge las decisiones de diseño de la Fase 4 antes de implementa
 - Una sola aplicación con **varias ventanas internas** y una **barra de navegación**: overview, alarmas, eventos (SER), tendencias y simulación de fallas.
 - Todas comparten la misma simulación (el mismo estado del reducer).
 - Las ventanas reales del navegador (una pestaña o pantalla por ventana) llegan con la Fase 5.
-- La ventana de **simulación de fallas es del instructor**: el operador no provoca fallas desde sus ventanas.
+- La ventana de **simulación de fallas es del instructor**: el operador no provoca fallas desde sus ventanas. La ubicación real de una falla queda ahí.
+- La ventana **"Protecciones"** (se agrega en la subfase 4.4) es de lectura: el diagrama de protección y medida (transformadores de medida, zonas, qué protección arrancó y cuál actuó, distancia estimada), sin la ubicación real de la falla. Los transformadores de medida no se dibujan en el unifilar de operación, para no saturarlo.
 
 ## 2. Eventos y alarmas
 
@@ -59,22 +60,57 @@ El filtrado es una función pura con tests; los componentes solo dibujan.
 
 ## 4. Protecciones
 
-Las **provoca y despeja el instructor**, desde la ventana de simulación. No hay re-arranque automático.
+Las **provoca y despeja el instructor**, desde la ventana de simulación. No hay re-arranque automático. El plan por PRs está en el issue #73.
+
+El convertidor es **VSC**: ante una falla AC aporta una corriente de falla **limitada**.
 
 | Falla | Protección que actúa | Efecto |
 |---|---|---|
-| Línea DC, **baja impedancia** | Onda viajera, al instante | Bloqueo del convertidor |
-| Línea DC, **alta impedancia** | Diferencial de línea DC, tras un retardo (0.5 s simulados por defecto, configurable). La onda viajera no la detecta | Bloqueo del convertidor |
-| Subtensión en la red AC | Subtensión AC (27) | Bloqueo del convertidor |
-| Línea AC | Protección de línea AC (21/87L) | Disparo de Q1 y bloqueo |
-| Interna del transformador | Diferencial (87T) | Disparo de Q1 y bloqueo |
-| Interna del convertidor | Protección del convertidor | Disparo de Q1 y bloqueo |
-| Equipo trabado | Supervisión | Alarma de discrepancia (prioridad alta) |
+| Línea DC, **baja impedancia** | Onda viajera, al instante | Relé 86: bloqueo del convertidor y disparo de Q1 |
+| Línea DC, **alta impedancia** | Diferencial de línea DC, tras un retardo (0.5 s simulados por defecto, configurable). La onda viajera no la detecta | Relé 86: bloqueo del convertidor y disparo de Q1 |
+| Subtensión en la red AC | Subtensión AC (27), por escalones | Relé 86: bloqueo del convertidor y disparo de Q1 |
+| Línea AC | Protección de distancia (21), zonas 1 y 2 (la 87L queda para el enlace con la segunda estación, #67) | Relé 86: bloqueo del convertidor y disparo de Q1 |
+| Interna del transformador | Diferencial (87T) | Relé 86: bloqueo del convertidor y disparo de Q1 |
+| Interna del convertidor | Protección del convertidor | Relé 86: bloqueo del convertidor y disparo de Q1 |
 
-- En la falla de línea DC, el **instructor elige el tipo** (baja o alta impedancia) y el SER registra **qué función actuó**.
-- El **bloqueo por protección es instantáneo**: P y Udc pasan a 0 sin rampa (a diferencia del bloqueo del operador, que exige P = 0 y deja bajar Udc con su rampa).
-- Las protecciones disparadas generan una **alarma urgente**.
-- **Equipo trabado**: la supervisión levanta la discrepancia cuando la maniobra supera el **doble de su tiempo** de maniobra. Al despejar la falla, la maniobra termina.
+(El equipo trabado y su alarma de discrepancia, que estaban en esta tabla, pasaron al backlog: issue #74, junto con la protección de falla de interruptor.)
+
+**Por qué todas activan el 86 y disparan Q1.** Se simplifica con **un solo relé de bloqueo por estación**, activado por **todas** las protecciones, sin recierre ni autorrestablecimiento. Antes, la falla de línea DC y la subtensión AC solo bloqueaban el convertidor. En una estación real suelen resolverse bloqueando y reintentando solas, sin disparar el interruptor: aquí se pierde ese realismo, y a cambio el operador debe normalizar siempre (resetear el 86 y volver a armar la secuencia), que es lo que se quiere practicar. Desde coupled, cualquier falla deja la estación `inconsistent` (Q1 abierto, Q2 cerrado); desde decoupled, queda en `stopped`.
+
+### Qué hace el 86 al actuar una protección
+- **Bloquea el convertidor al instante**: P, consigna y Udc pasan a 0 sin rampa (a diferencia del bloqueo del operador, que exige P = 0 y deja bajar Udc con su rampa).
+- **Dispara Q1** en **1,5 ciclos de la red** (30 ms a 50 Hz): abre con carga y sin pasar por los enclavamientos del operador (que siguen exigiendo el convertidor bloqueado). El tiempo se expresa en ciclos y la frecuencia de la red es un dato de la configuración. El disparo tiene prioridad sobre una maniobra de Q1 en curso; Q2 y QE no se ven afectados. Con dt = 100 ms el disparo termina en el mismo ciclo.
+- **Impide cerrar Q1 y desbloquear el convertidor** mientras esté enclavado.
+- Las protecciones disparadas generan una **alarma urgente** (una por función), que dura hasta el reset del 86, y el SER registra **qué función actuó**.
+- **Orden causal en el SER** dentro del mismo ciclo: arranques, disparos de las protecciones, 86 enclavado, convertidor bloqueado, Q1 abierto, estado de la estación y alarmas.
+
+### Medida y zonas
+Cada protección **ve** la falla solo si la **mide**: la falla está en su zona y la zona está energizada. Una falla en una zona sin energizar no la ve ningún relé; la protección actúa en cuanto la zona se energiza (**cierre sobre falla**).
+
+| Punto de medida | Dónde está | Lo usan |
+|---|---|---|
+| CT1 | lado red de Q1 | 21 y 87T (lado de alta) |
+| TP1 | barra AC, lado red de Q1 | 21 y 27 |
+| CT2 | lado válvulas del transformador | 87T (lado de baja) y convertidor |
+| CT3 | lado DC del convertidor, antes de Q2 | convertidor y medición de Idc |
+| Divisor DC | lado línea de Q2 | onda viajera y diferencial de línea DC |
+
+| Zona | Entre | Se energiza cuando |
+|---|---|---|
+| Línea AC | CT1 → red | siempre (la red es la fuente) |
+| Transformador | CT1 – CT2 | Q1 cerrado |
+| Convertidor | CT2 – CT3 | Q1 cerrado |
+| Línea DC | divisor DC → línea | Q2 cerrado y Udc > 0 |
+
+"Cerrado" usa la regla de la alarma de inconsistencia: un equipo en maniobra cuenta en su posición de origen. Q2, entre CT3 y el divisor, no tiene zona. Además de la zona energizada, la **21** es direccional (mira hacia la red) y necesita corriente por CT1, que solo existe si la estación aporta: ve la falla de línea AC con Q1 cerrado y el convertidor desbloqueado (aporte del VSC). La **27** ve la falla siempre, porque TP1 mide la tensión de barra.
+
+### Ajustes
+Cada elemento tiene un **tiempo propio** del relé (no intencional) y un **retardo intencional**, ambos configurables: actúa cuando lleva viendo la falla `propio + retardo`; si deja de verla antes, el contador vuelve a 0. Valores por defecto: unos 30 ms propios para la 87T, la zona 1 de la 21, el escalón 2 de la 27 y el convertidor; unos pocos ms para la onda viajera; retardo de 0.5 s en el diferencial DC y de 300 ms en la zona 2 de la 21 y en el escalón 1 de la 27.
+- **21:** zona 1 hasta el 80 % de la línea, instantánea; zona 2 hasta el 120 %, con 300 ms. Sin zona 3. El instructor elige la ubicación de la falla (0 a 150 % del largo de la línea).
+- **27:** escalón 1 al 80 % de Un con 300 ms; escalón 2 al 70 % de Un, instantáneo. El simulador incorpora una tensión AC en TP1: el instructor elige la tensión residual de una falla de subtensión, y una falla de línea AC la deja en una residual fija (configurable, 0 % por defecto). Por eso la 27 ve también las fallas de línea AC más allá del 120 % (la 21 no): consecuencia aceptada de la simplificación.
+- **SER:** registra el **arranque** de cada elemento que vio la falla y el **disparo** solo del que llegó a disparar. Cuando dispara el más rápido, el bloqueo y el disparo de Q1 quitan la energización o la corriente, y el más lento deja de ver la falla.
+- **En la falla de línea DC, el instructor elige el tipo** (baja o alta impedancia).
+- La falla no cambia la planta hasta que una protección actúa (simplificación).
 
 ## 5. Reset remoto de protecciones
 
@@ -148,7 +184,7 @@ Se implementan en este orden, cada una con su rama(s), PR(s) y milestone:
 | 4.1 | Navegación y eventos: barra de ventanas, tabla de señales, ventana SER |
 | 4.2 | Alarmas: modelo, ventana, reconocimiento |
 | 4.3 | Modo manual (#36) |
-| 4.4 | Trabajo previo: panel de eventos (#39) e indicador de foco (#62). Después, fallas y protecciones: ventana de simulación, protecciones, discrepancia, reset remoto |
+| 4.4 | Trabajo previo: panel de eventos (#39) e indicador de foco (#62). Después, fallas y protecciones (#73): protecciones por zona, relé 86, reset remoto, ventana del instructor y ventana "Protecciones". El equipo trabado, la discrepancia y la 50BF salen al backlog (#74) |
 | 4.5 | Tendencias |
 
 **Por qué el panel de eventos (#39) pasó de la 4.5 a la 4.4:** el aviso de rechazo del panel de órdenes empuja los botones unos 40 px hacia abajo al aparecer, y suben al desaparecer. Un segundo clic apurado puede seleccionar otra orden, así que es un riesgo de operación, no una mejora estética. La 4.4 agrega muchos mensajes nuevos (fallas, protecciones), y el problema se agravaría; por eso se resuelve antes, como trabajo previo de la subfase. El indicador de foco (#62) va en el mismo bloque por la misma razón: en una pantalla de mando, el operador debe ver qué elemento recibirá la acción.
