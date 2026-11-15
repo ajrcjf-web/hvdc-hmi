@@ -49,7 +49,7 @@ supervisa una estación HVDC monopolar.
 - Nunca hagas merge, ni commits o push directamente en `main`, ni crees tags o Releases, ni cierres o reabras issues a mano: eso lo hago yo.
 
 ## Planes de varios PRs
-- Cuando un plan aprobado abarca varios PRs, se guarda como comentario en el issue correspondiente y se lee de ahí al empezar cada PR. (La subfase 4.3 está en el issue #36.)
+- Cuando un plan aprobado abarca varios PRs, se guarda como comentario en el issue correspondiente y se lee de ahí al empezar cada PR. (La subfase 4.3 está en el issue #36. La subfase 4.4, fallas y protecciones, está en el issue #73: el plan vigente es su último comentario, el "Plan v3".)
 
 ## Decisiones de diseño
 - Consigna de potencia válida: 0, o entre Pmin y Pmax.
