@@ -14,6 +14,7 @@ import {
   type AlarmState,
   type TestAlarmCode,
 } from "./alarms.ts";
+import { withFault, withoutFault, type Fault, type FaultKind } from "./protections.ts";
 import { timestampMs, type SerEvent, type SignalEvent } from "./events.ts";
 import { runCycle, type CycleEvent, type ScheduledCommand } from "./simulationCycle.ts";
 import { createStation, type Station, type StationConfig } from "./station.ts";
@@ -116,4 +117,22 @@ export function setTestAlarm(
 ): SimulationState {
   const alarms = setForced(state.alarms, code, active);
   return alarms === state.alarms ? state : { ...state, alarms };
+}
+
+// El instructor provoca una falla. No es una orden de mando: no pasa por runCommand, ni por
+// select-before-operate, ni por los enclavamientos. Solo cambia la causa: las protecciones
+// la ven (o no) en el siguiente ciclo, según su zona y su energización.
+export function setFault(state: SimulationState, fault: Fault): SimulationState {
+  const faults = withFault(state.station.faults, fault);
+  return faults === state.station.faults
+    ? state
+    : { ...state, station: { ...state.station, faults } };
+}
+
+// El instructor despeja una falla. El relé 86 no se suelta: sigue enclavado hasta el reset.
+export function clearFault(state: SimulationState, kind: FaultKind): SimulationState {
+  const faults = withoutFault(state.station.faults, kind);
+  return faults === state.station.faults
+    ? state
+    : { ...state, station: { ...state.station, faults } };
 }

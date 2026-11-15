@@ -10,6 +10,9 @@ export const signalDescriptions = {
   "STATION.STATE": "Estación: estado",
   "CONVERTER.BLOCK": "Convertidor: bloqueo",
   "STATION.MODE": "Estación: modo de operación",
+  "PROT.TRANSFORMER_DIFFERENTIAL": "Protección diferencial del transformador (87T)",
+  "PROT.CONVERTER": "Protección del convertidor",
+  "RELAY86.LOCKOUT": "Relé de bloqueo 86",
   "CMD.TO_EARTHED": "Orden: ir a earthed",
   "CMD.TO_STOPPED": "Orden: ir a stopped",
   "CMD.TO_DECOUPLED": "Orden: ir a decoupled",
@@ -25,6 +28,9 @@ export const signalDescriptions = {
   "CMD.Q2_CLOSE": "Orden: cerrar Q2",
   "CMD.QE_OPEN": "Orden: abrir QE",
   "CMD.QE_CLOSE": "Orden: cerrar QE",
+  "ALARM.PROT_TRANSFORMER_DIFFERENTIAL": "Alarma: actuó la protección diferencial del transformador (87T)",
+  "ALARM.PROT_CONVERTER": "Alarma: actuó la protección del convertidor",
+  "ALARM.RELAY86_LOCKED": "Alarma: relé de bloqueo 86 enclavado",
   "ALARM.INCONSISTENT": "Alarma: estación inconsistente",
   "ALARM.TEST_URGENT": "Alarma de prueba: urgente",
   "ALARM.TEST_HIGH": "Alarma de prueba: alta",
@@ -52,6 +58,10 @@ export const signalStateLabels = {
   // modo de operación
   automatic: "automático",
   manual: "manual",
+  // protecciones y relé 86
+  "picked-up": "arrancó",
+  operated: "actuó",
+  locked: "enclavado",
   // paso de una orden
   selected: "seleccionada",
   executed: "ejecutada",

@@ -14,6 +14,7 @@
 // o sin reconocer.
 
 import type { SignalEvent } from "./events.ts";
+import { isCausePresent, type ProtectionElement } from "./protections.ts";
 import type { SignalCode } from "./signals.ts";
 import type { Station } from "./station.ts";
 import { deriveState } from "./stationState.ts";
@@ -34,7 +35,12 @@ export type AlarmLifeState =
   | "normal";
 
 // Prioridad de cada alarma. El orden de las claves es el orden de evaluación.
+// Las alarmas de protección van antes que la de inconsistencia: es su causa, y los eventos
+// de un mismo ciclo salen en este orden.
 export const alarmPriorities: Record<AlarmCode, AlarmPriority> = {
+  "ALARM.PROT_TRANSFORMER_DIFFERENTIAL": "urgent",
+  "ALARM.PROT_CONVERTER": "urgent",
+  "ALARM.RELAY86_LOCKED": "urgent",
   "ALARM.INCONSISTENT": "urgent",
   "ALARM.TEST_URGENT": "urgent",
   "ALARM.TEST_HIGH": "high",
@@ -61,12 +67,18 @@ export type AlarmResult = { alarms: AlarmState; events: SignalEvent[] };
 export function createAlarmState(): AlarmState {
   return {
     life: {
+      "ALARM.PROT_TRANSFORMER_DIFFERENTIAL": "normal",
+      "ALARM.PROT_CONVERTER": "normal",
+      "ALARM.RELAY86_LOCKED": "normal",
       "ALARM.INCONSISTENT": "normal",
       "ALARM.TEST_URGENT": "normal",
       "ALARM.TEST_HIGH": "normal",
       "ALARM.TEST_LOW": "normal",
     },
     activatedAtSeconds: {
+      "ALARM.PROT_TRANSFORMER_DIFFERENTIAL": 0,
+      "ALARM.PROT_CONVERTER": 0,
+      "ALARM.RELAY86_LOCKED": 0,
       "ALARM.INCONSISTENT": 0,
       "ALARM.TEST_URGENT": 0,
       "ALARM.TEST_HIGH": 0,
@@ -94,12 +106,24 @@ export function visibleAlarms(alarms: AlarmState): AlarmCode[] {
   return alarmCodes.filter((code) => isVisible(alarms.life[code]));
 }
 
+// La protección actuó (desde el último reset) y su falla sigue presente.
+function isProtectionAlarmActive(element: ProtectionElement, station: Station): boolean {
+  return station.relay86.operated.includes(element) && isCausePresent(element, station);
+}
+
 // ¿Está presente la condición de cada alarma?
 export function alarmConditions(
   station: Station,
   alarms: AlarmState,
 ): Record<AlarmCode, boolean> {
   return {
+    // "Protección X actuó": activa mientras la falla siga presente y se normaliza cuando el
+    // instructor la despeja. Así el operador ve en la lista de alarmas cuándo se despejó la
+    // falla, que es la señal de que puede resetear el 86.
+    "ALARM.PROT_TRANSFORMER_DIFFERENTIAL": isProtectionAlarmActive("transformerDifferential", station),
+    "ALARM.PROT_CONVERTER": isProtectionAlarmActive("converterProtection", station),
+    // "Relé 86 enclavado": activa hasta el reset del 86.
+    "ALARM.RELAY86_LOCKED": station.relay86.locked,
     // Un equipo en maniobra cuenta en su posición de origen: la alarma no se normaliza al
     // empezar la maniobra que la resuelve (ni aparece antes de que termine la que la causa).
     "ALARM.INCONSISTENT": deriveState(atOrigin(station.switchgear)) === "inconsistent",

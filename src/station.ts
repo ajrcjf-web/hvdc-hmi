@@ -3,6 +3,16 @@
 // Cada orden devuelve una estación nueva, o un rechazo con motivo.
 
 import {
+  createProtectionState,
+  createRelay86,
+  defaultProtectionConfig,
+  noFaults,
+  type Faults,
+  type ProtectionConfig,
+  type ProtectionState,
+  type Relay86,
+} from "./protections.ts";
+import {
   canTransition,
   deriveState,
   statePositions,
@@ -33,9 +43,12 @@ export type Station = {
   udcKV: number; // tensión DC (tiene dinámica: sube y baja con su rampa)
   powerMW: number; // potencia medida
   powerOrderMW: number; // consigna del operador
+  faults: Faults; // las fallas que provoca el instructor (no son órdenes)
+  relay86: Relay86; // relé de bloqueo 86: enclavado tras actuar una protección
+  protection: ProtectionState; // cuánto lleva cada elemento viendo su falla
 };
 
-export type StationConfig = SwitchgearConfig & {
+export type StationConfig = SwitchgearConfig & ProtectionConfig & {
   pMinMW: number;
   pMaxMW: number;
   rampRateMWPerMin: number;
@@ -45,6 +58,7 @@ export type StationConfig = SwitchgearConfig & {
 
 export const defaultConfig: StationConfig = {
   ...defaultSwitchgearConfig,
+  ...defaultProtectionConfig,
   pMinMW: 50,
   pMaxMW: 500,
   rampRateMWPerMin: 600,
@@ -64,6 +78,9 @@ export function createStation(): Station {
     udcKV: 0,
     powerMW: 0,
     powerOrderMW: 0,
+    faults: noFaults(),
+    relay86: createRelay86(),
+    protection: createProtectionState(),
   };
 }
 
@@ -114,6 +131,12 @@ function operateSwitch(
     return reject(
       `${id} no puede maniobrar con corriente: P debe ser 0 (P actual: ${station.powerMW} MW)`,
     );
+  }
+
+  // El relé 86 enclavado impide cerrar Q1 hasta que el operador lo resetee. Abrir no se
+  // enclava (lleva a una condición más segura).
+  if (id === "Q1" && to === "closed" && station.relay86.locked) {
+    return reject("Q1 no puede cerrarse con el relé 86 enclavado: resetear el 86 primero");
   }
 
   const result = requestSwitch(station.switchgear, id, to, config);
