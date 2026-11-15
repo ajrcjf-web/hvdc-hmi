@@ -118,6 +118,9 @@ Cada elemento tiene un **tiempo propio** del relé (no intencional) y un **retar
 - El reset usa *select-before-operate*, igual que las demás órdenes.
 - El reset **se rechaza, con su motivo, mientras la causa siga presente** (la falla no fue despejada por el instructor).
 - Este escenario (intentar resetear con la falla presente) es **explícito**: tiene test y prueba manual en el PR.
+- El reset vale en **automático y en manual** y **no exige ningún estado** de la estación: se puede resetear antes o después de normalizar los equipos. Se rechaza también si el 86 no está enclavado.
+- Liberar el 86 **no mueve ningún equipo**: la estación sigue `inconsistent` hasta que el operador normaliza en manual (abrir Q2). Normalizar es: pasar a manual, abrir Q2, resetear el 86 (cuando el instructor despejó la falla) y volver a armar la secuencia.
+- El operador sabe que puede resetear porque la alarma "Protección X actuó" se normaliza al despejarse la falla; la alarma "Relé 86 enclavado" se normaliza con el reset.
 
 ## 6. Modo manual (issue #36)
 
