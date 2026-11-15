@@ -42,6 +42,39 @@ describe("toFaultRows", () => {
   });
 });
 
+describe("toFaultRows: después del disparo", () => {
+  // Disparo desde coupled: Q1 abierto (la zona quedó sin energizar) y el 86 enclavado.
+  const tripped = (): Station => ({
+    ...withFault(stationAt("coupled"), "converter"),
+    switchgear: { ...stationAt("coupled").switchgear, Q1: { kind: "open" } },
+    relay86: { locked: true, operated: ["converterProtection"] },
+  });
+
+  test("si el elemento ya actuó, la nota lo dice y no habla en futuro", () => {
+    const note = toFaultRows(tripped())[1]!.note;
+    expect(note).toBe(
+      "Protección del convertidor ya actuó y la zona del convertidor (CT2–CT3) quedó sin energizar",
+    );
+    expect(note).not.toContain("actuará");
+  });
+
+  test("la nota de una falla que no actuó sigue igual", () => {
+    // El transformador no actuó: su zona también está sin energizar, y actuará al energizarse.
+    const station: Station = { ...tripped(), faults: { transformer: true, converter: true } };
+    expect(toFaultRows(station)[0]!.note).toContain("actuará cuando se energice");
+  });
+
+  test("si ya actuó y la zona sigue energizada, solo dice que ya actuó", () => {
+    const station: Station = { ...tripped(), switchgear: stationAt("coupled").switchgear };
+    expect(toFaultRows(station)[1]!.note).toBe("Protección del convertidor ya actuó");
+  });
+
+  test("despejada la falla no hay nota, aunque el 86 siga enclavado", () => {
+    const station: Station = { ...tripped(), faults: noFaults() };
+    expect(toFaultRows(station)[1]!.note).toBe("");
+  });
+});
+
 describe("summarizeStation", () => {
   test("dice el estado de la estación y el del 86", () => {
     expect(summarizeStation(stationAt("coupled"))).toBe("Estación: coupled · Relé 86: normal");

@@ -40,9 +40,15 @@ export function toFaultRows(station: Station): FaultRow[] {
     const protection = describeSignal(elementDefinitions[info.element].signal);
     let note = "";
     if (present) {
-      note = isZoneEnergized(info.zone, station)
-        ? `La ve: ${protection}`
-        : `La ${info.zoneLabel} está sin energizar: ninguna protección la ve; ${protection} actuará cuando se energice`;
+      const energized = isZoneEnergized(info.zone, station);
+      if (station.relay86.operated.includes(info.element)) {
+        // Ya actuó (y el disparo suele dejar la zona sin energizar): no "actuará".
+        note = `${protection} ya actuó${energized ? "" : ` y la ${info.zoneLabel} quedó sin energizar`}`;
+      } else {
+        note = energized
+          ? `La ve: ${protection}`
+          : `La ${info.zoneLabel} está sin energizar: ninguna protección la ve; ${protection} actuará cuando se energice`;
+      }
     }
     return {
       kind,
