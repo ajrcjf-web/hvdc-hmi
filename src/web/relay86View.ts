@@ -7,6 +7,13 @@ import { relay86Causes } from "../protections.ts";
 import { describeSignal } from "../signals.ts";
 import type { Station } from "../station.ts";
 
+// Las dos etiquetas del indicador. Se dibujan las dos (la inactiva invisible) para reservar el
+// ancho de la más larga con la fuente real.
+export const relay86Labels = {
+  normal: { symbol: "[□]", label: "RELÉ 86 NORMAL" },
+  locked: { symbol: "[■]", label: "RELÉ 86 ENCLAVADO" },
+} as const;
+
 export type Relay86View = {
   locked: boolean;
   label: string; // el texto del indicador
@@ -21,8 +28,8 @@ export function describeRelay86(station: Station): Relay86View {
   const locked = station.relay86.locked;
   return {
     locked,
-    label: locked ? "RELÉ 86 ENCLAVADO" : "RELÉ 86 NORMAL",
-    symbol: locked ? "[■]" : "[□]",
+    label: relay86Labels[locked ? "locked" : "normal"].label,
+    symbol: relay86Labels[locked ? "locked" : "normal"].symbol,
     accessibleLabel: `Relé de bloqueo 86: ${locked ? "enclavado" : "normal"}`,
     causes: relay86Causes(station).map((cause) => ({
       name: cause.name,
