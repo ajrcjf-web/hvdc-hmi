@@ -79,7 +79,7 @@ export function describeCommand(
         : null,
     relay86:
       command.kind === "reset86"
-        ? { locked: station.relay86.locked, causes: relay86Causes(station) }
+        ? { locked: station.relay86.locked, causes: relay86Causes(station, config) }
         : null,
     modeChange: command.kind === "mode" ? { from: station.mode, to: command.to } : null,
     check: result.ok ? { ok: true } : { ok: false, reason: result.reason },

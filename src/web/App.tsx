@@ -104,6 +104,7 @@ export function App() {
         {state.ui.activeWindow === "faults" && (
           <FaultsWindow
             station={state.simulation.station}
+            config={state.simulation.config}
             alarms={state.simulation.alarms}
             dispatch={dispatch}
           />

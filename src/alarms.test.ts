@@ -16,7 +16,7 @@ import {
 } from "./alarms.ts";
 import { describeSignal } from "./signals.ts";
 import type { Station } from "./station.ts";
-import { stationAt } from "./testSupport.ts";
+import { stationAt, testConfig } from "./testSupport.ts";
 
 const normalStation = stationAt("stopped");
 // Q1 cerrado y Q2 cerrado con QE cerrado: ninguna posición corresponde a un estado.
@@ -33,7 +33,7 @@ const life = (alarms: AlarmState, code: AlarmCode) => alarms.life[code];
 
 // Activa la condición de una alarma de prueba y evalúa, como hace el ciclo.
 function activated(code: typeof urgent | typeof high | typeof low, at = 0): AlarmState {
-  return evaluateAlarms(setTestAlarm(createAlarmState(), code, true), normalStation, at).alarms;
+  return evaluateAlarms(setTestAlarm(createAlarmState(), code, true), normalStation, at, testConfig).alarms;
 }
 
 describe("la tabla de alarmas", () => {
@@ -66,7 +66,7 @@ describe("evaluateAlarms: ciclo de vida completo", () => {
     let alarms = setTestAlarm(createAlarmState(), urgent, true);
 
     // 1. La condición aparece.
-    let result = evaluateAlarms(alarms, normalStation, 1);
+    let result = evaluateAlarms(alarms, normalStation, 1, testConfig);
     alarms = result.alarms;
     events.push(...result.events);
     expect(life(alarms, urgent)).toBe("active-unacknowledged");
@@ -80,7 +80,7 @@ describe("evaluateAlarms: ciclo de vida completo", () => {
 
     // 3. La condición desaparece estando reconocida: pasa a normal y sale de la lista.
     alarms = setTestAlarm(alarms, urgent, false);
-    result = evaluateAlarms(alarms, normalStation, 3);
+    result = evaluateAlarms(alarms, normalStation, 3, testConfig);
     alarms = result.alarms;
     events.push(...result.events);
     expect(life(alarms, urgent)).toBe("normal");
@@ -98,7 +98,7 @@ describe("evaluateAlarms: ciclo de vida completo", () => {
     expect(life(alarms, high)).toBe("active-unacknowledged");
 
     // La condición desaparece sin que nadie la haya visto: sigue visible.
-    alarms = evaluateAlarms(setTestAlarm(alarms, high, false), normalStation, 1).alarms;
+    alarms = evaluateAlarms(setTestAlarm(alarms, high, false), normalStation, 1, testConfig).alarms;
     expect(life(alarms, high)).toBe("returned-unacknowledged");
     expect(visibleAlarms(alarms)).toEqual([high]);
 
@@ -110,24 +110,24 @@ describe("evaluateAlarms: ciclo de vida completo", () => {
 
   test("si la condición reaparece antes de reconocer la normalización, vuelve a activa sin reconocer", () => {
     let alarms = activated(low);
-    alarms = evaluateAlarms(setTestAlarm(alarms, low, false), normalStation, 1).alarms;
+    alarms = evaluateAlarms(setTestAlarm(alarms, low, false), normalStation, 1, testConfig).alarms;
     expect(life(alarms, low)).toBe("returned-unacknowledged");
 
-    const result = evaluateAlarms(setTestAlarm(alarms, low, true), normalStation, 2);
+    const result = evaluateAlarms(setTestAlarm(alarms, low, true), normalStation, 2, testConfig);
     expect(life(result.alarms, low)).toBe("active-unacknowledged");
     expect(result.events).toEqual([{ code: low, state: "active-unacknowledged", timeSeconds: 2 }]);
   });
 
   test("una alarma reconocida cuya condición sigue presente se queda activa reconocida", () => {
     const acked = acknowledge(activated(urgent), urgent, 1).alarms;
-    const result = evaluateAlarms(acked, normalStation, 2);
+    const result = evaluateAlarms(acked, normalStation, 2, testConfig);
     expect(life(result.alarms, urgent)).toBe("active-acknowledged");
     expect(result.events).toEqual([]);
   });
 
   test("sin cambios no hay eventos y las alarmas son las mismas", () => {
     const alarms = createAlarmState();
-    const result = evaluateAlarms(alarms, normalStation, 0);
+    const result = evaluateAlarms(alarms, normalStation, 0, testConfig);
     expect(result.events).toEqual([]);
     expect(result.alarms).toBe(alarms);
   });
@@ -137,6 +137,7 @@ describe("evaluateAlarms: ciclo de vida completo", () => {
       setTestAlarm(setTestAlarm(createAlarmState(), urgent, true), low, true),
       normalStation,
       0,
+      testConfig,
     ).alarms;
     expect(visibleAlarms(alarms)).toEqual([urgent, low]);
     expect(life(alarms, high)).toBe("normal");
@@ -145,12 +146,12 @@ describe("evaluateAlarms: ciclo de vida completo", () => {
 
 describe("la alarma de inconsistent", () => {
   test("se activa cuando la estación queda inconsistente y se normaliza cuando deja de estarlo", () => {
-    const on = evaluateAlarms(createAlarmState(), inconsistentStation, 5);
+    const on = evaluateAlarms(createAlarmState(), inconsistentStation, 5, testConfig);
     expect(on.events).toEqual([
       { code: "ALARM.INCONSISTENT", state: "active-unacknowledged", timeSeconds: 5 },
     ]);
 
-    const off = evaluateAlarms(on.alarms, normalStation, 6);
+    const off = evaluateAlarms(on.alarms, normalStation, 6, testConfig);
     expect(off.events).toEqual([
       { code: "ALARM.INCONSISTENT", state: "returned-unacknowledged", timeSeconds: 6 },
     ]);
@@ -161,7 +162,7 @@ describe("la alarma de inconsistent", () => {
       ...normalStation,
       switchgear: { ...normalStation.switchgear, Q1: { kind: "moving", to: "closed", remainingSeconds: 1 } },
     };
-    expect(evaluateAlarms(createAlarmState(), moving, 0).events).toEqual([]);
+    expect(evaluateAlarms(createAlarmState(), moving, 0, testConfig).events).toEqual([]);
   });
 });
 
@@ -192,6 +193,7 @@ describe("reconocer", () => {
       testAlarmCodes.reduce((a, c) => setTestAlarm(a, c, true), createAlarmState()),
       normalStation,
       0,
+      testConfig,
     ).alarms;
     const result = acknowledgeMany(all, [urgent, low], 1);
     expect(life(result.alarms, urgent)).toBe("active-acknowledged");
@@ -233,7 +235,7 @@ describe("alarmas de prueba", () => {
 
 describe("cuándo apareció cada alarma", () => {
   const appear = (at: number) =>
-    evaluateAlarms(setTestAlarm(createAlarmState(), urgent, true), normalStation, at).alarms;
+    evaluateAlarms(setTestAlarm(createAlarmState(), urgent, true), normalStation, at, testConfig).alarms;
 
   test("anota el instante en que la alarma aparece", () => {
     expect(appear(4).activatedAtSeconds[urgent]).toBe(4);
@@ -244,28 +246,28 @@ describe("cuándo apareció cada alarma", () => {
   });
 
   test("normalizar no cambia la hora de aparición", () => {
-    const returned = evaluateAlarms(setTestAlarm(appear(4), urgent, false), normalStation, 9).alarms;
+    const returned = evaluateAlarms(setTestAlarm(appear(4), urgent, false), normalStation, 9, testConfig).alarms;
     expect(returned.life[urgent]).toBe("returned-unacknowledged");
     expect(returned.activatedAtSeconds[urgent]).toBe(4);
   });
 
   test("lo que no cambia conserva su instante", () => {
-    const later = evaluateAlarms(appear(4), normalStation, 9);
+    const later = evaluateAlarms(appear(4), normalStation, 9, testConfig);
     expect(later.alarms.activatedAtSeconds[urgent]).toBe(4);
     expect(appear(4).activatedAtSeconds[high]).toBe(0);
   });
 
   test("si la alarma se reactiva, la hora es la de la nueva aparición", () => {
-    let alarms = evaluateAlarms(setTestAlarm(appear(4), urgent, false), normalStation, 6).alarms;
-    alarms = evaluateAlarms(setTestAlarm(alarms, urgent, true), normalStation, 8).alarms;
+    let alarms = evaluateAlarms(setTestAlarm(appear(4), urgent, false), normalStation, 6, testConfig).alarms;
+    alarms = evaluateAlarms(setTestAlarm(alarms, urgent, true), normalStation, 8, testConfig).alarms;
     expect(alarms.life[urgent]).toBe("active-unacknowledged");
     expect(alarms.activatedAtSeconds[urgent]).toBe(8);
   });
 
   test("tras reconocer la normalización y volver a aparecer, también es la nueva hora", () => {
     let alarms = acknowledge(appear(4), urgent, 5).alarms;
-    alarms = evaluateAlarms(setTestAlarm(alarms, urgent, false), normalStation, 6).alarms; // normal
-    alarms = evaluateAlarms(setTestAlarm(alarms, urgent, true), normalStation, 10).alarms;
+    alarms = evaluateAlarms(setTestAlarm(alarms, urgent, false), normalStation, 6, testConfig).alarms; // normal
+    alarms = evaluateAlarms(setTestAlarm(alarms, urgent, true), normalStation, 10, testConfig).alarms;
     expect(alarms.activatedAtSeconds[urgent]).toBe(10);
   });
 });

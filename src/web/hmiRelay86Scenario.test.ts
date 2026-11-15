@@ -3,7 +3,6 @@
 // despeje, reset aceptado y normalización de la estación hasta volver a transmitir potencia.
 import { describe, expect, test } from "vitest";
 import type { AlarmCode } from "../alarms.ts";
-import type { FaultKind } from "../protections.ts";
 import { deriveState } from "../stationState.ts";
 import { deblockedAt, testConfig } from "../testSupport.ts";
 import {
@@ -24,6 +23,8 @@ const ticks = (state: HmiState, count: number) =>
 // Selecciona, ejecuta y deja correr el latido en que se ejecuta la orden.
 const operate = (state: HmiState, command: OperatorCommand) =>
   run(state, { type: "select", command }, { type: "execute" }, tick);
+
+type FaultKind = "transformer" | "converter"; // las fallas sin dato
 
 // El instructor provoca y despeja fallas desde su ventana (no son órdenes de mando).
 const provoke = (state: HmiState, kind: FaultKind): HmiState =>

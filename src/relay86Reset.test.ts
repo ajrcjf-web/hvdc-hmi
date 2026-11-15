@@ -21,12 +21,12 @@ function expectRejected(result: CommandResult, reason: string) {
 
 describe("requestRelayReset", () => {
   test("con el 86 sin enclavar se rechaza", () => {
-    expectRejected(requestRelayReset(stationAt("stopped")), "no está enclavado");
+    expectRejected(requestRelayReset(stationAt("stopped"), testConfig), "no está enclavado");
   });
 
   test("con la causa presente se rechaza, y el motivo nombra la protección", () => {
     const station = locked(stationAt("stopped"), ["converterProtection"], { converter: true });
-    expectRejected(requestRelayReset(station), "la causa sigue presente (Protección del convertidor)");
+    expectRejected(requestRelayReset(station, testConfig), "la causa sigue presente (Protección del convertidor)");
   });
 
   test("con varias causas presentes las nombra a todas", () => {
@@ -34,7 +34,7 @@ describe("requestRelayReset", () => {
       transformer: true,
       converter: true,
     });
-    const result = requestRelayReset(station);
+    const result = requestRelayReset(station, testConfig);
     expectRejected(result, "Protección diferencial del transformador (87T)");
     expectRejected(result, "Protección del convertidor");
   });
@@ -43,7 +43,7 @@ describe("requestRelayReset", () => {
     const station = locked(stationAt("stopped"), ["transformerDifferential", "converterProtection"], {
       converter: true,
     });
-    const result = requestRelayReset(station);
+    const result = requestRelayReset(station, testConfig);
     expectRejected(result, "Protección del convertidor");
     expect(result).toEqual({
       ok: false,
@@ -53,21 +53,21 @@ describe("requestRelayReset", () => {
 
   test("con la causa despejada, el 86 se libera y no queda ningún elemento actuado", () => {
     const station = locked(stationAt("stopped"), ["converterProtection"]);
-    const result = requestRelayReset(station);
+    const result = requestRelayReset(station, testConfig);
     expect(result).toMatchObject({ ok: true, station: { relay86: { locked: false, operated: [] } } });
   });
 
   test("no cambia nada más de la estación", () => {
     const station = locked(stationAt("stopped"), ["converterProtection"]);
-    const result = requestRelayReset(station);
+    const result = requestRelayReset(station, testConfig);
     if (!result.ok) throw new Error(result.reason);
     expect(result.station).toEqual({ ...station, relay86: { locked: false, operated: [] } });
   });
 
   test("vale en automático y en manual", () => {
     const station = locked(stationAt("stopped"), ["converterProtection"]);
-    expect(requestRelayReset({ ...station, mode: "automatic" }).ok).toBe(true);
-    expect(requestRelayReset({ ...station, mode: "manual" }).ok).toBe(true);
+    expect(requestRelayReset({ ...station, mode: "automatic" }, testConfig).ok).toBe(true);
+    expect(requestRelayReset({ ...station, mode: "manual" }, testConfig).ok).toBe(true);
   });
 
   test("no exige ningún estado: se puede resetear con la estación inconsistent", () => {
@@ -75,19 +75,19 @@ describe("requestRelayReset", () => {
       ...stationAt("coupled"),
       switchgear: { ...stationAt("coupled").switchgear, Q1: { kind: "open" } },
     };
-    expect(requestRelayReset(locked(inconsistent, ["converterProtection"])).ok).toBe(true);
+    expect(requestRelayReset(locked(inconsistent, ["converterProtection"]), testConfig).ok).toBe(true);
   });
 
   test("no usa la energización: la causa cuenta aunque ya ninguna zona la vea", () => {
     // Q1 abierto: el convertidor no está energizado, pero la falla sigue ahí.
     const station = locked(deblockedAt(0), ["converterProtection"], { converter: true });
-    expect(requestRelayReset(station).ok).toBe(false);
+    expect(requestRelayReset(station, testConfig).ok).toBe(false);
   });
 
   test("tras el reset, volver a cerrar Q1 ya no lo impide el 86", () => {
     const tripped = locked(stationAt("stopped"), ["converterProtection"]);
     expect(requestTransition(tripped, "decoupled", testConfig).ok).toBe(false);
-    const reset = requestRelayReset(tripped);
+    const reset = requestRelayReset(tripped, testConfig);
     if (!reset.ok) throw new Error(reset.reason);
     expect(requestTransition(reset.station, "decoupled", testConfig).ok).toBe(true);
   });

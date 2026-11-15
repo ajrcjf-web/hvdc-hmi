@@ -88,6 +88,27 @@ export function summarizeAlarms(alarms: AlarmState): AlarmSummary {
   return { count: visible.length, unacknowledged, highest, blinking: unacknowledged > 0 };
 }
 
+// El texto del indicador, con el símbolo de lo no reconocido si parpadea.
+export function formatAlarmSummary(summary: AlarmSummary): string {
+  const text = describeAlarmSummary(summary);
+  return summary.blinking ? `${UNACKNOWLEDGED_SYMBOL} ${text}` : text;
+}
+
+// Los textos más anchos que puede mostrar el indicador: para cada prioridad, la cantidad máxima
+// de alarmas con el símbolo de lo no reconocido, y "Sin alarmas". La barra los dibuja
+// superpuestos con el texto real (invisibles) para reservar el ancho del más largo con la fuente
+// real: así, cuando llega la primera alarma, el indicador no cambia de ancho ni pasa a otra
+// línea. Se generan con la misma función que da el texto real, para que no se desactualicen.
+export function widestAlarmSummaryTexts(maxCount: number): string[] {
+  const priorities = Object.keys(priorityLabels) as AlarmPriority[];
+  return [
+    describeAlarmSummary({ count: 0, unacknowledged: 0, highest: null, blinking: false }),
+    ...priorities.map((highest) =>
+      formatAlarmSummary({ count: maxCount, unacknowledged: maxCount, highest, blinking: true }),
+    ),
+  ];
+}
+
 // El texto del indicador: la cantidad y la prioridad más alta, además del color.
 export function describeAlarmSummary(summary: AlarmSummary): string {
   if (summary.highest === null) {
