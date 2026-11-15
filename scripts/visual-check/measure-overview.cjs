@@ -3,8 +3,8 @@
 // botón "Resetear 86" (y de los paneles de estado y de órdenes). Saca una captura por paso.
 // Es un ejemplo: para otro PR de interfaz se copia y se cambian el recorrido y lo que se mide.
 //
-// Requisitos: Chrome instalado y `npm install --no-save playwright-core` (no baja navegadores
-// y no cambia package.json). Con otra ruta de Chrome: variable CHROME_PATH.
+// Requisitos: Chrome instalado y `npm install` (playwright-core es una devDependency fija; no
+// baja navegadores: usa el Chrome instalado). Con otra ruta de Chrome: variable CHROME_PATH.
 // Uso: node scripts/visual-check/measure-overview.cjs <url> <carpeta de capturas> [ancho]
 // Ver docs/WORKFLOW.md, "Revisión visual medida".
 const { chromium } = require("playwright-core");
