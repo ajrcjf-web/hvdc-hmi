@@ -4,8 +4,15 @@
 //
 // A la derecha va el indicador de alarmas, visible desde todas las ventanas: la cantidad
 // y la prioridad más alta (por texto, símbolo y color), intermitente si hay alguna sin
-// reconocer. Al pulsarlo se abre la ventana de alarmas.
-import { describeAlarmSummary, UNACKNOWLEDGED_SYMBOL, type AlarmSummary } from "../alarmView.ts";
+// reconocer. Al pulsarlo se abre la ventana de alarmas. Su ancho no depende de lo que dice:
+// el texto real y los textos más anchos posibles (invisibles) están en la misma celda de una
+// grilla, así la caja reserva el ancho del más largo y no cambia ni pasa a otra línea cuando
+// llega la primera alarma.
+
+// Se calcula una vez: depende solo de cuántas alarmas existen.
+const reservedTexts = widestAlarmSummaryTexts(alarmCodes.length);
+import { alarmCodes } from "../../alarms.ts";
+import { describeAlarmSummary, formatAlarmSummary, widestAlarmSummaryTexts, type AlarmSummary } from "../alarmView.ts";
 import { windows, type WindowId } from "../windows.ts";
 
 type Props = {
@@ -40,8 +47,14 @@ export function NavigationBar({ active, alarmSummary, onNavigate }: Props) {
         onClick={() => onNavigate("alarms")}
         aria-label={`Alarmas: ${text}${alarmSummary.blinking ? ", hay alguna sin reconocer" : ""}`}
       >
-        {alarmSummary.blinking && `${UNACKNOWLEDGED_SYMBOL} `}
-        {text}
+        <span className="alarm-text-stack">
+          <span className="alarm-text-actual">{formatAlarmSummary(alarmSummary)}</span>
+          {reservedTexts.map((reserved) => (
+            <span key={reserved} className="alarm-text-reserve" aria-hidden="true">
+              {reserved}
+            </span>
+          ))}
+        </span>
       </button>
     </nav>
   );

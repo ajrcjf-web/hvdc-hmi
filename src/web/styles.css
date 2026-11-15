@@ -424,6 +424,21 @@ input {
   font-variant-numeric: tabular-nums;
 }
 
+.alarm-text-stack {
+  display: inline-grid;
+}
+
+.alarm-text-stack > span {
+  grid-area: 1 / 1;
+}
+
+/* Los textos más anchos posibles, invisibles: reservan el ancho del indicador (en negrita, que
+   es como se ve con alarmas). */
+.alarm-text-reserve {
+  visibility: hidden;
+  font-weight: bold;
+}
+
 .nav .alarm-indicator:is(.alarm-urgent, .alarm-high, .alarm-low) {
   color: var(--alarm-color);
   font-weight: bold;
