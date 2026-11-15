@@ -13,7 +13,6 @@ import {
   deblockCommand,
   modeCommand,
   powerOrderCommand,
-  reset86Command,
   switchCommand,
   transitionCommand,
   type OperatorCommand,
@@ -81,11 +80,6 @@ export function CommandPanel({ mode, onCommand }: Props) {
       <div className="buttons">
         <button onClick={() => onCommand(deblockCommand())}>Desbloquear</button>
         <button onClick={() => onCommand(blockCommand())}>Bloquear</button>
-      </div>
-
-      <h3>Relé de bloqueo 86</h3>
-      <div className="buttons">
-        <button onClick={() => onCommand(reset86Command())}>Resetear 86</button>
       </div>
 
       <h3>Consigna de potencia</h3>

@@ -4,6 +4,7 @@ import type { FaultKind } from "../protections.ts";
 import type { Station } from "../station.ts";
 import { deblockedAt, stationAt, testConfig } from "../testSupport.ts";
 import { describeCommand } from "./commandView.ts";
+import { describeRelay86, lastProtection } from "./relay86View.ts";
 import { reset86Command, transitionCommand } from "./commands.ts";
 import { createHmiState, hmiReducer, type HmiAction, type HmiState } from "./hmiState.ts";
 
@@ -81,6 +82,30 @@ describe("reducer: fallas del instructor", () => {
     );
     expect(state.simulation.station.relay86.locked).toBe(true);
     expect(codes(state)).toContain("PROT.TRANSFORMER_DIFFERENTIAL");
+  });
+});
+
+describe("lo que ve la overview después de una falla", () => {
+  test("el indicador del 86 y la última protección siguen al disparo y al reset", () => {
+    let state = withStation(deblockedAt(300));
+    expect(describeRelay86(state.simulation.station).locked).toBe(false);
+    expect(lastProtection(state.simulation.events)).toBeNull();
+
+    state = run(state, provoke("converter"), tick);
+    expect(describeRelay86(state.simulation.station)).toMatchObject({ locked: true, label: "RELÉ 86 ENCLAVADO" });
+    expect(lastProtection(state.simulation.events)?.name).toBe("Protección del convertidor");
+    expect(describeRelay86(state.simulation.station).causes[0]?.present).toBe(true);
+
+    // Despejada la falla, el indicador sigue enclavado y la causa figura despejada.
+    state = run(state, clear("converter"), tick);
+    expect(describeRelay86(state.simulation.station).locked).toBe(true);
+    expect(describeRelay86(state.simulation.station).causes[0]?.present).toBe(false);
+
+    // Tras el reset el indicador vuelve a normal; la última protección queda como dato histórico.
+    state = run(state, { type: "select", command: reset86Command() }, { type: "execute" }, tick);
+    expect(describeRelay86(state.simulation.station).locked).toBe(false);
+    expect(describeRelay86(state.simulation.station).causes).toEqual([]);
+    expect(lastProtection(state.simulation.events)?.name).toBe("Protección del convertidor");
   });
 });
 
