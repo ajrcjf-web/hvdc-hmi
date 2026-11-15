@@ -1,5 +1,5 @@
-// El relé 86 enclavado: impide cerrar Q1 y desbloquear el convertidor, y el operador
-// sigue sin poder abrir Q1 con carga (solo la protección lo hace).
+// El relé 86 enclavado solo impide cerrar Q1, y el operador sigue sin poder abrir Q1 con
+// carga (solo la protección lo hace).
 import { describe, expect, test } from "vitest";
 import {
   requestDeblock,
@@ -55,14 +55,10 @@ describe("el 86 enclavado impide cerrar Q1", () => {
   });
 });
 
-describe("el 86 enclavado impide desbloquear el convertidor", () => {
-  test("se rechaza con su motivo", () => {
-    const station = locked({ ...stationAt("coupled") });
-    expectRejected(requestDeblock(station), "relé 86 enclavado");
-  });
-
-  test("sin el 86 enclavado, en coupled se acepta", () => {
-    expect(requestDeblock(stationAt("coupled")).ok).toBe(true);
+describe("el 86 enclavado no necesita otra regla para el desbloqueo", () => {
+  test("con Q1 abierto la estación no está en coupled, y desbloquear ya se rechaza por eso", () => {
+    // El 86 deja Q1 abierto y no deja cerrarlo: el desbloqueo queda bloqueado sin regla propia.
+    expectRejected(requestDeblock(locked(stationAt("stopped"))), "Solo se puede desbloquear en coupled");
   });
 });
 

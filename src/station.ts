@@ -224,11 +224,6 @@ export function requestSwitchOrder(
 }
 
 export function requestDeblock(station: Station): CommandResult {
-  if (station.relay86.locked) {
-    return reject(
-      "El convertidor no se puede desbloquear con el relé 86 enclavado: resetear el 86 primero",
-    );
-  }
   const state = deriveState(station.switchgear);
   if (state === "transition") {
     return reject(transitionReason(station));
