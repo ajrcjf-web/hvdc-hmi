@@ -7,6 +7,7 @@ import {
   requestDeblock,
   requestMode,
   requestPowerOrder,
+  requestRelayReset,
   requestSwitchOrder,
   requestTransition,
   type CommandResult,
@@ -25,7 +26,8 @@ export type OperatorCommand =
   | { kind: "deblock" }
   | { kind: "powerOrder"; orderMW: number }
   | { kind: "mode"; to: OperatingMode }
-  | { kind: "switch"; id: SwitchId; to: SwitchTarget };
+  | { kind: "switch"; id: SwitchId; to: SwitchTarget }
+  | { kind: "reset86" };
 
 export function transitionCommand(to: StationState): OperatorCommand {
   return { kind: "transition", to };
@@ -45,6 +47,10 @@ export function powerOrderCommand(orderMW: number): OperatorCommand {
 
 export function modeCommand(to: OperatingMode): OperatorCommand {
   return { kind: "mode", to };
+}
+
+export function reset86Command(): OperatorCommand {
+  return { kind: "reset86" };
 }
 
 export function switchCommand(id: SwitchId, to: SwitchTarget): OperatorCommand {
@@ -72,6 +78,8 @@ export function runCommand(
       return requestMode(station, command.to, config);
     case "switch":
       return requestSwitchOrder(station, command.id, command.to, config);
+    case "reset86":
+      return requestRelayReset(station);
   }
 }
 
@@ -91,6 +99,8 @@ export function commandLabel(command: OperatorCommand): string {
       return command.to === "manual" ? "Pasar a manual" : "Pasar a automático";
     case "switch":
       return `${command.to === "open" ? "Abrir" : "Cerrar"} ${command.id}`;
+    case "reset86":
+      return "Resetear 86";
   }
 }
 
@@ -110,6 +120,8 @@ export function commandSignal(command: OperatorCommand): CommandSignal {
       return { code: command.to === "manual" ? "CMD.MODE_MANUAL" : "CMD.MODE_AUTOMATIC" };
     case "switch":
       return { code: switchSignals[command.id][command.to] };
+    case "reset86":
+      return { code: "CMD.RESET_86" };
   }
 }
 

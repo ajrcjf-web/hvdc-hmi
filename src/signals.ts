@@ -20,6 +20,7 @@ export const signalDescriptions = {
   "CMD.BLOCK": "Orden: bloquear el convertidor",
   "CMD.DEBLOCK": "Orden: desbloquear el convertidor",
   "CMD.POWER_ORDER": "Orden: consigna de potencia",
+  "CMD.RESET_86": "Orden: resetear el relé 86",
   "CMD.MODE_AUTOMATIC": "Orden: pasar a modo automático",
   "CMD.MODE_MANUAL": "Orden: pasar a modo manual",
   "CMD.Q1_OPEN": "Orden: abrir Q1",

@@ -8,7 +8,7 @@
 
 import type { SignalEvent } from "./events.ts";
 import { isZoneEnergized, type MeasurementPoint, type ProtectionZone } from "./protectionZones.ts";
-import type { SignalCode } from "./signals.ts";
+import { describeSignal, type SignalCode } from "./signals.ts";
 import { isTimeUp } from "./simulationTime.ts";
 import type { Station } from "./station.ts";
 import { tripSwitch } from "./switchgear.ts";
@@ -104,6 +104,19 @@ export const elementDefinitions: Record<ProtectionElement, ElementDefinition> = 
 // ¿Sigue presente la causa de un elemento? Sirve para rechazar el reset del 86.
 export function isCausePresent(element: ProtectionElement, station: Station): boolean {
   return elementDefinitions[element].causePresent(station.faults);
+}
+
+// Las causas del 86 enclavado: los elementos que actuaron, con su nombre (el de la tabla de
+// señales, para no repetir textos) y si su falla sigue presente. Las usan el reset y la
+// ventana de confirmación.
+export type Relay86Cause = { element: ProtectionElement; name: string; present: boolean };
+
+export function relay86Causes(station: Station): Relay86Cause[] {
+  return station.relay86.operated.map((element) => ({
+    element,
+    name: describeSignal(elementDefinitions[element].signal),
+    present: isCausePresent(element, station),
+  }));
 }
 
 function sees(element: ProtectionElement, station: Station): boolean {

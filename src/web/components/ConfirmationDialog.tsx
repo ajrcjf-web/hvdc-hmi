@@ -125,6 +125,24 @@ export function ConfirmationDialog({
             </dd>
           </>
         )}
+        {view.relay86 !== null && (
+          <>
+            <dt>Relé 86</dt>
+            <dd>{view.relay86.locked ? "enclavado" : "no enclavado"}</dd>
+            {view.relay86.causes.length > 0 && (
+              <>
+                <dt>Causa</dt>
+                <dd>
+                  {view.relay86.causes.map((cause) => (
+                    <div key={cause.element}>
+                      {cause.name}: falla {cause.present ? "presente" : "despejada"}
+                    </div>
+                  ))}
+                </dd>
+              </>
+            )}
+          </>
+        )}
         <dt>Resultado esperado</dt>
         <dd>{view.expected}</dd>
         <dt>Expira en</dt>

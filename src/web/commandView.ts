@@ -2,6 +2,7 @@
 // solo preparan textos y datos; los componentes los ponen en pantalla.
 
 import { formatSwitch, formatValue } from "../labels.ts";
+import { relay86Causes, type Relay86Cause } from "../protections.ts";
 import { wholeSecondsLeft } from "../simulationTime.ts";
 import type { OperatingMode, Station, StationConfig } from "../station.ts";
 import type { SwitchId, SwitchTarget } from "../switchgear.ts";
@@ -21,6 +22,7 @@ export type CommandView = {
   powerOrder: { currentMW: number; newMW: number } | null; // solo para la consigna
   switchOrder: { id: SwitchId; position: string; to: SwitchTarget } | null; // solo para el mando por equipo
   modeChange: { from: OperatingMode; to: OperatingMode } | null; // solo para el cambio de modo
+  relay86: { locked: boolean; causes: Relay86Cause[] } | null; // solo para el reset del 86
   // Verificación en vivo con la estación actual: si la orden dejó de ser válida,
   // trae el motivo. Es informativa: la lógica decide de verdad al ejecutar.
   check: { ok: true } | { ok: false; reason: string };
@@ -40,6 +42,8 @@ function expectedOutcome(command: OperatorCommand, station: Station, config: Sta
       return `La estación pasará a modo ${command.to === "manual" ? "manual" : "automático"}`;
     case "switch":
       return `${command.id} ${command.to === "open" ? "se abrirá" : "se cerrará"}`;
+    case "reset86":
+      return "El relé 86 se liberará: ya se podrá volver a cerrar Q1";
   }
 }
 
@@ -72,6 +76,10 @@ export function describeCommand(
             position: formatSwitch(station.switchgear[command.id]),
             to: command.to,
           }
+        : null,
+    relay86:
+      command.kind === "reset86"
+        ? { locked: station.relay86.locked, causes: relay86Causes(station) }
         : null,
     modeChange: command.kind === "mode" ? { from: station.mode, to: command.to } : null,
     check: result.ok ? { ok: true } : { ok: false, reason: result.reason },
