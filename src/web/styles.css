@@ -535,6 +535,10 @@ input {
   margin: 0 0 0.75rem;
 }
 
+.indicators button {
+  align-self: center;
+}
+
 .mode-indicator {
   display: inline-block;
   margin: 0;
