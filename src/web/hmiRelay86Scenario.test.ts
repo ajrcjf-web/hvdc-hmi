@@ -4,7 +4,6 @@
 import { describe, expect, test } from "vitest";
 import type { AlarmCode } from "../alarms.ts";
 import type { FaultKind } from "../protections.ts";
-import { clearFault, setFault } from "../simulationState.ts";
 import { deriveState } from "../stationState.ts";
 import { deblockedAt, testConfig } from "../testSupport.ts";
 import {
@@ -26,15 +25,11 @@ const ticks = (state: HmiState, count: number) =>
 const operate = (state: HmiState, command: OperatorCommand) =>
   run(state, { type: "select", command }, { type: "execute" }, tick);
 
-// El instructor provoca y despeja fallas (no son órdenes: no pasan por el reducer todavía).
-const provoke = (state: HmiState, kind: FaultKind): HmiState => ({
-  ...state,
-  simulation: setFault(state.simulation, { kind }),
-});
-const clear = (state: HmiState, kind: FaultKind): HmiState => ({
-  ...state,
-  simulation: clearFault(state.simulation, kind),
-});
+// El instructor provoca y despeja fallas desde su ventana (no son órdenes de mando).
+const provoke = (state: HmiState, kind: FaultKind): HmiState =>
+  hmiReducer(state, { type: "set-fault", fault: { kind } });
+const clear = (state: HmiState, kind: FaultKind): HmiState =>
+  hmiReducer(state, { type: "clear-fault", kind });
 
 const life = (state: HmiState, code: AlarmCode) => state.simulation.alarms.life[code];
 // Los eventos del SER de una señal, en orden cronológico.
