@@ -150,7 +150,7 @@ Para los PRs de interfaz, antes de abrir el PR se recorre la aplicación real co
 4. Mirar las capturas (se miran de verdad: la medición no ve un texto cortado ni un borde mal dibujado).
 5. Detener el servidor y comprobar que el puerto quedó libre.
 
-`measure-overview.cjs` (indicadores del modo y del 86 y botón "Resetear 86") y `measure-alarms.cjs` (indicador de alarmas de la barra, con alarmas de prueba de distintas prioridades; informe: `report-alarms.cjs`) son ejemplos: para otro PR se copia y se cambian el recorrido y lo que se mide. Un cambio que el operador causó con su propia orden (por ejemplo, el alto del panel de órdenes al pasar a manual) es esperable; uno que causó un evento (llega una falla, una alarma) es un defecto. La medición no sustituye la revisión visual del usuario, que juzga qué llama la atención.
+`measure-overview.cjs` (indicadores del modo y del 86 y botón "Resetear 86") y `measure-alarms.cjs` (indicador de alarmas de la barra, con alarmas de prueba de distintas prioridades; informe: `report-alarms.cjs`) y `measure-faults.cjs` (ventana del instructor con fallas de la red: arma la planta, provoca fallas con dato, escribe un valor inválido y recorre el reset) son ejemplos: para otro PR se copia y se cambian el recorrido y lo que se mide. Un cambio que el operador causó con su propia orden (por ejemplo, el alto del panel de órdenes al pasar a manual) es esperable; uno que causó un evento (llega una falla, una alarma) es un defecto. La medición no sustituye la revisión visual del usuario, que juzga qué llama la atención.
 
 ## Problemas conocidos del entorno (Windows)
 
