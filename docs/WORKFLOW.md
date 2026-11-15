@@ -153,3 +153,17 @@ como `C:\...`, y Vitest termina cargado dos veces.
     npm test
 
 No es un problema del proyecto: no hay que cambiar código ni configuración.
+
+### La página queda en blanco después de cambiar de rama
+
+**Síntoma:** después de `git switch`, la aplicación queda en blanco. La consola
+no muestra errores, pero al importar un módulo aparece un error del tipo
+"does not provide an export named …", con un `?t=…` en el nombre del archivo.
+
+**Causa:** el servidor de Vite siguió corriendo durante el cambio de rama, vio
+cambiar muchos archivos de golpe y mezcló versiones viejas y nuevas de los
+módulos.
+
+**Solución:** cortar el servidor (Ctrl+C) **antes** de cambiar de rama y volver
+a levantarlo después con `npm run dev`. Si ya pasó, reiniciarlo y recargar la
+página.
