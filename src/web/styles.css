@@ -424,6 +424,21 @@ input {
   font-variant-numeric: tabular-nums;
 }
 
+.alarm-text-stack {
+  display: inline-grid;
+}
+
+.alarm-text-stack > span {
+  grid-area: 1 / 1;
+}
+
+/* Los textos más anchos posibles, invisibles: reservan el ancho del indicador (en negrita, que
+   es como se ve con alarmas). */
+.alarm-text-reserve {
+  visibility: hidden;
+  font-weight: bold;
+}
+
 .nav .alarm-indicator:is(.alarm-urgent, .alarm-high, .alarm-low) {
   color: var(--alarm-color);
   font-weight: bold;
@@ -527,12 +542,49 @@ input {
 
 /* Indicador del modo: se distingue por texto, símbolo y forma del borde, no por color.
    Automático: borde simple. Manual: borde doble y negrita. */
-.mode-indicator {
-  display: inline-block;
+.indicators {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch; /* los dos indicadores miden lo mismo de alto */
+  gap: 0.5rem 1rem;
   margin: 0 0 0.75rem;
+}
+
+.indicators button {
+  align-self: center;
+}
+
+.mode-indicator {
+  display: inline-grid;
+  margin: 0;
   padding: 0.25rem 0.75rem;
   color: var(--text-strong);
   letter-spacing: 0.05em;
+  text-align: center;
+}
+
+/* Las dos etiquetas del modo, una sobre la otra en la misma celda: la caja reserva el ancho de
+   la más larga (la manual, en negrita) y no cambia al cambiar de modo. */
+.mode-text {
+  grid-area: 1 / 1;
+}
+
+.mode-text-manual {
+  font-weight: bold;
+}
+
+.mode-text-hidden {
+  visibility: hidden;
+}
+
+/* Los indicadores del modo y del relé 86 tienen el mismo alto (misma altura de línea, fija: los
+   símbolos pueden venir de otra fuente y alterarla; y la fila los estira al más alto) y un borde de ancho constante (1px):
+   la forma "más gruesa" se dibuja hacia adentro con box-shadow inset, que no ocupa lugar. Así
+   ningún cambio de estado cambia el tamaño de la caja ni mueve lo que está al lado o debajo.
+   Automático: borde simple. Manual: borde doble y negrita (un anillo de fondo y otro de línea). */
+.mode-indicator,
+.relay86-indicator {
+  line-height: 1.4;
 }
 
 .mode-automatic {
@@ -540,8 +592,43 @@ input {
 }
 
 .mode-manual {
-  border: 4px double var(--line);
-  font-weight: bold;
+  border: 1px solid var(--line);
+  box-shadow:
+    inset 0 0 0 2px var(--bg),
+    inset 0 0 0 3px var(--line);
+}
+
+/* Relé 86: texto, símbolo y forma del borde (fino: normal, grueso: enclavado). Las dos
+   etiquetas están en la misma celda de una grilla y la inactiva es invisible: la caja
+   siempre reserva el ancho de la más larga, con la fuente real, sin estimar un ancho mínimo.
+   El borde mide siempre 1px; el grosor del enclavado es un box-shadow inset. El rojo es el de
+   la alarma urgente que lo acompaña. */
+.relay86-indicator {
+  display: inline-grid;
+  margin: 0;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--line);
+  color: var(--text-strong);
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+
+.relay86-text {
+  grid-area: 1 / 1;
+}
+
+.relay86-text-locked {
+  font-weight: bold; /* la etiqueta más ancha: también reserva su ancho cuando está invisible */
+}
+
+.relay86-text-hidden {
+  visibility: hidden;
+}
+
+.relay86-locked {
+  border-color: var(--alarm-urgent);
+  box-shadow: inset 0 0 0 3px var(--alarm-urgent);
+  color: var(--alarm-urgent);
 }
 
 .switch-name {
