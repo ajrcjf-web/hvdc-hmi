@@ -53,6 +53,7 @@ describe("runCycle: una falla con la estación en coupled y con carga", () => {
       "Q1.POS open",
       "STATION.STATE inconsistent",
       "ALARM.PROT_CONVERTER active-unacknowledged",
+      "ALARM.RELAY86_LOCKED active-unacknowledged",
       "ALARM.INCONSISTENT active-unacknowledged",
     ]);
     expect(events.every((e) => e.timeSeconds === 0.1)).toBe(true);
@@ -108,6 +109,7 @@ describe("runCycle: una falla con la estación en decoupled", () => {
     expect(deriveState(station.switchgear)).toBe("stopped");
     expect(station.relay86.locked).toBe(true);
     expect(alarms.life["ALARM.PROT_TRANSFORMER_DIFFERENTIAL"]).toBe("active-unacknowledged");
+    expect(alarms.life["ALARM.RELAY86_LOCKED"]).toBe("active-unacknowledged");
     expect(alarms.life["ALARM.INCONSISTENT"]).toBe("normal");
   });
 });
@@ -167,17 +169,52 @@ describe("estado de la simulación: el instructor provoca y despeja", () => {
     expect(clearFault(state, "converter")).toBe(state);
   });
 
-  test("la falla llega al SER y a las alarmas; despejarla no suelta el 86 ni normaliza la alarma", () => {
-    let state = setFault(coupled(), { kind: "converter" });
-    state = advance(state, 0.1).state;
+  test("la falla llega al SER y a las alarmas", () => {
+    const state = advance(setFault(coupled(), { kind: "converter" }), 0.1).state;
     expect(state.station.relay86.locked).toBe(true);
     expect(state.alarms.life["ALARM.PROT_CONVERTER"]).toBe("active-unacknowledged");
+    expect(state.alarms.life["ALARM.RELAY86_LOCKED"]).toBe("active-unacknowledged");
     // El SER guarda el más reciente primero: la última es la alarma de inconsistencia.
     expect(state.events[0]).toMatchObject({ code: "ALARM.INCONSISTENT" });
     expect(state.events.map((e) => e.code)).toContain("PROT.CONVERTER");
+  });
+});
 
-    state = advance(clearFault(state, "converter"), 0.1).state;
+describe("alarmas de protección y del 86", () => {
+  const tripped = () =>
+    advance(setFault({ ...createSimulationState(testConfig, 0), station: deblockedAt(300) }, { kind: "converter" }), 0.1)
+      .state;
+
+  test("al despejar la falla, la alarma de la protección se normaliza y la del 86 sigue activa", () => {
+    const state = advance(clearFault(tripped(), "converter"), 0.1).state;
+    // El 86 no se suelta solo: sigue enclavado, y con él su alarma. Que la de la protección
+    // se normalice es la señal, en la lista de alarmas, de que ya se puede resetear.
     expect(state.station.relay86.locked).toBe(true);
+    expect(state.alarms.life["ALARM.PROT_CONVERTER"]).toBe("returned-unacknowledged");
+    expect(state.alarms.life["ALARM.RELAY86_LOCKED"]).toBe("active-unacknowledged");
+    const last = state.events.slice(0, 1);
+    expect(last).toMatchObject([{ code: "ALARM.PROT_CONVERTER", state: "returned-unacknowledged" }]);
+  });
+
+  test("la alarma del 86 dura hasta que el 86 se resetea", () => {
+    let state = advance(clearFault(tripped(), "converter"), 0.1).state;
+    // El reset es una orden del operador (otro PR): aquí se suelta el relé a mano.
+    state = { ...state, station: { ...state.station, relay86: { locked: false, operated: [] } } };
+    state = advance(state, 0.1).state;
+    expect(state.alarms.life["ALARM.RELAY86_LOCKED"]).toBe("returned-unacknowledged");
+  });
+
+  test("si la falla reaparece con la protección ya actuada, su alarma vuelve a activarse", () => {
+    let state = advance(clearFault(tripped(), "converter"), 0.1).state;
+    expect(state.alarms.life["ALARM.PROT_CONVERTER"]).toBe("returned-unacknowledged");
+    state = advance(setFault(state, { kind: "converter" }), 0.1).state;
     expect(state.alarms.life["ALARM.PROT_CONVERTER"]).toBe("active-unacknowledged");
+  });
+
+  test("despejar la falla antes de que el elemento actúe no genera ninguna alarma", () => {
+    const stopped = { ...createSimulationState(testConfig, 0), station: stationAt("stopped") };
+    const state = advance(setFault(stopped, { kind: "converter" }), 0.1).state;
+    expect(state.alarms.life["ALARM.PROT_CONVERTER"]).toBe("normal");
+    expect(state.alarms.life["ALARM.RELAY86_LOCKED"]).toBe("normal");
   });
 });

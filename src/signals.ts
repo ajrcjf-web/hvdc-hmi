@@ -30,6 +30,7 @@ export const signalDescriptions = {
   "CMD.QE_CLOSE": "Orden: cerrar QE",
   "ALARM.PROT_TRANSFORMER_DIFFERENTIAL": "Alarma: actuó la protección diferencial del transformador (87T)",
   "ALARM.PROT_CONVERTER": "Alarma: actuó la protección del convertidor",
+  "ALARM.RELAY86_LOCKED": "Alarma: relé de bloqueo 86 enclavado",
   "ALARM.INCONSISTENT": "Alarma: estación inconsistente",
   "ALARM.TEST_URGENT": "Alarma de prueba: urgente",
   "ALARM.TEST_HIGH": "Alarma de prueba: alta",
