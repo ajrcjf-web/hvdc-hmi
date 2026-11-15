@@ -20,6 +20,8 @@ export type ProtectionElement = (typeof protectionElements)[number];
 // Las fallas que provoca el instructor. No son órdenes: no pasan por los enclavamientos.
 export type Faults = { transformer: boolean; converter: boolean };
 export type FaultKind = keyof Faults;
+// Las fallas que ofrece la ventana del instructor, en el orden en que se muestran.
+export const faultKinds: FaultKind[] = ["transformer", "converter"];
 export type Fault = { kind: FaultKind };
 
 export function noFaults(): Faults {

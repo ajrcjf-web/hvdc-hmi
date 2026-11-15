@@ -12,14 +12,17 @@
 
 import type { AlarmCode, TestAlarmCode } from "../alarms.ts";
 import { commandStepEvent, type SignalEvent } from "../events.ts";
+import type { Fault, FaultKind } from "../protections.ts";
 import type { ScheduledCommand } from "../simulationCycle.ts";
 import {
   acknowledgeAlarm,
   acknowledgeAlarms,
   advance,
   appendEvents,
+  clearFault,
   createSimulationState,
   schedule,
+  setFault,
   setTestAlarm,
   type SimulationState,
 } from "../simulationState.ts";
@@ -63,7 +66,11 @@ export type HmiAction =
   // Alarmas: reconocer no es una orden de mando (no hay selección ni enclavamientos).
   | { type: "acknowledge-alarm"; code: AlarmCode }
   | { type: "acknowledge-alarms"; codes: AlarmCode[] } // las que la ventana muestra
-  | { type: "set-test-alarm"; code: TestAlarmCode; active: boolean }; // del instructor
+  | { type: "set-test-alarm"; code: TestAlarmCode; active: boolean } // del instructor
+  // Fallas: las provoca y despeja el instructor. No son órdenes de mando: sin runCommand,
+  // sin select-before-operate y sin enclavamientos. Las protecciones las ven en el ciclo.
+  | { type: "set-fault"; fault: Fault }
+  | { type: "clear-fault"; kind: FaultKind };
 
 export function createHmiState(
   config: StationConfig,
@@ -152,6 +159,12 @@ export function hmiReducer(state: HmiState, action: HmiAction): HmiState {
 
     case "set-test-alarm":
       return { simulation: setTestAlarm(simulation, action.code, action.active), ui };
+
+    case "set-fault":
+      return { simulation: setFault(simulation, action.fault), ui };
+
+    case "clear-fault":
+      return { simulation: clearFault(simulation, action.kind), ui };
 
     case "select":
       return selectCommand(state, action.command);

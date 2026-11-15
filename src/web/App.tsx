@@ -102,7 +102,11 @@ export function App() {
           />
         )}
         {state.ui.activeWindow === "faults" && (
-          <FaultsWindow alarms={state.simulation.alarms} dispatch={dispatch} />
+          <FaultsWindow
+            station={state.simulation.station}
+            alarms={state.simulation.alarms}
+            dispatch={dispatch}
+          />
         )}
         {!windowInfo(state.ui.activeWindow).available && <PendingWindow id={state.ui.activeWindow} />}
         {state.ui.selection !== null && (
