@@ -34,7 +34,11 @@ export type AlarmLifeState =
   | "normal";
 
 // Prioridad de cada alarma. El orden de las claves es el orden de evaluación.
+// Las alarmas de protección van antes que la de inconsistencia: es su causa, y los eventos
+// de un mismo ciclo salen en este orden.
 export const alarmPriorities: Record<AlarmCode, AlarmPriority> = {
+  "ALARM.PROT_TRANSFORMER_DIFFERENTIAL": "urgent",
+  "ALARM.PROT_CONVERTER": "urgent",
   "ALARM.INCONSISTENT": "urgent",
   "ALARM.TEST_URGENT": "urgent",
   "ALARM.TEST_HIGH": "high",
@@ -61,12 +65,16 @@ export type AlarmResult = { alarms: AlarmState; events: SignalEvent[] };
 export function createAlarmState(): AlarmState {
   return {
     life: {
+      "ALARM.PROT_TRANSFORMER_DIFFERENTIAL": "normal",
+      "ALARM.PROT_CONVERTER": "normal",
       "ALARM.INCONSISTENT": "normal",
       "ALARM.TEST_URGENT": "normal",
       "ALARM.TEST_HIGH": "normal",
       "ALARM.TEST_LOW": "normal",
     },
     activatedAtSeconds: {
+      "ALARM.PROT_TRANSFORMER_DIFFERENTIAL": 0,
+      "ALARM.PROT_CONVERTER": 0,
       "ALARM.INCONSISTENT": 0,
       "ALARM.TEST_URGENT": 0,
       "ALARM.TEST_HIGH": 0,
@@ -100,6 +108,11 @@ export function alarmConditions(
   alarms: AlarmState,
 ): Record<AlarmCode, boolean> {
   return {
+    // Una alarma de protección dura hasta que se resetea el 86 (no hasta despejar la falla).
+    "ALARM.PROT_TRANSFORMER_DIFFERENTIAL": station.relay86.operated.includes(
+      "transformerDifferential",
+    ),
+    "ALARM.PROT_CONVERTER": station.relay86.operated.includes("converterProtection"),
     // Un equipo en maniobra cuenta en su posición de origen: la alarma no se normaliza al
     // empezar la maniobra que la resuelve (ni aparece antes de que termine la que la causa).
     "ALARM.INCONSISTENT": deriveState(atOrigin(station.switchgear)) === "inconsistent",

@@ -2,6 +2,7 @@
 // Función pura: recibe la estación y devuelve la siguiente, más lo ocurrido.
 
 import { evaluateAlarms, type AlarmState } from "./alarms.ts";
+import { evaluateProtections } from "./protections.ts";
 import { commandStepEvent, detectPlantEvents, type CommandSignal, type SignalEvent } from "./events.ts";
 import { step } from "./simulation.ts";
 import type { CommandResult, Station, StationConfig } from "./station.ts";
@@ -35,9 +36,12 @@ export type CycleResult = {
 // 1. Aplica las órdenes programadas dentro del intervalo. Cada una deja su evento
 //    (ejecutada o rechazada) y los cambios que provocó en la estación, con la hora t.
 // 2. Registra el estado si un múltiplo de SNAPSHOT_INTERVAL_SECONDS cae en el intervalo.
-// 3. Hace evolucionar la planta hasta el instante siguiente. Los cambios que ocurren
+// 3. Evalúa las protecciones: arranques, disparos, el relé 86 y el bloqueo del convertidor.
+//    Va antes de step para que el disparo de Q1 (1,5 ciclos de la red = 30 ms a 50 Hz)
+//    termine en este mismo ciclo. Sus eventos llevan la hora t + dt.
+// 4. Hace evolucionar la planta hasta el instante siguiente. Los cambios que ocurren
 //    en este paso (una maniobra que termina) llevan la hora t + dt.
-// 4. Evalúa las alarmas sobre la estación ya avanzada: las que aparecen o se normalizan
+// 5. Evalúa las alarmas sobre la estación ya avanzada: las que aparecen o se normalizan
 //    en este paso llevan la hora t + dt, y cada cambio es un evento de señal.
 //
 // Los eventos de señal se detectan una vez por ciclo, así que su resolución real es dt
@@ -87,8 +91,19 @@ export function runCycle(
     events.push({ kind: "snapshot", station: current });
   }
 
-  const next = step(current, dtSeconds, config);
-  for (const event of detectPlantEvents(current, next, nextTimeSeconds)) {
+  const protection = evaluateProtections(current, dtSeconds, config, nextTimeSeconds);
+  for (const event of protection.events) {
+    events.push({ kind: "signal", event });
+  }
+
+  const next = step(protection.station, dtSeconds, config);
+  // El bloqueo del convertidor ya lo registró la etapa de protecciones (antes que Q1 abierto,
+  // que es el orden causal): se compara con el convertidor tal como quedó después de ella.
+  const beforeStep =
+    protection.station.converter === current.converter
+      ? current
+      : { ...current, converter: protection.station.converter };
+  for (const event of detectPlantEvents(beforeStep, next, nextTimeSeconds)) {
     events.push({ kind: "signal", event });
   }
 

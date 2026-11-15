@@ -112,6 +112,27 @@ export function requestSwitch(
   return { ok: true, switchgear: { ...switchgear, [id]: moving } };
 }
 
+// Disparo de un equipo por una protección: abre con carga y sin pasar por los
+// enclavamientos del operador (requestSwitch). Por eso no es una orden: solo lo usa la
+// lógica de las protecciones. Tiene prioridad sobre una maniobra en curso: un equipo que
+// se estaba cerrando pasa a abrirse. Si ya está abierto, o ya se está abriendo, no cambia.
+// El disparo se expresa como una maniobra de apertura de tripSeconds: si cabe en un ciclo,
+// stepSwitchgear lo completa en el mismo ciclo; si no, se ve "en maniobra".
+export function tripSwitch(
+  switchgear: Switchgear,
+  id: SwitchId,
+  tripSeconds: number,
+): Switchgear {
+  const status = switchgear[id];
+  if (status.kind === "open" || (status.kind === "moving" && status.to === "open")) {
+    return switchgear;
+  }
+  return {
+    ...switchgear,
+    [id]: { kind: "moving", to: "open", remainingSeconds: tripSeconds },
+  };
+}
+
 export function stepSwitchgear(switchgear: Switchgear, dtSeconds: number): Switchgear {
   return {
     Q1: stepSwitch(switchgear.Q1, dtSeconds),

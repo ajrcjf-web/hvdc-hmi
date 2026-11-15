@@ -2,12 +2,19 @@
 // No es un archivo de tests (no termina en .test.ts): solo lo importan.
 
 import { createAlarmState } from "./alarms.ts";
+import {
+  createProtectionState,
+  createRelay86,
+  defaultProtectionConfig,
+  noFaults,
+} from "./protections.ts";
 import type { Station, StationConfig } from "./station.ts";
 import { switchgearFor, type StationState } from "./stationState.ts";
 
 // Rampa de potencia: 600 MW/min = 10 MW/s. Rampa de tensión: 100 kV/s.
 export const testConfig: StationConfig = {
   operatingTimeSeconds: { Q1: 2, Q2: 4, QE: 3 },
+  ...defaultProtectionConfig,
   pMinMW: 50,
   pMaxMW: 500,
   rampRateMWPerMin: 600,
@@ -24,6 +31,9 @@ export function stationAt(state: StationState): Station {
     udcKV: 0,
     powerMW: 0,
     powerOrderMW: 0,
+    faults: noFaults(),
+    relay86: createRelay86(),
+    protection: createProtectionState(),
   };
 }
 
@@ -36,6 +46,9 @@ export function deblockedAt(powerMW = 0, powerOrderMW = powerMW): Station {
     udcKV: testConfig.ratedVoltageKV,
     powerMW,
     powerOrderMW,
+    faults: noFaults(),
+    relay86: createRelay86(),
+    protection: createProtectionState(),
   };
 }
 
