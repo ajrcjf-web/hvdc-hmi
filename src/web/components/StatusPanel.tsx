@@ -2,14 +2,17 @@
 import { converterLabels, formatSwitch, formatTime, formatValue } from "../../labels.ts";
 import { measure } from "../../measurements.ts";
 import type { Station } from "../../station.ts";
+import type { LastProtection, Relay86View } from "../relay86View.ts";
 import { deriveState } from "../../stationState.ts";
 
 type Props = {
   station: Station;
   timeSeconds: number;
+  relay: Relay86View;
+  lastProtection: LastProtection | null;
 };
 
-export function StatusPanel({ station, timeSeconds }: Props) {
+export function StatusPanel({ station, timeSeconds, relay, lastProtection }: Props) {
   const { Q1, Q2, QE } = station.switchgear;
   const state = deriveState(station.switchgear);
   const { udcKV, idcKA } = measure(station);
@@ -33,6 +36,19 @@ export function StatusPanel({ station, timeSeconds }: Props) {
 
         <dt>Convertidor</dt>
         <dd>{converterLabels[station.converter]}</dd>
+
+        <dt>Última protección</dt>
+        <dd>
+          {lastProtection === null
+            ? "ninguna"
+            : `${lastProtection.name}, ${lastProtection.timestamp}`}
+        </dd>
+        <dt>Causa del 86</dt>
+        <dd>
+          {relay.causes.length === 0
+            ? "—"
+            : relay.causes.map((cause) => <div key={cause.name}>{cause.text}</div>)}
+        </dd>
 
         <dt>P</dt>
         <dd>{formatValue(station.powerMW, 0)} MW</dd>
