@@ -1,6 +1,8 @@
 // Barra de navegación: un botón por ventana. Son botones y no enlaces para no invitar
 // a abrir otra pestaña (cada pestaña tendría su propia simulación). La ventana activa se
 // distingue por forma y peso (borde inferior y negrita) y por aria-current, no por color.
+// Los botones no dicen si la ventana está pendiente: lo dice la propia ventana al abrirla (así la
+// barra entra en una línea a 1280 px con el panel de eventos abierto).
 //
 // A la derecha va el indicador de alarmas, visible desde todas las ventanas: la cantidad
 // y la prioridad más alta (por texto, símbolo y color), intermitente si hay alguna sin
@@ -38,7 +40,6 @@ export function NavigationBar({ active, alarmSummary, onNavigate }: Props) {
           onClick={() => onNavigate(w.id)}
         >
           {w.label}
-          {w.available ? "" : " (pendiente)"}
         </button>
       ))}
       <button
