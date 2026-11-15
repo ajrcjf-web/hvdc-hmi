@@ -57,7 +57,7 @@ export function commandStepEvent(
 // Compara la estación antes y después, y devuelve lo que cambió: la posición de
 // cada equipo, el estado de la estación y el bloqueo del convertidor. Si no cambió
 // nada, no hay eventos. Cuando varias cosas cambian a la vez, salen en este orden:
-// equipos (Q1, Q2, QE), estado de la estación, convertidor y modo.
+// equipos (Q1, Q2, QE), estado de la estación, convertidor, modo y relé 86.
 export function detectPlantEvents(
   before: Station,
   after: Station,
@@ -83,6 +83,14 @@ export function detectPlantEvents(
 
   if (before.mode !== after.mode) {
     events.push({ code: "STATION.MODE", state: after.mode, timeSeconds });
+  }
+
+  if (before.relay86.locked !== after.relay86.locked) {
+    events.push({
+      code: "RELAY86.LOCKOUT",
+      state: after.relay86.locked ? "locked" : "normal",
+      timeSeconds,
+    });
   }
 
   return events;

@@ -7,6 +7,7 @@ import {
   createRelay86,
   defaultProtectionConfig,
   noFaults,
+  relay86Causes,
   type Faults,
   type ProtectionConfig,
   type ProtectionState,
@@ -235,6 +236,23 @@ export function requestDeblock(station: Station): CommandResult {
     return reject("El convertidor ya está desbloqueado");
   }
   return { ok: true, station: { ...station, converter: "deblocked" } };
+}
+
+// Reset remoto del relé 86. Vale en los dos modos y no exige ningún estado de la estación
+// (se puede resetear antes o después de normalizar los equipos). Se rechaza, con su motivo,
+// si el 86 no está enclavado o si la causa de alguna protección que actuó sigue presente:
+// el instructor todavía no despejó la falla. Al aceptarse, el 86 se libera; las protecciones
+// vuelven a poder actuar.
+export function requestRelayReset(station: Station): CommandResult {
+  if (!station.relay86.locked) {
+    return reject("El relé 86 no está enclavado");
+  }
+  const present = relay86Causes(station).filter((cause) => cause.present);
+  if (present.length > 0) {
+    const names = present.map((cause) => cause.name).join("; ");
+    return reject(`No se puede resetear el 86: la causa sigue presente (${names})`);
+  }
+  return { ok: true, station: { ...station, relay86: createRelay86() } };
 }
 
 export function requestBlock(station: Station): CommandResult {

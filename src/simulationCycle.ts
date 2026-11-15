@@ -97,12 +97,17 @@ export function runCycle(
   }
 
   const next = step(protection.station, dtSeconds, config);
-  // El bloqueo del convertidor ya lo registró la etapa de protecciones (antes que Q1 abierto,
-  // que es el orden causal): se compara con el convertidor tal como quedó después de ella.
+  // El enclavamiento del 86 y el bloqueo del convertidor ya los registró la etapa de
+  // protecciones (antes que Q1 abierto, que es el orden causal): se compara con el
+  // convertidor y el 86 tal como quedaron después de ella.
   const beforeStep =
-    protection.station.converter === current.converter
+    protection.station === current
       ? current
-      : { ...current, converter: protection.station.converter };
+      : {
+          ...current,
+          converter: protection.station.converter,
+          relay86: protection.station.relay86,
+        };
   for (const event of detectPlantEvents(beforeStep, next, nextTimeSeconds)) {
     events.push({ kind: "signal", event });
   }
