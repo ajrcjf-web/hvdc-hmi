@@ -2,7 +2,9 @@
 // a las órdenes) se ven en el panel lateral, que está en todas las ventanas.
 import type { Dispatch } from "react";
 import type { HmiAction, HmiState } from "../hmiState.ts";
+import { describeRelay86, lastProtection } from "../relay86View.ts";
 import { ModeIndicator } from "./ModeIndicator.tsx";
+import { Relay86Indicator } from "./Relay86Indicator.tsx";
 import { CommandPanel } from "./CommandPanel.tsx";
 import { SingleLineDiagram } from "./SingleLineDiagram.tsx";
 import { StatusPanel } from "./StatusPanel.tsx";
@@ -13,13 +15,22 @@ type Props = {
 };
 
 export function OverviewWindow({ state, dispatch }: Props) {
+  const relay = describeRelay86(state.simulation.station);
   return (
     <>
       <h1>HMI HVDC — Overview</h1>
-      <ModeIndicator mode={state.simulation.station.mode} />
+      <div className="indicators">
+        <ModeIndicator mode={state.simulation.station.mode} />
+        <Relay86Indicator relay={relay} />
+      </div>
       <SingleLineDiagram station={state.simulation.station} />
       <div className="layout">
-        <StatusPanel station={state.simulation.station} timeSeconds={state.simulation.timeSeconds} />
+        <StatusPanel
+          station={state.simulation.station}
+          timeSeconds={state.simulation.timeSeconds}
+          relay={relay}
+          lastProtection={lastProtection(state.simulation.events)}
+        />
         <CommandPanel
           mode={state.simulation.station.mode}
           onCommand={(command) => dispatch({ type: "select", command })}
